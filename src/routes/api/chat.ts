@@ -150,19 +150,42 @@ itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
 Do NOT include bookingLinks — they are added separately.`;
 
-        const { object } = await generateObject({
-          model,
-          system: PACKAGER_SYSTEM,
-          schema: packagesSchema,
-          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn 3 packages.`,
-        });
+        type RawPackage = z.infer<typeof packageSchema>;
+        let rawPackages: RawPackage[] = [];
+        try {
+          const { object } = await generateObject({
+            model,
+            system: PACKAGER_SYSTEM,
+            output: "array",
+            schema: packageSchema,
+            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn EXACTLY 3 packages in order: basic, medium, premium.`,
+          });
+          rawPackages = object as RawPackage[];
+        } catch (err) {
+          console.error("[packager] generateObject failed", err);
+          return new Response(
+            "Entschuldigung, die Paketerstellung ist fehlgeschlagen. Bitte versuche es noch einmal.",
+            { status: 502 },
+          );
+        }
+
+        // Ensure exactly 3 packages, assign tier by index.
+        const trimmed = rawPackages.slice(0, 3);
+        while (trimmed.length < 3 && trimmed.length > 0) {
+          trimmed.push(trimmed[trimmed.length - 1]);
+        }
+        const normalized = trimmed.map((p, i) => ({
+          ...p,
+          type: TIER_ORDER[i],
+          currency: p.currency ?? "EUR",
+        }));
 
         // Persist trip request + packages
         let tripRequestId: string | undefined;
         try {
           const { data: tr } = await supabaseAdmin
             .from("trip_requests")
-            .insert({ raw_brief: brief, destination: object.packages[0]?.destination ?? null })
+            .insert({ raw_brief: brief, destination: normalized[0]?.destination ?? null })
             .select("id")
             .single();
           tripRequestId = tr?.id;
@@ -170,7 +193,7 @@ Do NOT include bookingLinks — they are added separately.`;
           // non-fatal
         }
 
-        const packagesWithLinks = object.packages.map((p) => ({
+        const packagesWithLinks = normalized.map((p) => ({
           ...p,
           bookingLinks: placeholderLinks(p.destination),
         }));
@@ -182,9 +205,9 @@ Do NOT include bookingLinks — they are added separately.`;
               trip_request_id: tripRequestId,
               package_type: p.type,
               title: p.title,
-              price: p.price,
+              price: Math.round(p.price),
               rating: p.rating,
-              match_score: p.matchScore,
+              match_score: Math.round(p.matchScore),
               summary: p.summary,
               data: p,
             }));
