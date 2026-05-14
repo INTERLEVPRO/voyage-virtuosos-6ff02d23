@@ -245,16 +245,24 @@ Do NOT include bookingLinks — they are added separately.`;
           packages: finalPackages,
         };
 
-        // Stream a German intro + a fenced JSON block for the client to parse.
+        // Deterministic UI message stream — no model call to repeat content.
         const intro = `Perfekt ✨ Mein Team hat **3 Pakete** für dich entworfen — Basic, Medium und Premium. Schau sie dir gleich an…`;
         const finalText = `${intro}\n\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
 
-        const result = streamText({
-          model,
-          system: "Repeat the user's text VERBATIM. Do not add or change anything.",
-          prompt: finalText,
+        const stream = createUIMessageStream({
+          execute: ({ writer }) => {
+            const id = `pkg-${Date.now()}`;
+            writer.write({ type: "start" });
+            writer.write({ type: "start-step" });
+            writer.write({ type: "text-start", id });
+            writer.write({ type: "text-delta", id, delta: finalText });
+            writer.write({ type: "text-end", id });
+            writer.write({ type: "finish-step" });
+            writer.write({ type: "finish" });
+          },
+          originalMessages: uiMessages,
         });
-        return result.toUIMessageStreamResponse({ originalMessages: uiMessages });
+        return createUIMessageStreamResponse({ stream });
       },
     },
   },
