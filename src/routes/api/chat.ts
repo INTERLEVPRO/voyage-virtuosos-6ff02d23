@@ -4,7 +4,6 @@ import {
   convertToModelMessages,
   streamText,
   generateText,
-  generateObject,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
