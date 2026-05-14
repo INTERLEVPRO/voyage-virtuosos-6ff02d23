@@ -3,28 +3,54 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Send, Loader2, Sparkles } from "lucide-react";
+import type { TravelPackage, PackagesPayload } from "@/types/travel";
 
 const STARTER_PROMPTS = [
-  "Paris trip, 1000€ budget, 4 days, lover of art & coffee",
-  "Honeymoon in Bali, 5000€, 10 days, beach & wellness",
-  "Tokyo solo trip, 2500€, 7 days, food & design",
+  "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
+  "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
+  "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
 ];
 
 const AGENT_STAGES = [
-  "Concierge listening…",
-  "Research agent scouting flights & stays…",
-  "Budget agent crafting your tiers…",
-  "Itinerary architect drawing your days…",
-  "Persona agent weaving the story…",
+  "Concierge hört zu…",
+  "Research-Agent sucht Flüge & Hotels…",
+  "Budget-Agent erstellt 3 Pakete…",
+  "Itinerary-Architekt plant deine Tage…",
+  "Pakete werden zusammengestellt…",
 ];
 
-export function ChatPanel() {
+const JSON_BLOCK_RE = /```json\s*([\s\S]*?)```/i;
+
+function extractPackages(text: string): TravelPackage[] | null {
+  const m = text.match(JSON_BLOCK_RE);
+  if (!m) return null;
+  try {
+    const parsed = JSON.parse(m[1]) as PackagesPayload;
+    if (parsed?.status === "packages_ready" && Array.isArray(parsed.packages)) {
+      return parsed.packages;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function stripJsonBlock(text: string): string {
+  return text.replace(JSON_BLOCK_RE, "").trim();
+}
+
+export function ChatPanel({
+  onPackagesReady,
+}: {
+  onPackagesReady?: (pkgs: TravelPackage[]) => void;
+}) {
   const transport = new DefaultChatTransport({ api: "/api/chat" });
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [stageIdx, setStageIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const handedOffRef = useRef<Set<string>>(new Set());
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -46,6 +72,20 @@ export function ChatPanel() {
     inputRef.current?.focus();
   }, [status]);
 
+  // Detect packages_ready in the latest assistant message (only when streaming has finished)
+  useEffect(() => {
+    if (status === "streaming" || status === "submitted") return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return;
+    if (handedOffRef.current.has(last.id)) return;
+    const text = last.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+    const pkgs = extractPackages(text);
+    if (pkgs && onPackagesReady) {
+      handedOffRef.current.add(last.id);
+      onPackagesReady(pkgs);
+    }
+  }, [messages, status, onPackagesReady]);
+
   const submit = (text: string) => {
     if (!text.trim() || isLoading) return;
     sendMessage({ text: text.trim() });
@@ -60,8 +100,8 @@ export function ChatPanel() {
           <Sparkles className="h-4 w-4 text-primary" />
         </div>
         <div>
-          <div className="font-display text-lg leading-tight">Weltweit Urlaub Atelier</div>
-          <div className="text-xs opacity-80">A team of AI agents at your service</div>
+          <div className="font-display text-lg leading-tight">Weltweit Urlaub</div>
+          <div className="text-xs opacity-80">Dein KI-Reiseberater für Flüge, Hotels und Aktivitäten</div>
         </div>
       </div>
 
@@ -69,9 +109,9 @@ export function ChatPanel() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-6">
         {messages.length === 0 && (
           <div className="space-y-4">
-            <p className="font-display text-xl text-primary">Where shall we send you?</p>
+            <p className="font-display text-xl text-primary">Wohin soll deine Reise gehen?</p>
             <p className="text-sm text-muted-foreground">
-              Describe your dream trip — destination, budget, length, vibe. Our agents will compose a bespoke proposal.
+              Erzähl uns von deinem Traumurlaub — Reiseziel, Budget, Dauer, Stil. Unser KI-Team entwirft 3 maßgeschneiderte Pakete.
             </p>
             <div className="flex flex-col gap-2 pt-2">
               {STARTER_PROMPTS.map((p) => (
@@ -88,9 +128,8 @@ export function ChatPanel() {
         )}
 
         {messages.map((m) => {
-          const text = m.parts
-            .map((p) => (p.type === "text" ? p.text : ""))
-            .join("");
+          const raw = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+          const display = m.role === "assistant" ? stripJsonBlock(raw) : raw;
           const isUser = m.role === "user";
           return (
             <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -102,10 +141,10 @@ export function ChatPanel() {
                 }
               >
                 {isUser ? (
-                  <p className="whitespace-pre-wrap">{text}</p>
+                  <p className="whitespace-pre-wrap">{display}</p>
                 ) : (
                   <div className="prose-luxe">
-                    <ReactMarkdown>{text || "…"}</ReactMarkdown>
+                    <ReactMarkdown>{display || "…"}</ReactMarkdown>
                   </div>
                 )}
               </div>
@@ -143,7 +182,7 @@ export function ChatPanel() {
             }
           }}
           rows={1}
-          placeholder="Describe your dream trip…"
+          placeholder="Beschreibe deinen Traumurlaub…"
           className="flex-1 resize-none rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
           disabled={isLoading}
         />
@@ -151,7 +190,7 @@ export function ChatPanel() {
           type="submit"
           disabled={isLoading || !input.trim()}
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-gold text-primary shadow-soft transition-transform hover:scale-105 disabled:opacity-50"
-          aria-label="Send"
+          aria-label="Senden"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
