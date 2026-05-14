@@ -153,16 +153,30 @@ Do NOT include bookingLinks — they are added separately.`;
         type RawPackage = z.infer<typeof packageSchema>;
         let rawPackages: RawPackage[] = [];
         try {
-          const { object } = await generateObject({
+          const { text } = await generateText({
             model,
-            system: PACKAGER_SYSTEM,
-            output: "array",
-            schema: packageSchema,
-            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn EXACTLY 3 packages in order: basic, medium, premium.`,
+            system: `${PACKAGER_SYSTEM}\n\nReturn ONLY a valid JSON array of 3 package objects. No prose, no markdown, no code fences. Each object MUST contain: title, destination, price (number), rating (0-5), reviews (int), matchScore (0-100), duration, hotel, flight, summary, badges (string[]), activities (string[]), itinerary (array of {day:int,title,description}). Optional: type, currency, mealPlan, whyItFits.`,
+            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn EXACTLY 3 packages as a JSON array, in order: basic, medium, premium.`,
           });
-          rawPackages = object as RawPackage[];
+          // Strip optional code fences
+          const cleaned = text
+            .trim()
+            .replace(/^```(?:json)?\s*/i, "")
+            .replace(/\s*```$/, "")
+            .trim();
+          // Find first '[' to last ']' to be defensive
+          const start = cleaned.indexOf("[");
+          const end = cleaned.lastIndexOf("]");
+          const jsonStr = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+          const parsed = JSON.parse(jsonStr);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          rawPackages = arr
+            .map((p) => packageSchema.safeParse(p))
+            .filter((r) => r.success)
+            .map((r) => (r as { success: true; data: RawPackage }).data);
+          if (rawPackages.length === 0) throw new Error("No valid packages parsed");
         } catch (err) {
-          console.error("[packager] generateObject failed", err);
+          console.error("[packager] generation failed", err);
           return new Response(
             "Entschuldigung, die Paketerstellung ist fehlgeschlagen. Bitte versuche es noch einmal.",
             { status: 502 },
