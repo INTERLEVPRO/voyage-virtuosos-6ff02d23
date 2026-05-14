@@ -48,29 +48,26 @@ const bookingLinksSchema = z.object({
 });
 
 const packageSchema = z.object({
-  type: z.enum(["basic", "medium", "premium"]),
+  type: z.enum(["basic", "medium", "premium"]).optional(),
   title: z.string(),
   destination: z.string(),
-  price: z.number().int(),
-  currency: z.string().default("EUR"),
+  price: z.number(),
+  currency: z.string().optional(),
   rating: z.number().min(0).max(5),
   reviews: z.number().int().min(0),
-  matchScore: z.number().int().min(0).max(100),
+  matchScore: z.number().min(0).max(100),
   duration: z.string(),
   hotel: z.string(),
   flight: z.string(),
   mealPlan: z.string().optional(),
   summary: z.string(),
   whyItFits: z.string().optional(),
-  badges: z.array(z.string()).min(1).max(5),
-  activities: z.array(z.string()).min(1).max(8),
-  itinerary: z.array(itineraryDaySchema).min(1).max(14),
-  bookingLinks: bookingLinksSchema.optional(),
+  badges: z.array(z.string()).min(1),
+  activities: z.array(z.string()).min(1),
+  itinerary: z.array(itineraryDaySchema).min(1),
 });
 
-const packagesSchema = z.object({
-  packages: z.array(packageSchema).length(3),
-});
+const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
 function isPlanningRequest(text: string, history: string): boolean {
   const all = `${history}\n${text}`.toLowerCase();
