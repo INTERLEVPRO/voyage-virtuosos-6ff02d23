@@ -14,7 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      affiliate_clicks: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string | null
+          provider: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          provider?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          provider?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packages: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          match_score: number | null
+          package_type: string
+          price: number | null
+          rating: number | null
+          summary: string | null
+          title: string | null
+          trip_request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          match_score?: number | null
+          package_type: string
+          price?: number | null
+          rating?: number | null
+          summary?: string | null
+          title?: string | null
+          trip_request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          match_score?: number | null
+          package_type?: string
+          price?: number | null
+          rating?: number | null
+          summary?: string | null
+          title?: string | null
+          trip_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packages_trip_request_id_fkey"
+            columns: ["trip_request_id"]
+            isOneToOne: false
+            referencedRelation: "trip_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_requests: {
+        Row: {
+          budget: number | null
+          created_at: string
+          departure_airport: string | null
+          destination: string | null
+          id: string
+          preferences: Json | null
+          raw_brief: string | null
+          travel_dates: string | null
+          travelers: number | null
+          vacation_type: string | null
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          departure_airport?: string | null
+          destination?: string | null
+          id?: string
+          preferences?: Json | null
+          raw_brief?: string | null
+          travel_dates?: string | null
+          travelers?: number | null
+          vacation_type?: string | null
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          departure_airport?: string | null
+          destination?: string | null
+          id?: string
+          preferences?: Json | null
+          raw_brief?: string | null
+          travel_dates?: string | null
+          travelers?: number | null
+          vacation_type?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
