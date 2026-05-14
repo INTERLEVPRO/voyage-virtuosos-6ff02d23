@@ -1,0 +1,1 @@
+drop policy if exists "Public insert affiliate_clicks" on public.affiliate_clicks;
