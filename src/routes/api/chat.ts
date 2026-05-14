@@ -4,46 +4,90 @@ import {
   convertToModelMessages,
   streamText,
   generateText,
+  generateObject,
   type UIMessage,
 } from "ai";
+import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type ChatRequestBody = { messages?: unknown };
 
-const CONCIERGE_SYSTEM = `You are the Concierge — the warm, charming front-of-house AI for Weltweit Urlaub, a luxury travel atelier.
-Your job in this turn is to gently understand what the traveller wants. If destination, dates, budget, travelers, or vibe are missing, ask ONE focused question. Keep replies brief, evocative, and human.
-If the user has already provided destination + budget, do NOT ask more questions — just acknowledge and let the orchestrator hand off.`;
+const CONCIERGE_SYSTEM = `Du bist der Concierge von Weltweit Urlaub — warm, charmant, auf Deutsch.
+Deine Aufgabe ist es, in 1–2 kurzen Fragen das Reisebriefing zu vervollständigen.
+Pflichtangaben: Reiseziel ODER Urlaubsart, ungefähres Budget, Reisedauer (Tage), Anzahl Reisende, Abflughafen, Reisezeitraum.
+Wenn etwas fehlt: stelle EINE freundliche, fokussierte Frage. Halte Antworten kurz und einladend.
+Wenn alles vorhanden ist: bestätige knapp ("Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…") — nichts weiter.`;
 
-const RESEARCH_SYSTEM = `You are the Research Agent. Given a travel brief, produce realistic plausible options for flights and hotels.
-Return concise bullet data only — no prose. Format:
+const RESEARCH_SYSTEM = `You are the Research Agent. Given a German travel brief, output realistic plausible flights and hotels.
+Concise bullet data only — no prose.
 
 FLIGHTS:
-- <airline> <route> <approx €price> <duration>
-(2-3 options)
+- <airline> <route> <€price> <duration>
+(2-3 options across price tiers)
 
 HOTELS:
-- <name> · <neighborhood> · <€/night> · <one-line vibe>
-(3 options across price tiers)`;
+- <name> · <neighborhood> · <€/night> · <one-line vibe> · <star rating>
+(3 options: budget / mid / luxury)`;
 
-const BUDGET_SYSTEM = `You are the Budget Optimizer. Build 3 packages (Essential / Signature / Bespoke) from the research data.
-For each: total €, what's included (1-line each), and the ONE reason a traveller would pick it. Be crisp.`;
+const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan in GERMAN.
+Use the duration from the brief (default 5 days). For each day output:
+Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).`;
 
-const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan for the trip (use number of days from context, default 5).
-Format each day as:
-**Day N — <theme>**
-Morning · Afternoon · Evening (1 line each, evocative not clinical).`;
+// Zod schema mirrors src/types/travel.ts TravelPackage
+const itineraryDaySchema = z.object({
+  day: z.number().int().min(1),
+  title: z.string(),
+  description: z.string(),
+});
 
-const PERSONA_SYSTEM = `You are the Persona Agent — final voice of Weltweit Urlaub.
-Take the raw concierge + research + budget + itinerary outputs and weave them into ONE elegant, sensory, story-driven response in markdown.
-Tone: like a private travel curator writing to a friend. Warm, specific, never generic. Use markdown headings, short paragraphs, and emoji sparingly (1-2 max).
-Always end with a soft invitation: ask if they want to refine any package or detail.`;
+const bookingLinksSchema = z.object({
+  hotel: z.string().url().optional(),
+  flight: z.string().url().optional(),
+  activities: z.string().url().optional(),
+});
 
-function isPlanningRequest(text: string): boolean {
-  const t = text.toLowerCase();
-  // Heuristic: triggers full multi-agent flow when destination + budget/duration cues are present
-  const hasBudget = /\b(\d{2,5})\s?(€|eur|usd|\$)/i.test(text) || /budget/i.test(t);
-  const hasDestination = /\b(in|to|visit|trip|travel|holiday|vacation)\b/.test(t) && text.split(" ").length > 4;
-  return hasBudget && hasDestination;
+const packageSchema = z.object({
+  type: z.enum(["basic", "medium", "premium"]),
+  title: z.string(),
+  destination: z.string(),
+  price: z.number().int(),
+  currency: z.string().default("EUR"),
+  rating: z.number().min(0).max(5),
+  reviews: z.number().int().min(0),
+  matchScore: z.number().int().min(0).max(100),
+  duration: z.string(),
+  hotel: z.string(),
+  flight: z.string(),
+  mealPlan: z.string().optional(),
+  summary: z.string(),
+  whyItFits: z.string().optional(),
+  badges: z.array(z.string()).min(1).max(5),
+  activities: z.array(z.string()).min(1).max(8),
+  itinerary: z.array(itineraryDaySchema).min(1).max(14),
+  bookingLinks: bookingLinksSchema.optional(),
+});
+
+const packagesSchema = z.object({
+  packages: z.array(packageSchema).length(3),
+});
+
+function isPlanningRequest(text: string, history: string): boolean {
+  const all = `${history}\n${text}`.toLowerCase();
+  const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all);
+  const hasDestOrType =
+    /\b(in|nach|to|trip|reise|urlaub|holiday|vacation|strand|berge|städt|city|insel|island)\b/.test(all);
+  const longEnough = all.split(/\s+/).length > 8;
+  return hasBudget && hasDestOrType && longEnough;
+}
+
+function placeholderLinks(destination: string) {
+  const q = encodeURIComponent(destination);
+  return {
+    hotel: `https://www.booking.com/searchresults.html?ss=${q}`,
+    flight: `https://www.skyscanner.de/transport/fluge-nach/${q}/`,
+    activities: `https://www.getyourguide.de/s/?q=${q}`,
+  };
 }
 
 export const Route = createFileRoute("/api/chat")({
@@ -56,23 +100,22 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const key = process.env.LOVABLE_API_KEY;
-        if (!key) {
-          return new Response("LOVABLE_API_KEY missing", { status: 500 });
-        }
+        if (!key) return new Response("LOVABLE_API_KEY missing", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
         const model = gateway("google/gemini-3-flash-preview");
         const uiMessages = messages as UIMessage[];
+
+        const textOf = (m: UIMessage) =>
+          m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
         const lastUser = [...uiMessages].reverse().find((m) => m.role === "user");
-        const lastUserText =
-          lastUser?.parts
-            ?.map((p) => (p.type === "text" ? p.text : ""))
-            .join(" ") ?? "";
+        const lastUserText = lastUser ? textOf(lastUser) : "";
+        const fullHistory = uiMessages.map(textOf).join("\n");
 
         const modelMessages = await convertToModelMessages(uiMessages);
 
-        // Decide: plan trip (multi-agent) vs concierge chat
-        if (!isPlanningRequest(lastUserText)) {
+        // Concierge mode
+        if (!isPlanningRequest(lastUserText, fullHistory)) {
           const result = streamText({
             model,
             system: CONCIERGE_SYSTEM,
@@ -81,43 +124,104 @@ export const Route = createFileRoute("/api/chat")({
           return result.toUIMessageStreamResponse({ originalMessages: uiMessages });
         }
 
-        // Multi-agent orchestration — run agents sequentially, then stream final persona response
+        // Multi-agent: research → itinerary → packager (structured)
+        const brief = `${fullHistory}\n\nLetzte Nachricht: ${lastUserText}`;
+
         const research = await generateText({
           model,
           system: RESEARCH_SYSTEM,
-          prompt: `Travel brief from user:\n"""${lastUserText}"""\nProduce flights & hotels.`,
-        });
-
-        const budget = await generateText({
-          model,
-          system: BUDGET_SYSTEM,
-          prompt: `User brief: ${lastUserText}\n\nResearch data:\n${research.text}\n\nBuild 3 packages.`,
+          prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
         });
 
         const itinerary = await generateText({
           model,
           system: ITINERARY_SYSTEM,
-          prompt: `User brief: ${lastUserText}\n\nResearch:\n${research.text}\n\nBudget packages:\n${budget.text}\n\nBuild itinerary.`,
+          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German.`,
         });
 
-        const finalStream = streamText({
+        const PACKAGER_SYSTEM = `You are the Packager Agent for Weltweit Urlaub.
+Produce EXACTLY 3 travel packages in this order: basic, medium, premium.
+- basic price ≈ user budget × 0.85
+- medium price ≈ user budget × 1.0
+- premium price ≈ user budget × 1.15
+All user-facing strings (title, destination, summary, whyItFits, hotel, flight, mealPlan, badges, activities, itinerary titles & descriptions) MUST be in GERMAN.
+matchScore: integer 80–98, premium highest.
+rating: 4.0–4.9. reviews: 200–3000.
+duration: e.g. "7 Tage".
+badges: short German tags like "Direktflug", "Strandnähe", "Frühstück inklusive".
+itinerary length must equal duration in days.
+Use realistic data drawn from the research output below.
+Do NOT include bookingLinks — they are added separately.`;
+
+        const { object } = await generateObject({
           model,
-          system: PERSONA_SYSTEM,
-          prompt: `User brief: ${lastUserText}
-
-=== Research Agent output ===
-${research.text}
-
-=== Budget Optimizer output ===
-${budget.text}
-
-=== Itinerary Architect output ===
-${itinerary.text}
-
-Now compose the final luxurious travel proposal in markdown. Include sections: a poetic intro, "✈️ Getting There", "🏛️ Where You'll Stay", "💎 Your Package Options" (the 3 tiers), "🗺️ Day by Day", and a closing invitation.`,
+          system: PACKAGER_SYSTEM,
+          schema: packagesSchema,
+          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn 3 packages.`,
         });
 
-        return finalStream.toUIMessageStreamResponse({ originalMessages: uiMessages });
+        // Persist trip request + packages
+        let tripRequestId: string | undefined;
+        try {
+          const { data: tr } = await supabaseAdmin
+            .from("trip_requests")
+            .insert({ raw_brief: brief, destination: object.packages[0]?.destination ?? null })
+            .select("id")
+            .single();
+          tripRequestId = tr?.id;
+        } catch {
+          // non-fatal
+        }
+
+        const packagesWithLinks = object.packages.map((p) => ({
+          ...p,
+          bookingLinks: placeholderLinks(p.destination),
+        }));
+
+        const inserted: { id: string }[] = [];
+        if (tripRequestId) {
+          try {
+            const rows = packagesWithLinks.map((p) => ({
+              trip_request_id: tripRequestId,
+              package_type: p.type,
+              title: p.title,
+              price: p.price,
+              rating: p.rating,
+              match_score: p.matchScore,
+              summary: p.summary,
+              data: p,
+            }));
+            const { data: ins } = await supabaseAdmin
+              .from("packages")
+              .insert(rows)
+              .select("id");
+            if (ins) inserted.push(...ins);
+          } catch {
+            // non-fatal
+          }
+        }
+
+        const finalPackages = packagesWithLinks.map((p, i) => ({
+          ...p,
+          id: inserted[i]?.id ?? `${p.type}-${Date.now()}-${i}`,
+        }));
+
+        const payload = {
+          status: "packages_ready" as const,
+          tripRequestId,
+          packages: finalPackages,
+        };
+
+        // Stream a German intro + a fenced JSON block for the client to parse.
+        const intro = `Perfekt ✨ Mein Team hat **3 Pakete** für dich entworfen — Basic, Medium und Premium. Schau sie dir gleich an…`;
+        const finalText = `${intro}\n\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
+
+        const result = streamText({
+          model,
+          system: "Repeat the user's text VERBATIM. Do not add or change anything.",
+          prompt: finalText,
+        });
+        return result.toUIMessageStreamResponse({ originalMessages: uiMessages });
       },
     },
   },

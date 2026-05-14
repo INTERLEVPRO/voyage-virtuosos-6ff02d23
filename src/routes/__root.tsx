@@ -48,10 +48,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Weltweit Urlaub — Your AI Travel Atelier" },
-      { name: "description", content: "A team of AI agents — concierge, research, budget, itinerary, persona — crafts your bespoke luxury travel package in minutes." },
-      { property: "og:title", content: "Weltweit Urlaub — AI Travel Atelier" },
-      { property: "og:description", content: "Multi-agent AI crafts bespoke luxury travel packages." },
+      { title: "Weltweit Urlaub — Reise planen in 2 Minuten" },
+      { name: "description", content: "Dein KI-Reiseberater erstellt in 2 Minuten 3 maßgeschneiderte Reisepakete — Basic, Medium, Premium. Flüge, Hotels und Aktivitäten inklusive." },
+      { property: "og:title", content: "Weltweit Urlaub — Reise planen in 2 Minuten" },
+      { property: "og:description", content: "KI-Reiseberater entwirft 3 Pakete: Basic, Medium, Premium." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -70,7 +70,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <head><HeadContent /></head>
       <body>{children}<Scripts /></body>
     </html>
