@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTrackClickRouteImport } from './routes/api/track-click'
+import { Route as ApiRefinePackageRouteImport } from './routes/api/refine-package'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const ApiTrackClickRoute = ApiTrackClickRouteImport.update({
   path: '/api/track-click',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRefinePackageRoute = ApiRefinePackageRouteImport.update({
+  id: '/api/refine-package',
+  path: '/api/refine-package',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -32,30 +38,39 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat' | '/api/track-click'
+  fullPaths: '/' | '/api/chat' | '/api/refine-package' | '/api/track-click'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat' | '/api/track-click'
-  id: '__root__' | '/' | '/api/chat' | '/api/track-click'
+  to: '/' | '/api/chat' | '/api/refine-package' | '/api/track-click'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/chat'
+    | '/api/refine-package'
+    | '/api/track-click'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiRefinePackageRoute: typeof ApiRefinePackageRoute
   ApiTrackClickRoute: typeof ApiTrackClickRoute
 }
 
@@ -75,6 +90,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrackClickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/refine-package': {
+      id: '/api/refine-package'
+      path: '/api/refine-package'
+      fullPath: '/api/refine-package'
+      preLoaderRoute: typeof ApiRefinePackageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -88,8 +110,19 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiRefinePackageRoute: ApiRefinePackageRoute,
   ApiTrackClickRoute: ApiTrackClickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
