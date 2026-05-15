@@ -8,9 +8,10 @@ import {
   createUIMessageStreamResponse,
   type UIMessage,
 } from "ai";
-import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { packageSchema } from "@/lib/package-schema";
+import type { z } from "zod";
 
 type ChatRequestBody = { messages?: unknown };
 
