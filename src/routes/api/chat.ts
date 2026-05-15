@@ -120,7 +120,7 @@ itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
 Do NOT include bookingLinks — they are added separately.`;
 
-        type RawPackage = z.infer<typeof packageSchema>;
+        type RawPackage = import("@/lib/package-schema").ParsedPackage;
         let rawPackages: RawPackage[] = [];
         try {
           const { text } = await generateText({
