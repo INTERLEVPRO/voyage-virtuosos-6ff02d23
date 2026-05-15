@@ -142,7 +142,7 @@ Do NOT include bookingLinks — they are added separately.`;
           rawPackages = arr
             .map((p) => packageSchema.safeParse(p))
             .filter((r) => r.success)
-            .map((r) => (r as { success: true; data: RawPackage }).data);
+            .map((r) => (r as { success: true; data: ParsedPackage }).data);
           if (rawPackages.length === 0) throw new Error("No valid packages parsed");
         } catch (err) {
           console.error("[packager] generation failed", err);
