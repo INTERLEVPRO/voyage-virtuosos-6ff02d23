@@ -10,7 +10,7 @@ import {
 } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { packageSchema } from "@/lib/package-schema";
+import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
 
 type ChatRequestBody = { messages?: unknown };
@@ -120,8 +120,7 @@ itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
 Do NOT include bookingLinks — they are added separately.`;
 
-        type RawPackage = import("@/lib/package-schema").ParsedPackage;
-        let rawPackages: RawPackage[] = [];
+        let rawPackages: ParsedPackage[] = [];
         try {
           const { text } = await generateText({
             model,
