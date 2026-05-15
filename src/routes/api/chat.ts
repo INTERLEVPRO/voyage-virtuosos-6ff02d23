@@ -8,9 +8,10 @@ import {
   createUIMessageStreamResponse,
   type UIMessage,
 } from "ai";
-import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
+
 
 type ChatRequestBody = { messages?: unknown };
 
@@ -35,38 +36,6 @@ const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day pl
 Use the duration from the brief (default 5 days). For each day output:
 Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).`;
 
-// Zod schema mirrors src/types/travel.ts TravelPackage
-const itineraryDaySchema = z.object({
-  day: z.number().int().min(1),
-  title: z.string(),
-  description: z.string(),
-});
-
-const bookingLinksSchema = z.object({
-  hotel: z.string().url().optional(),
-  flight: z.string().url().optional(),
-  activities: z.string().url().optional(),
-});
-
-const packageSchema = z.object({
-  type: z.enum(["basic", "medium", "premium"]).optional(),
-  title: z.string(),
-  destination: z.string(),
-  price: z.number(),
-  currency: z.string().optional(),
-  rating: z.number().min(0).max(5),
-  reviews: z.number().int().min(0),
-  matchScore: z.number().min(0).max(100),
-  duration: z.string(),
-  hotel: z.string(),
-  flight: z.string(),
-  mealPlan: z.string().optional(),
-  summary: z.string(),
-  whyItFits: z.string().optional(),
-  badges: z.array(z.string()).min(1),
-  activities: z.array(z.string()).min(1),
-  itinerary: z.array(itineraryDaySchema).min(1),
-});
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
@@ -151,8 +120,7 @@ itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
 Do NOT include bookingLinks — they are added separately.`;
 
-        type RawPackage = z.infer<typeof packageSchema>;
-        let rawPackages: RawPackage[] = [];
+        let rawPackages: ParsedPackage[] = [];
         try {
           const { text } = await generateText({
             model,
@@ -174,7 +142,7 @@ Do NOT include bookingLinks — they are added separately.`;
           rawPackages = arr
             .map((p) => packageSchema.safeParse(p))
             .filter((r) => r.success)
-            .map((r) => (r as { success: true; data: RawPackage }).data);
+            .map((r) => (r as { success: true; data: ParsedPackage }).data);
           if (rawPackages.length === 0) throw new Error("No valid packages parsed");
         } catch (err) {
           console.error("[packager] generation failed", err);
