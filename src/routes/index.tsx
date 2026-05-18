@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Globe, Check, Sparkles, ShieldCheck } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
-import { ChatPanel } from "@/components/ChatPanel";
+import { TripIntakeForm } from "@/components/TripIntakeForm";
 import { PackageResults } from "@/components/PackageResults";
 import { PackageDetail } from "@/components/PackageDetail";
 import type { TravelPackage } from "@/types/travel";
@@ -71,12 +71,9 @@ function Index() {
             />
           </section>
 
-          {/* Right: chat (replaces structured form, same workflow as before) */}
+          {/* Right: structured intake form (feeds same /api/chat workflow) */}
           <section>
-            <ChatPanel onPackagesReady={setPackages} />
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
-            </p>
+            <TripIntakeForm onPackagesReady={setPackages} />
           </section>
         </div>
       </main>
