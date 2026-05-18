@@ -1,8 +1,29 @@
 import { useState } from "react";
-import { ArrowLeft, Star, Sparkles, Plane, Hotel, MapPin, Compass, Utensils, Check, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Plane,
+  Hotel,
+  Compass,
+  Check,
+  Pencil,
+  ExternalLink,
+  ShieldCheck,
+  Headphones,
+  Star,
+  Sun,
+  Utensils,
+  Camera,
+  Palmtree,
+  Waves,
+  Building2,
+} from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
 import { PriceConfirmation } from "./PriceConfirmation";
+import beachImg from "@/assets/dest-beach.jpg";
+import townImg from "@/assets/dest-town.jpg";
+import resortImg from "@/assets/dest-resort.jpg";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -16,39 +37,13 @@ async function trackClick(packageId: string, provider: string, url: string) {
   }
 }
 
-function BookingButton({
-  packageId,
-  provider,
-  url,
-  label,
-  Icon,
-  primary,
-}: {
-  packageId: string;
-  provider: string;
-  url?: string;
-  label: string;
-  Icon: typeof Plane;
-  primary?: boolean;
-}) {
-  if (!url) return null;
-  return (
-    <button
-      onClick={() => {
-        trackClick(packageId, provider, url);
-        window.open(url, "_blank", "noopener,noreferrer");
-      }}
-      className={
-        primary
-          ? "flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 text-sm font-medium text-primary shadow-soft transition-transform hover:scale-[1.02]"
-          : "flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-accent hover:bg-secondary/40"
-      }
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </button>
-  );
-}
+const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
+  basic: { label: "BASIC PAKET", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
+  medium: { label: "MEDIUM PAKET", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
+  premium: { label: "PREMIUM PAKET", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
+};
+
+const DAY_ICONS = [Plane, Waves, Building2, Camera, Sun, Palmtree, Compass, Utensils];
 
 const QUICK_ACTIONS: { label: string; request: string }[] = [
   { label: "Anderes Hotel", request: "Bitte schlage ein anderes Hotel vor." },
@@ -96,6 +91,8 @@ export function PackageDetail({
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const tier = TIER_BADGE[currentPkg.type];
 
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
@@ -156,213 +153,321 @@ export function PackageDetail({
   const showPlanCheck = mode.kind !== "planOk";
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-12">
-      <button
-        onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="h-4 w-4" /> Zurück zu den Vorschlägen
-      </button>
+    <section className="mx-auto max-w-5xl px-6 py-10">
+      {/* Back + tier */}
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
+        >
+          <ArrowLeft className="h-4 w-4" /> Zurück zu den Paketen
+        </button>
+        <span className={`rounded-md px-2.5 py-1 text-xs font-bold tracking-wider ${tier.cls}`}>
+          {tier.label}
+        </span>
+      </div>
 
-      <div className="grid gap-10 lg:grid-cols-3">
-        {/* Main */}
-        <div className="space-y-8 lg:col-span-2">
-          {/* Hero */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft md:p-8">
-            <span className="rounded-full bg-gradient-gold px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
-              {currentPkg.type}
-            </span>
-            <h1 className="mt-4 font-display text-4xl text-primary md:text-5xl">{currentPkg.title}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" /> {currentPkg.destination}</span>
-              <span>· {currentPkg.duration}</span>
-              <span className="inline-flex items-center gap-1 text-accent">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="font-medium text-foreground">{currentPkg.rating.toFixed(1)}</span>
-                <span className="text-muted-foreground">({currentPkg.reviews.toLocaleString("de-DE")})</span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-accent">
-                <Sparkles className="h-4 w-4" />
-                <span className="font-medium text-foreground">{currentPkg.matchScore}% Match</span>
-              </span>
-            </div>
-            <p className="mt-5 text-base leading-relaxed text-foreground/80">{currentPkg.summary}</p>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {currentPkg.badges.map((b) => (
-                <span key={b} className="rounded-full border border-border bg-secondary/40 px-2.5 py-0.5 text-xs text-secondary-foreground">
-                  {b}
-                </span>
-              ))}
-            </div>
-          </div>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+        Dein Urlaub in {currentPkg.destination}
+      </h1>
 
-          {/* Plan-Check */}
-          {showPlanCheck && (
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft md:p-8">
-              <h2 className="font-display text-xl text-primary">
-                Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
-              </h2>
+      {/* Meta strip */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <span>📅 {currentPkg.duration}</span>
+        <span>👥 2 Personen</span>
+        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span className="ml-auto font-semibold text-foreground">
+          Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
+        </span>
+      </div>
 
-              {notice && (
-                <p className="mt-3 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground/80">
-                  {notice}
-                </p>
-              )}
+      {/* Hero image */}
+      <div className="mt-5 overflow-hidden rounded-2xl shadow-card">
+        <img
+          src={tier.image}
+          alt={currentPkg.destination}
+          width={1024}
+          height={420}
+          className="h-64 w-full object-cover md:h-80"
+        />
+      </div>
 
-              {mode.kind !== "confirming" && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => {
-                      setMode({ kind: "planOk" });
-                      setNotice(null);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-4 py-2 text-sm font-medium text-primary shadow-soft disabled:opacity-50"
-                  >
-                    <Check className="h-4 w-4" /> Plan OK
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => setMode({ kind: "composing" })}
-                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-accent hover:bg-secondary/40 disabled:opacity-50"
-                  >
-                    <Pencil className="h-4 w-4" /> Plan ändern
-                  </button>
-                  {QUICK_ACTIONS.map((a) => (
-                    <button
-                      key={a.label}
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleQuickAction(a.request)}
-                      className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-accent hover:bg-secondary/40 disabled:opacity-50"
-                    >
-                      {a.label}
-                    </button>
-                  ))}
+      {/* Itinerary overview strip */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+        <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
+        <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
+          {currentPkg.itinerary.map((d, i) => {
+            const Icon = DAY_ICONS[i % DAY_ICONS.length];
+            return (
+              <div key={d.day} className="flex flex-col items-center text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
+                  <Icon className="h-5 w-5" />
                 </div>
-              )}
+                <div className="mt-2 text-xs font-semibold text-foreground">Tag {d.day}</div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
+                  {d.title}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-              {mode.kind === "composing" && (
-                <RefineComposer
-                  loading={loading}
-                  onSubmit={(text) => callRefine(text, false)}
-                />
-              )}
+      {/* Provider rows: Flight / Hotel / Activities */}
+      <div className="mt-5 space-y-3">
+        <ProviderRow
+          icon={Plane}
+          title="Flüge"
+          subtitle={currentPkg.flight}
+          ratingLabel="Google"
+          rating={`${currentPkg.rating.toFixed(1)}/5`}
+          price={Math.round(currentPkg.price * 0.32)}
+          ctaLabel="Bei Skyscanner ansehen"
+          provider="flight"
+          url={currentPkg.bookingLinks?.flight}
+          packageId={currentPkg.id}
+          ctaCls="bg-accent text-accent-foreground hover:bg-accent/90"
+        />
+        <ProviderRow
+          icon={Hotel}
+          title="Hotel"
+          subtitle={currentPkg.hotel}
+          ratingLabel="Booking.com"
+          rating={(currentPkg.rating * 2).toFixed(1)}
+          extra={currentPkg.mealPlan}
+          price={Math.round(currentPkg.price * 0.5)}
+          ctaLabel="Bei Booking.com ansehen"
+          provider="hotel"
+          url={currentPkg.bookingLinks?.hotel}
+          packageId={currentPkg.id}
+          ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
+        />
+        <ProviderRow
+          icon={Compass}
+          title="Aktivitäten"
+          subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
+          ratingLabel="GetYourGuide"
+          rating={`${currentPkg.rating.toFixed(1)}/5`}
+          price={Math.round(currentPkg.price * 0.18)}
+          ctaLabel="Bei GetYourGuide ansehen"
+          provider="activities"
+          url={currentPkg.bookingLinks?.activities}
+          packageId={currentPkg.id}
+          ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
+        />
+      </div>
 
-              {mode.kind === "confirming" && (
-                <PriceConfirmation
-                  oldPrice={mode.oldPrice}
-                  newPrice={mode.newPrice}
-                  priceDifference={mode.priceDifference}
-                  changeSummary={mode.changeSummary}
-                  loading={loading}
-                  onAccept={handleAcceptPrice}
-                  onCancel={handleCancelPrice}
-                />
-              )}
+      {/* Total price strip */}
+      <div className="mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+          <div className="text-2xl font-extrabold text-foreground">
+            € {currentPkg.price.toLocaleString("de-DE")}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <span className="font-semibold text-foreground">{currentPkg.matchScore}% Match</span>
+        </div>
+      </div>
+
+      {/* Plan-Check */}
+      {showPlanCheck && (
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-foreground">
+            Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
+          </h2>
+
+          {notice && (
+            <p className="mt-3 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm text-foreground/80">
+              {notice}
+            </p>
+          )}
+
+          {mode.kind !== "confirming" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  setMode({ kind: "planOk" });
+                  setNotice(null);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90 disabled:opacity-50"
+              >
+                <Check className="h-4 w-4" /> Plan OK
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => setMode({ kind: "composing" })}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+              >
+                <Pencil className="h-4 w-4" /> Plan ändern
+              </button>
+              {QUICK_ACTIONS.map((a) => (
+                <button
+                  key={a.label}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickAction(a.request)}
+                  className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+                >
+                  {a.label}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Flight & Hotel */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Plane className="h-4 w-4" /> Flug
-              </div>
-              <p className="mt-3 text-sm text-foreground/80">{currentPkg.flight}</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Hotel className="h-4 w-4" /> Hotel
-              </div>
-              <p className="mt-3 text-sm text-foreground/80">{currentPkg.hotel}</p>
-              {currentPkg.mealPlan && (
-                <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <Utensils className="h-3.5 w-3.5" /> {currentPkg.mealPlan}
-                </p>
-              )}
-            </div>
-          </div>
+          {mode.kind === "composing" && (
+            <RefineComposer
+              loading={loading}
+              onSubmit={(text) => callRefine(text, false)}
+            />
+          )}
 
-          {/* Activities */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft md:p-8">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <Compass className="h-4 w-4" /> Aktivitäten
-            </div>
-            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-              {currentPkg.activities.map((a) => (
-                <li key={a} className="flex items-start gap-2 text-sm text-foreground/80">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
-                  {a}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Itinerary */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft md:p-8">
-            <h2 className="font-display text-2xl text-primary">Tag für Tag</h2>
-            <ol className="mt-5 space-y-5">
-              {currentPkg.itinerary.map((d) => (
-                <li key={d.day} className="border-l-2 border-accent/40 pl-4">
-                  <div className="font-display text-lg text-primary">
-                    Tag {d.day} — {d.title}
-                  </div>
-                  <p className="mt-1 text-sm text-foreground/80">{d.description}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {currentPkg.whyItFits && (
-            <div className="rounded-2xl border border-accent/40 bg-accent/5 p-6 shadow-soft md:p-8">
-              <h2 className="font-display text-xl text-primary">Warum dieses Paket zu dir passt</h2>
-              <p className="mt-2 text-sm text-foreground/80">{currentPkg.whyItFits}</p>
-            </div>
+          {mode.kind === "confirming" && (
+            <PriceConfirmation
+              oldPrice={mode.oldPrice}
+              newPrice={mode.newPrice}
+              priceDifference={mode.priceDifference}
+              changeSummary={mode.changeSummary}
+              loading={loading}
+              onAccept={handleAcceptPrice}
+              onCancel={handleCancelPrice}
+            />
           )}
         </div>
+      )}
 
-        {/* Sticky booking box */}
-        <aside className="lg:col-span-1">
-          <div className="sticky top-6 rounded-2xl border border-border bg-card p-6 shadow-luxe">
-            <div className="font-display text-3xl text-primary">
-              {currentPkg.price.toLocaleString("de-DE")} {currentPkg.currency === "EUR" ? "€" : currentPkg.currency}
-            </div>
-            <div className="text-xs text-muted-foreground">pro Person · ca.</div>
-
-            <div className="mt-5 space-y-2.5">
-              <BookingButton
-                packageId={currentPkg.id}
-                provider="hotel"
-                url={currentPkg.bookingLinks?.hotel}
-                label="Hotel ansehen"
-                Icon={Hotel}
-                primary
-              />
-              <BookingButton
-                packageId={currentPkg.id}
-                provider="flight"
-                url={currentPkg.bookingLinks?.flight}
-                label="Flugangebote prüfen"
-                Icon={Plane}
-              />
-              <BookingButton
-                packageId={currentPkg.id}
-                provider="activities"
-                url={currentPkg.bookingLinks?.activities}
-                label="Aktivitäten entdecken"
-                Icon={Compass}
-              />
-            </div>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              Buchung erfolgt über unsere Partner. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
-            </p>
-          </div>
-        </aside>
+      {/* Itinerary detail */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <h2 className="text-lg font-semibold text-foreground">Tag für Tag</h2>
+        <ol className="mt-4 space-y-4">
+          {currentPkg.itinerary.map((d) => (
+            <li key={d.day} className="border-l-2 border-primary/40 pl-4">
+              <div className="text-sm font-semibold text-foreground">
+                Tag {d.day} — {d.title}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+            </li>
+          ))}
+        </ol>
       </div>
+
+      {/* Activities list */}
+      <div className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <h2 className="text-lg font-semibold text-foreground">Aktivitäten inklusive</h2>
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {currentPkg.activities.map((a) => (
+            <li key={a} className="flex items-start gap-2 text-sm text-foreground/80">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {a}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {currentPkg.whyItFits && (
+        <div className="mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+          <h2 className="text-lg font-semibold text-foreground">Warum dieses Paket zu dir passt</h2>
+          <p className="mt-2 text-sm text-foreground/80">{currentPkg.whyItFits}</p>
+        </div>
+      )}
+
+      {/* Trust strip */}
+      <div className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3">
+        <TrustItem icon={Star} title="Top bewertet" body="Echte deutsche Reviews" />
+        <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
+        <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
+      </div>
+
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
+      </p>
     </section>
+  );
+}
+
+function ProviderRow({
+  icon: Icon,
+  title,
+  subtitle,
+  extra,
+  ratingLabel,
+  rating,
+  price,
+  ctaLabel,
+  provider,
+  url,
+  packageId,
+  ctaCls,
+}: {
+  icon: typeof Plane;
+  title: string;
+  subtitle: string;
+  extra?: string;
+  ratingLabel: string;
+  rating: string;
+  price: number;
+  ctaLabel: string;
+  provider: string;
+  url?: string;
+  packageId: string;
+  ctaCls: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:flex-row sm:items-center">
+      <div className="flex flex-1 items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-base font-semibold text-foreground">{title}</h3>
+            <span className="text-xs text-muted-foreground">
+              {ratingLabel} <span className="font-semibold text-foreground">{rating}</span>
+            </span>
+          </div>
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
+          {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+        <div className="text-lg font-bold text-foreground">€ {price.toLocaleString("de-DE")}</div>
+        {url && (
+          <button
+            onClick={() => {
+              trackClick(packageId, provider, url);
+              window.open(url, "_blank", "noopener,noreferrer");
+            }}
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
+          >
+            {ctaLabel} <ExternalLink className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TrustItem({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Star;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-foreground">{title}</div>
+        <div className="text-xs text-muted-foreground">{body}</div>
+      </div>
+    </div>
   );
 }

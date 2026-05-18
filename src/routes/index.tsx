@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import heroImage from "@/assets/hero-travel.jpg";
+import { Globe, Check, Sparkles, ShieldCheck } from "lucide-react";
+import assistantImg from "@/assets/assistant.png";
 import { ChatPanel } from "@/components/ChatPanel";
-import { AgentTeam } from "@/components/AgentBadge";
 import { PackageResults } from "@/components/PackageResults";
 import { PackageDetail } from "@/components/PackageDetail";
 import type { TravelPackage } from "@/types/travel";
@@ -18,6 +18,7 @@ function Index() {
   if (selected) {
     return (
       <div className="min-h-screen bg-background">
+        <SiteHeader />
         <PackageDetail pkg={selected} onBack={() => setSelected(null)} />
         <Footer />
       </div>
@@ -27,6 +28,7 @@ function Index() {
   if (packages.length > 0) {
     return (
       <div className="min-h-screen bg-background">
+        <SiteHeader />
         <PackageResults
           packages={packages}
           onSelect={setSelected}
@@ -39,73 +41,97 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="Luxuriöses Reiseziel"
-            width={1920}
-            height={1080}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-hero" />
-        </div>
+      <SiteHeader />
 
-        <div className="relative mx-auto max-w-7xl px-6 pt-24 pb-12 lg:pt-32 lg:pb-20">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-card/70 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-primary backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Reise planen in 2 Minuten · Weltweit Urlaub
+      <main className="mx-auto max-w-7xl px-6 py-10 lg:py-16">
+        <div className="grid items-start gap-10 lg:grid-cols-2">
+          {/* Left: greeting + assistant */}
+          <section className="relative overflow-hidden rounded-3xl bg-gradient-soft-sky p-8 shadow-card lg:p-10">
+            <div className="relative z-10 max-w-md">
+              <h1 className="text-4xl leading-tight text-foreground md:text-5xl">
+                Hi! Ich bin dein KI-<span className="text-primary">Reiseassistent</span> <span aria-hidden>👋</span>
+              </h1>
+              <p className="mt-4 text-base text-muted-foreground">
+                Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
+              </p>
+
+              <div className="mt-8 grid grid-cols-3 gap-3 text-xs">
+                <Feature icon={Check} title="Einfach" body="Wenige Fragen" />
+                <Feature icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
+                <Feature icon={ShieldCheck} title="Top bewertet" body="Echte Reviews" />
+              </div>
             </div>
-            <h1 className="mt-6 font-display text-5xl leading-[1.05] text-primary text-balance md:text-7xl">
-              Deine perfekte Reise — <em className="not-italic text-accent">geplant in 2 Minuten</em>.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              Erzähl unserem KI-Concierge von deinem Traumurlaub. Sechs Agenten — Concierge, Research, Budget, Itinerary, Persona — entwerfen in Sekunden 3 Pakete: Basic, Medium, Premium.
-            </p>
-          </div>
-        </div>
-      </section>
 
-      {/* Chat + Agents */}
-      <section className="mx-auto max-w-7xl px-6 pb-24">
-        <div className="grid gap-10 lg:grid-cols-5">
-          <div className="lg:col-span-3">
+            <img
+              src={assistantImg}
+              alt="KI-Reiseassistentin"
+              width={420}
+              height={420}
+              className="pointer-events-none absolute -right-6 bottom-0 hidden h-[340px] w-auto select-none object-contain md:block lg:h-[400px]"
+            />
+          </section>
+
+          {/* Right: chat (replaces structured form, same workflow as before) */}
+          <section>
             <ChatPanel onPackagesReady={setPackages} />
-          </div>
-          <aside className="lg:col-span-2">
-            <h2 className="font-display text-3xl text-primary">Das Atelier</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Jeder Agent hat eine Aufgabe — gemeinsam arbeiten sie wie ein privates Reisebüro.
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
             </p>
-            <div className="mt-6">
-              <AgentTeam />
-            </div>
-
-            <div className="mt-8 rounded-xl border border-border bg-card p-5 shadow-soft">
-              <h3 className="font-display text-lg text-primary">So funktioniert's</h3>
-              <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li><span className="font-medium text-foreground">1.</span> Erzähl dem Concierge deinen Traum.</li>
-                <li><span className="font-medium text-foreground">2.</span> Research findet Flüge & Hotels.</li>
-                <li><span className="font-medium text-foreground">3.</span> Budget erstellt Basic / Medium / Premium.</li>
-                <li><span className="font-medium text-foreground">4.</span> Itinerary plant deine Tage.</li>
-                <li><span className="font-medium text-foreground">5.</span> Wähle dein Paket & buche direkt.</li>
-              </ol>
-            </div>
-          </aside>
+          </section>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>
   );
 }
 
+function Feature({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Check;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <div className="text-sm font-semibold text-foreground">{title}</div>
+      <div className="text-xs text-muted-foreground">{body}</div>
+    </div>
+  );
+}
+
+function SiteHeader() {
+  return (
+    <header className="border-b border-border bg-card/80 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Globe className="h-5 w-5" />
+          </div>
+          <span className="text-lg font-bold tracking-tight text-foreground">
+            Weltweit<span className="text-primary">urlaub</span>.de
+          </span>
+        </div>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <button className="hidden items-center gap-1 hover:text-foreground sm:inline-flex">
+            DE <span className="text-xs">▾</span>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function Footer() {
   return (
     <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-      Weltweit Urlaub · Reise planen in 2 Minuten · Powered by Lovable AI
+      Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Lovable AI
     </footer>
   );
 }

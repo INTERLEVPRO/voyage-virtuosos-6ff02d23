@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarDays, Users, Plane, Wallet } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { PackageCard } from "./PackageCard";
 
@@ -11,24 +11,38 @@ export function PackageResults({
   onSelect: (p: TravelPackage) => void;
   onBack: () => void;
 }) {
+  const sample = packages[0];
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16">
+    <section className="mx-auto max-w-5xl px-6 py-12">
       <button
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Neuen Reisewunsch starten
       </button>
 
-      <h1 className="font-display text-4xl text-primary md:text-5xl">Deine Reisevorschläge</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        Vergleiche Basic, Medium und Premium — passend zu deinem Budget. Wähle ein Paket aus, um Details und Buchungsoptionen zu sehen.
+      <h1 className="text-center text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+        Hier sind deine 3 persönlichen Pakete
+      </h1>
+      <p className="mt-2 text-center text-sm text-muted-foreground">
+        Alle Preise enthalten Flüge, Hotel & Aktivitäten
       </p>
 
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {sample?.duration ?? "—"}</span>
+        <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> 2 Personen</span>
+        <span className="inline-flex items-center gap-1.5"><Plane className="h-3.5 w-3.5" /> Ab Frankfurt (FRA)</span>
+        <span className="inline-flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Budget berücksichtigt</span>
+      </div>
+
+      <div className="mt-10 grid gap-5">
         {packages.map((p) => (
           <PackageCard key={p.id} pkg={p} onSelect={() => onSelect(p)} />
         ))}
+      </div>
+
+      <div className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-center text-xs text-muted-foreground">
+        🇩🇪 Bewertungen werden nur von deutschen Nutzern angezeigt. Wir zeigen echte Reviews aus Deutschland für Hotels, Flüge und Aktivitäten.
       </div>
     </section>
   );
