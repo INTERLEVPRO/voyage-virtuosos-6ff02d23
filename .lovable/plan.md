@@ -1,54 +1,58 @@
-# Home page: structured intake form (matches reference)
+## Goal
 
-Replace the chat composer on the right side of the home page with a clean structured form like the reference image. The form collects all key trip details once, then sends a single composed prompt to the existing AI agent — same backend, same package generation, same refinement/affiliate flow.
+Transform the current chat-only experience into the full **Weltweit Urlaub** funnel from your handoff doc: AI chat → 3 package cards (Basic / Medium / Premium) → detail page with affiliate booking links, all in German, with Supabase persistence and click tracking.
 
-## What changes
+## Scope (MVP — matches your handoff)
 
-Only the home page right column. Everything else (agent, /api/chat, package generation, PackageResults, PackageDetail, refinement, price gate, affiliate tracking) stays exactly as is.
+In:
+- German UI + slogan *"Reise planen in 2 Minuten"*
+- Structured 3-tier package output from the AI
+- Package results grid + detail page
+- Affiliate buttons only on detail page
+- Supabase tables: `trip_requests`, `packages`, `affiliate_clicks`
+- Click tracking endpoint
 
-## Form fields (match reference)
+Out (later phase):
+- Real Booking / Amadeus / GetYourGuide APIs (placeholder affiliate URLs for now)
+- Auth / "My Trips" (no login required for MVP)
 
-1. Travel dates — date range picker (e.g. 20.06.2025 – 27.06.2025)
-2. Budget (total) — number input in € (e.g. 2000)
-3. Departure airport — select (Frankfurt FRA, München MUC, Berlin BER, Hamburg HAM, Düsseldorf DUS, Wien VIE, Zürich ZRH, + "Andere")
-4. Number of travelers — select (1–6 Adults, with optional kids note)
-5. Destination / Region — text input with suggestions (Portugal – Algarve, Mallorca, Bali, …) — free text allowed
-6. What kind of vacation — multi-chip select (Beach, Relaxation, City, Culture, Adventure, Wellness, Family, Honeymoon, Food, Nature)
+## Build steps
 
-Primary CTA: **„Meinen perfekten Urlaub finden ✨"** (green, full width).
-Below CTA: small lock line „Deine Daten sind sicher und werden nicht weitergegeben."
-Bottom trust row keeps the 3 badges: Einfach · Persönlich · Top bewertet (already exists).
+**1. Types** — `src/types/travel.ts` with `TravelPackage`, `ItineraryDay`, `BookingLinks` exactly per handoff.
 
-## Submission flow
+**2. AI pipeline rewrite** — `src/routes/api/chat.ts`
+- Keep Concierge for small-talk / data gathering (German prompts).
+- When planning brief is complete, run Research → Itinerary agents, then a final **Packager agent** that uses AI SDK `Output.object` (Zod schema) to emit `{ status: "packages_ready", packages: [3] }` — Basic/Medium/Premium with budgets at 0.85x / 1.0x / 1.15x.
+- Stream the JSON back as a single text part wrapped in a fenced ```json block so `useChat` still works without a custom transport.
+- Persist `trip_requests` + `packages` rows server-side, return DB ids inside each package.
 
-On submit:
-1. Validate required fields (dates, budget, airport, travelers, destination, ≥1 vacation type).
-2. Build a single German prompt string from the answers, e.g.:
-   `"Reiseziel: Portugal – Algarve. Reisedaten: 20.06.2025–27.06.2025 (7 Nächte). Reisende: 2 Erwachsene. Budget: 2000€ gesamt. Abflug: Frankfurt (FRA). Stil: Beach, Relaxation."`
-3. Call existing `/api/chat` via the same `useChat`/`DefaultChatTransport` already used in `ChatPanel` — send that composed prompt as the first user message.
-4. While streaming, show the same "Agent stages" loader currently in `ChatPanel` (Concierge hört zu… → Research-Agent … → Pakete werden zusammengestellt…) — full-card loading state, no chat bubbles.
-5. When the assistant message contains the `packages_ready` JSON block, parse it with the existing `extractPackages` helper and call `setPackages(...)` on the home route — this triggers the existing `PackageResults` view exactly as today.
+**3. ChatPanel** — accept `onPackagesReady(packages)` prop. After each assistant message arrives, scan for the JSON block, parse, call the callback. Translate UI strings + starter prompts to German.
 
-No new API, no schema change, no edge function, no change to refinement or PackageDetail.
+**4. New components**
+- `PackageCard.tsx` — tier label, title, destination, price, rating, match score, badges, CTA *"Paket ansehen"*. No booking links.
+- `PackageResults.tsx` — heading *"Deine Reisevorschläge"*, 3-col grid.
+- `PackageDetail.tsx` — hero, overview, flight, hotel, activities, day-by-day, sticky booking box with *Hotel buchen / Flug ansehen / Aktivitäten buchen* buttons. Each click POSTs to `/api/track-click` then opens link in new tab.
 
-## Files
+**5. Index route** — 3-state render: chat → results → detail, with back navigation.
 
-- New: `src/components/TripIntakeForm.tsx`
-  - Self-contained form + submit + agent-stage loader.
-  - Uses `useChat({ transport: new DefaultChatTransport({ api: "/api/chat" }) })` internally (same as ChatPanel) and exposes `onPackagesReady` callback.
-  - Reuses existing `extractPackages` logic (extract into a tiny shared util `src/lib/extract-packages.ts` and import from both ChatPanel and the new form, so behavior stays identical).
-- Edited: `src/routes/index.tsx`
-  - Replace `<ChatPanel onPackagesReady={setPackages} />` with `<TripIntakeForm onPackagesReady={setPackages} />`.
-  - Keep left greeting card, header, footer, trust badges.
-- Untouched: `ChatPanel.tsx` stays in repo (still used nowhere on home but kept for potential reuse); we can delete later if you confirm. All other files unchanged.
+**6. Click tracking** — `src/routes/api/track-click.ts` (POST) inserts into `affiliate_clicks`, returns 200.
 
-## Technical notes
+**7. Supabase migration** — three tables per handoff. Public insert policies (no auth in MVP); reads server-side via service role.
 
-- Date range: use a lightweight inline date input pair (`<input type="date">` × 2) styled to match — avoids adding a heavy calendar dependency. Display formatted summary in the field.
-- Vacation type chips: toggle buttons with `aria-pressed`, primary tint when selected.
-- Validation: inline error text under each invalid field; CTA disabled until all required fields filled.
-- Form layout: stacked rows with leading icon (Calendar, Euro, Plane, Users, MapPin, Heart) matching reference exactly.
-- Mobile-first; the existing two-column grid collapses to single column on small screens.
-- No backend changes — `/api/chat` still receives a normal user text message.
+**8. Branding** — hero headline, header badge, chat subtitle in German per handoff.
 
-Confirm and I'll implement.
+## Technical details
+
+- Model: keep `google/gemini-3-flash-preview`.
+- Structured output: `generateText` + `Output.object(z.object({ packages: z.array(packageSchema).length(3) }))` for the final agent — avoids brittle prompt-only JSON.
+- Stream the final structured result as a single message containing both a short German intro paragraph + a fenced ```json … ``` block; `ChatPanel` extracts via regex.
+- Affiliate URLs stored in `packages.data` jsonb; placeholder URLs (booking.com / skyscanner / getyourguide) for MVP.
+- Click tracking uses `supabaseAdmin` (server route under `/api/`, not `/api/public/`, since called from same origin).
+- All new copy in German; keep code/comments in English.
+
+## Out-of-scope reminders
+
+- No auth, no saved trips list, no PDF export, no map view — those can come after MVP ships.
+- Real travel APIs deferred until you provide keys (Amadeus / Booking partner / GetYourGuide).
+
+After you approve, I'll run the Supabase migration first, then implement files in the order above.
