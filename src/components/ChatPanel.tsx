@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
 
 const STARTER_PROMPTS = [
@@ -93,34 +93,35 @@ export function ChatPanel({
   };
 
   return (
-    <div className="flex h-[640px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-luxe">
+    <div className="flex h-[640px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-primary to-[oklch(0.4_0.07_200)] px-5 py-4 text-primary-foreground">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-gold">
-          <Sparkles className="h-4 w-4 text-primary" />
+      <div className="flex items-center gap-3 border-b border-border bg-card px-5 py-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <MessageCircle className="h-5 w-5" />
         </div>
         <div>
-          <div className="font-display text-lg leading-tight">Weltweit Urlaub</div>
-          <div className="text-xs opacity-80">Dein KI-Reiseberater für Flüge, Hotels und Aktivitäten</div>
+          <div className="text-base font-semibold text-foreground">Lass uns starten</div>
+          <div className="text-xs text-muted-foreground">Erzähl mir kurz von deinem Traumurlaub.</div>
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-6">
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto bg-secondary/30 px-5 py-6">
         {messages.length === 0 && (
           <div className="space-y-4">
-            <p className="font-display text-xl text-primary">Wohin soll deine Reise gehen?</p>
+            <p className="text-base font-semibold text-foreground">Wohin soll deine Reise gehen?</p>
             <p className="text-sm text-muted-foreground">
-              Erzähl uns von deinem Traumurlaub — Reiseziel, Budget, Dauer, Stil. Unser KI-Team entwirft 3 maßgeschneiderte Pakete.
+              Reiseziel, Budget, Dauer, Stil — je mehr du erzählst, desto besser passen die 3 Pakete.
             </p>
             <div className="flex flex-col gap-2 pt-2">
               {STARTER_PROMPTS.map((p) => (
                 <button
                   key={p}
                   onClick={() => submit(p)}
-                  className="rounded-xl border border-border bg-secondary/50 px-4 py-3 text-left text-sm text-secondary-foreground transition-colors hover:border-accent hover:bg-secondary"
+                  className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5"
                 >
-                  ✦ {p}
+                  <Sparkles className="mr-1.5 inline h-3.5 w-3.5 text-primary" />
+                  {p}
                 </button>
               ))}
             </div>
@@ -137,7 +138,7 @@ export function ChatPanel({
                 className={
                   isUser
                     ? "max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm text-primary-foreground shadow-soft"
-                    : "max-w-[90%] rounded-2xl rounded-tl-sm border border-border bg-secondary/40 px-4 py-3 text-sm text-foreground"
+                    : "max-w-[90%] rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-3 text-sm text-foreground shadow-soft"
                 }
               >
                 {isUser ? (
@@ -154,7 +155,7 @@ export function ChatPanel({
 
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
             <span className="font-medium">{AGENT_STAGES[stageIdx]}</span>
           </div>
         )}
@@ -169,7 +170,7 @@ export function ChatPanel({
       {/* Composer */}
       <form
         onSubmit={(e) => { e.preventDefault(); submit(input); }}
-        className="flex items-end gap-2 border-t border-border bg-background/60 p-4"
+        className="flex items-end gap-2 border-t border-border bg-card p-4"
       >
         <textarea
           ref={inputRef}
@@ -183,16 +184,16 @@ export function ChatPanel({
           }}
           rows={1}
           placeholder="Beschreibe deinen Traumurlaub…"
-          className="flex-1 resize-none rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="flex-1 resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           disabled={isLoading}
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-gold text-primary shadow-soft transition-transform hover:scale-105 disabled:opacity-50"
-          aria-label="Senden"
+          className="flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.02] disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          Senden
         </button>
       </form>
     </div>
