@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Globe, Check, Sparkles, ShieldCheck } from "lucide-react";
+import { Check, Sparkles, ShieldCheck } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
+import logo from "@/assets/logo.png";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PackageResults } from "@/components/PackageResults";
 import { PackageDetail } from "@/components/PackageDetail";
