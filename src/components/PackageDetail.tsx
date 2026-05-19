@@ -203,6 +203,24 @@ export function PackageDetail({
         </span>
       </div>
 
+      {/* Top actions: Maps + Email */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a
+          href={mapsRouteUrl(currentPkg.destination)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
+        >
+          <MapPin className="h-4 w-4" /> Route auf Google Maps
+        </a>
+        <a
+          href={buildMailto(currentPkg)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
+        >
+          <Mail className="h-4 w-4" /> Plan per E-Mail senden
+        </a>
+      </div>
+
       {/* Hero image */}
       <div className="mt-5 overflow-hidden rounded-2xl shadow-card">
         <img
