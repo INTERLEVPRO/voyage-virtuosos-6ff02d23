@@ -17,6 +17,10 @@ import {
   Palmtree,
   Waves,
   Building2,
+  MapPin,
+  Mail,
+  Ticket,
+  Car,
 } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
@@ -35,6 +39,56 @@ async function trackClick(packageId: string, provider: string, url: string) {
   } catch {
     // non-fatal
   }
+}
+
+function mapsRouteUrl(destination: string, place?: string) {
+  const dest = encodeURIComponent(place ? `${place}, ${destination}` : destination);
+  return `https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${dest}&travelmode=driving`;
+}
+
+function bookingHotelUrl(destination: string) {
+  return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destination)}`;
+}
+
+function gygActivityUrl(destination: string, query?: string) {
+  const q = query ? `${query} ${destination}` : destination;
+  return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
+}
+function buildMailto(pkg: import("@/types/travel").TravelPackage) {
+  const lines: string[] = [];
+  lines.push(`Mein Reiseplan: ${pkg.title}`);
+  lines.push(`Ziel: ${pkg.destination}`);
+  lines.push(`Dauer: ${pkg.duration}`);
+  lines.push(`Preis: € ${pkg.price.toLocaleString("de-DE")}`);
+  lines.push("");
+  lines.push(`Hotel: ${pkg.hotel}`);
+  lines.push(`Flug: ${pkg.flight}`);
+  if (pkg.mealPlan) lines.push(`Verpflegung: ${pkg.mealPlan}`);
+  lines.push("");
+  lines.push("=== Tag für Tag ===");
+  pkg.itinerary.forEach((d) => {
+    lines.push(`Tag ${d.day} — ${d.title}`);
+    lines.push(d.description);
+    lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
+    lines.push("");
+  });
+  lines.push("=== Aktivitäten ===");
+  pkg.activities.forEach((a) => lines.push(`• ${a}`));
+  lines.push("");
+  lines.push("=== Buchungs-Links ===");
+  lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
+  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
+  lines.push("");
+  lines.push("— Weltweiturlaub.de");
+  const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
+  const body = encodeURIComponent(lines.join("\n"));
+  return `mailto:?subject=${subject}&body=${body}`;
+}
+
+
+function transferUrl(destination: string) {
+  return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
@@ -179,6 +233,24 @@ export function PackageDetail({
         <span className="ml-auto font-semibold text-foreground">
           Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
         </span>
+      </div>
+
+      {/* Top actions: Maps + Email */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a
+          href={mapsRouteUrl(currentPkg.destination)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
+        >
+          <MapPin className="h-4 w-4" /> Route auf Google Maps
+        </a>
+        <a
+          href={buildMailto(currentPkg)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
+        >
+          <Mail className="h-4 w-4" /> Plan per E-Mail senden
+        </a>
       </div>
 
       {/* Hero image */}
@@ -340,20 +412,63 @@ export function PackageDetail({
         </div>
       )}
 
-      {/* Itinerary detail */}
+      {/* Itinerary detail with maps + booking help per day */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
-        <h2 className="text-lg font-semibold text-foreground">Tag für Tag</h2>
-        <ol className="mt-4 space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
+        </p>
+        <ol className="mt-4 space-y-5">
           {currentPkg.itinerary.map((d) => (
-            <li key={d.day} className="border-l-2 border-primary/40 pl-4">
-              <div className="text-sm font-semibold text-foreground">
-                Tag {d.day} — {d.title}
+            <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">
+                    Tag {d.day} — {d.title}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+                </div>
+                <a
+                  href={mapsRouteUrl(currentPkg.destination, d.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                  title="Route auf Google Maps anzeigen"
+                >
+                  <MapPin className="h-3.5 w-3.5" /> Route
+                </a>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a
+                  href={bookingHotelUrl(currentPkg.destination)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Hotel className="h-3 w-3" /> Hotel buchen
+                </a>
+                <a
+                  href={gygActivityUrl(currentPkg.destination, d.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Ticket className="h-3 w-3" /> Aktivität buchen
+                </a>
+                <a
+                  href={transferUrl(currentPkg.destination)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Car className="h-3 w-3" /> Transfer
+                </a>
+              </div>
             </li>
           ))}
         </ol>
       </div>
+
 
       {/* Activities list */}
       <div className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-card">
