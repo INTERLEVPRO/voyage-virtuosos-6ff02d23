@@ -41,6 +41,24 @@ async function trackClick(packageId: string, provider: string, url: string) {
   }
 }
 
+function mapsRouteUrl(destination: string, place?: string) {
+  const dest = encodeURIComponent(place ? `${place}, ${destination}` : destination);
+  return `https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${dest}&travelmode=driving`;
+}
+
+function bookingHotelUrl(destination: string) {
+  return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destination)}`;
+}
+
+function gygActivityUrl(destination: string, query?: string) {
+  const q = query ? `${query} ${destination}` : destination;
+  return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
+}
+
+function transferUrl(destination: string) {
+  return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
+}
+
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
   basic: { label: "BASIC PAKET", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
   medium: { label: "MEDIUM PAKET", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
