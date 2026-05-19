@@ -412,20 +412,63 @@ export function PackageDetail({
         </div>
       )}
 
-      {/* Itinerary detail */}
+      {/* Itinerary detail with maps + booking help per day */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
-        <h2 className="text-lg font-semibold text-foreground">Tag für Tag</h2>
-        <ol className="mt-4 space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
+        </p>
+        <ol className="mt-4 space-y-5">
           {currentPkg.itinerary.map((d) => (
-            <li key={d.day} className="border-l-2 border-primary/40 pl-4">
-              <div className="text-sm font-semibold text-foreground">
-                Tag {d.day} — {d.title}
+            <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">
+                    Tag {d.day} — {d.title}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+                </div>
+                <a
+                  href={mapsRouteUrl(currentPkg.destination, d.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                  title="Route auf Google Maps anzeigen"
+                >
+                  <MapPin className="h-3.5 w-3.5" /> Route
+                </a>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a
+                  href={bookingHotelUrl(currentPkg.destination)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Hotel className="h-3 w-3" /> Hotel buchen
+                </a>
+                <a
+                  href={gygActivityUrl(currentPkg.destination, d.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Ticket className="h-3 w-3" /> Aktivität buchen
+                </a>
+                <a
+                  href={transferUrl(currentPkg.destination)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  <Car className="h-3 w-3" /> Transfer
+                </a>
+              </div>
             </li>
           ))}
         </ol>
       </div>
+
 
       {/* Activities list */}
       <div className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-card">
