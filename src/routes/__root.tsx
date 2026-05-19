@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  ClientOnly,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -86,7 +87,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
-        <Toaster position="top-center" richColors />
+        <ClientOnly fallback={null}>
+          <Toaster position="top-center" richColors />
+        </ClientOnly>
       </AuthProvider>
     </QueryClientProvider>
   );
