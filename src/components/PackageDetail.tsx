@@ -54,6 +54,38 @@ function gygActivityUrl(destination: string, query?: string) {
   const q = query ? `${query} ${destination}` : destination;
   return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
 }
+function buildMailto(pkg: import("@/types/travel").TravelPackage) {
+  const lines: string[] = [];
+  lines.push(`Mein Reiseplan: ${pkg.title}`);
+  lines.push(`Ziel: ${pkg.destination}`);
+  lines.push(`Dauer: ${pkg.duration}`);
+  lines.push(`Preis: € ${pkg.price.toLocaleString("de-DE")}`);
+  lines.push("");
+  lines.push(`Hotel: ${pkg.hotel}`);
+  lines.push(`Flug: ${pkg.flight}`);
+  if (pkg.mealPlan) lines.push(`Verpflegung: ${pkg.mealPlan}`);
+  lines.push("");
+  lines.push("=== Tag für Tag ===");
+  pkg.itinerary.forEach((d) => {
+    lines.push(`Tag ${d.day} — ${d.title}`);
+    lines.push(d.description);
+    lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
+    lines.push("");
+  });
+  lines.push("=== Aktivitäten ===");
+  pkg.activities.forEach((a) => lines.push(`• ${a}`));
+  lines.push("");
+  lines.push("=== Buchungs-Links ===");
+  lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
+  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
+  lines.push("");
+  lines.push("— Weltweiturlaub.de");
+  const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
+  const body = encodeURIComponent(lines.join("\n"));
+  return `mailto:?subject=${subject}&body=${body}`;
+}
+
 
 function transferUrl(destination: string) {
   return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
