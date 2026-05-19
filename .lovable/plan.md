@@ -1,50 +1,34 @@
-# Add Login / Register
+# Plan: "Plan per E-Mail senden" → direkter Versand an angemeldete User-Mail
 
-Add authentication (email+password and Google) with a user profiles table, and an account menu in the header.
+Aktuell öffnet der Button nur `mailto:` (Mail-Programm vom User). Du möchtest, dass beim Klick die Mail **automatisch sofort** an die Mail-Adresse des eingeloggten Users gesendet wird.
 
-## Database (migration)
+## Was sich ändert
 
-- Create `public.profiles` table: `id uuid PK refs auth.users(id) on delete cascade`, `display_name text`, `avatar_url text`, `created_at`, `updated_at`.
-- Enable RLS. Policies:
-  - Select: anyone authenticated can read profiles (or own-only — default own-only).
-  - Update/Insert: only `auth.uid() = id`.
-- Trigger `handle_new_user()` on `auth.users` insert → creates a `profiles` row with `display_name` from `raw_user_meta_data.full_name` or email.
-- `update_updated_at_column()` trigger on profiles.
+### 1. E-Mail-Infrastruktur einrichten (Lovable Emails)
+- Du brauchst eine verifizierte Sender-Domain (z. B. `weltweiturlaub.de` oder Subdomain wie `mail.weltweiturlaub.de`).
+- Setup-Dialog wird angezeigt → DNS-Einträge eintragen → Domain verifiziert.
+- Email-Infrastruktur (Queue, Send-Log, Worker) wird automatisch deployed.
 
-## Auth config
+### 2. Server Function `sendPlanEmail`
+- Neue Datei: `src/lib/send-plan.functions.ts`
+- Geschützt mit `requireSupabaseAuth` → nur eingeloggte User können senden.
+- Holt die User-E-Mail aus `context.claims.email` (kein Input-Feld nötig).
+- Rendert ein React-Email-Template mit Plan-Daten (Hotel, Flug, Tag-für-Tag, Maps-Links, Buchungs-Links).
+- Queued die Mail über die Lovable Emails Send-API.
 
-- Call `supabase--configure_social_auth` with `providers: ["google"]` (keep email enabled).
-- Do NOT auto-confirm emails (default).
+### 3. Button in `PackageDetail.tsx`
+- `<a href={buildMailto(...)}>` → `<button onClick={handleSendEmail}>`.
+- Beim Klick:
+  - Wenn nicht eingeloggt → Hinweis "Bitte erst einloggen" + Link zu `/login`.
+  - Wenn eingeloggt → Server-Function aufrufen → Toast "Plan wurde an deine@mail.com gesendet ✓".
+- Loading-State während Versand, Fehler-Toast bei Problemen.
+- `buildMailto` Helper entfernt.
 
-## Routes (TanStack file-based)
+## Was du brauchst
+- Eine Domain, die du verifizieren kannst (DNS-Zugriff). Falls keine vorhanden → wir können erst den Setup-Dialog öffnen und du sagst Bescheid wenn fertig.
 
-- `src/routes/login.tsx` — public route. Login form (email/password) + "Continue with Google" button using `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`. Link to `/register`. Supports `?redirect=` search param.
-- `src/routes/register.tsx` — public route. Signup form (email, password, display name) with `supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin, data: { full_name } } })`. Google button. Link to `/login`.
-- Keep home `/` public — no forced auth.
+## Nicht im Scope
+- Mail an andere Adressen senden (Freunde, Familie) → könnten wir später als optionales Eingabefeld nachrüsten.
+- HTML-Mail-Design polish — erstmal sauberes Standard-Template, dann iterieren.
 
-## Auth state plumbing
-
-- Add `src/hooks/use-auth.tsx`: subscribes to `supabase.auth.onAuthStateChange` FIRST, then `getSession()`. Exposes `{ user, session, loading, signOut }`.
-- Wrap app in `<AuthProvider>` inside `src/routes/__root.tsx` (around `<Outlet />`).
-- On auth state change, also call `queryClient.invalidateQueries()` and `router.invalidate()`.
-
-## Header UI (src/components/SiteHeader or inline in index)
-
-- If logged out: show "Anmelden" + "Registrieren" buttons (Link to `/login`, `/register`).
-- If logged in: avatar dropdown (shadcn `DropdownMenu`) with display name, "Abmelden" → calls `signOut()`.
-
-## Validation
-
-- Use `zod` schemas client-side: email format, password min 8, display name 1–80 chars.
-- Show inline errors via `react-hook-form` + shadcn `Form`.
-
-## Out of scope
-
-- Password reset page (can add later — note: would require `/reset-password` route).
-- Role-based access, protected routes (no `_authenticated` layout needed yet).
-- Changes to chat/packages flow.
-
-## Files touched
-
-- New: migration; `src/routes/login.tsx`, `src/routes/register.tsx`, `src/hooks/use-auth.tsx`.
-- Edited: `src/routes/__root.tsx` (provider + invalidation), `src/routes/index.tsx` (header auth buttons).
+Soll ich loslegen? Falls ja, starte ich mit dem Domain-Setup-Dialog.
