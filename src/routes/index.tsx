@@ -1,11 +1,20 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, Sparkles, ShieldCheck } from "lucide-react";
+import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PackageResults } from "@/components/PackageResults";
 import { PackageDetail } from "@/components/PackageDetail";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { TravelPackage } from "@/types/travel";
 
 export const Route = createFileRoute("/")({
@@ -108,20 +117,51 @@ function Feature({
 }
 
 function SiteHeader() {
+  const { user, signOut } = useAuth();
+  const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
+
   return (
     <header className="border-b border-border bg-card/80 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <a href="/" className="flex items-center">
+        <Link to="/" className="flex items-center">
           <img
             src={logo}
             alt="Weltweiturlaub.de — Reise planen in 2 Minuten"
             className="h-12 w-auto md:h-14"
           />
-        </a>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <button className="hidden items-center gap-1 hover:text-foreground sm:inline-flex">
-            DE <span className="text-xs">▾</span>
-          </button>
+        </Link>
+        <div className="flex items-center gap-3 text-sm">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                {initial}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate">
+                  {user.user_metadata?.full_name || user.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>
+                  <UserIcon className="mr-2 h-4 w-4" /> Mein Konto
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" /> Abmelden
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link to="/login" className="text-muted-foreground hover:text-foreground">
+                Anmelden
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-full bg-primary px-4 py-1.5 text-primary-foreground hover:opacity-90"
+              >
+                Registrieren
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
