@@ -46,6 +46,57 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          consent: boolean
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string | null
+          package_destination: string | null
+          package_id: string | null
+          package_price: number | null
+          package_title: string | null
+          package_type: string | null
+          phone: string | null
+          source: string | null
+          trip_request_id: string | null
+        }
+        Insert: {
+          consent?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          package_destination?: string | null
+          package_id?: string | null
+          package_price?: number | null
+          package_title?: string | null
+          package_type?: string | null
+          phone?: string | null
+          source?: string | null
+          trip_request_id?: string | null
+        }
+        Update: {
+          consent?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          package_destination?: string | null
+          package_id?: string | null
+          package_price?: number | null
+          package_title?: string | null
+          package_type?: string | null
+          phone?: string | null
+          source?: string | null
+          trip_request_id?: string | null
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           created_at: string
