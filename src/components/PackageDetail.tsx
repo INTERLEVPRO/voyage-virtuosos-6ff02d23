@@ -17,6 +17,10 @@ import {
   Palmtree,
   Waves,
   Building2,
+  MapPin,
+  Mail,
+  Ticket,
+  Car,
 } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
