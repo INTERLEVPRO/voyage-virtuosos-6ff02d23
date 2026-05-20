@@ -149,6 +149,11 @@ export function PackageDetail({
   const [notice, setNotice] = useState<string | null>(null);
 
   const tier = TIER_BADGE[currentPkg.type];
+  const itineraryWeather = useItineraryWeather(currentPkg.destination, currentPkg.itinerary.length);
+  const weatherDays =
+    itineraryWeather.data && !("error" in itineraryWeather.data)
+      ? itineraryWeather.data.trip.days
+      : [];
 
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
