@@ -22,6 +22,7 @@ import {
   Ticket,
   Car,
 } from "lucide-react";
+import { WeatherSection } from "./WeatherSection";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
 import { PriceConfirmation } from "./PriceConfirmation";
@@ -263,6 +264,11 @@ export function PackageDetail({
           className="h-64 w-full object-cover md:h-80"
         />
       </div>
+
+      {/* Weather */}
+      <WeatherSection destination={currentPkg.destination} duration={currentPkg.duration} />
+
+
 
       {/* Itinerary overview strip */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
