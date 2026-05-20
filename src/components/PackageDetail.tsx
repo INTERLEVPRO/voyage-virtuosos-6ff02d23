@@ -445,7 +445,7 @@ export function PackageDetail({
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
-          {currentPkg.itinerary.map((d) => (
+          {currentPkg.itinerary.map((d, i) => (
             <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -463,6 +463,13 @@ export function PackageDetail({
                 >
                   <MapPin className="h-3.5 w-3.5" /> Route
                 </a>
+              </div>
+              <div className="mt-3">
+                <DayWeatherChip
+                  dayIndex={i}
+                  data={weatherDays[i]}
+                  isLoading={itineraryWeather.isPending}
+                />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a
