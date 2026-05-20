@@ -265,6 +265,11 @@ export function PackageDetail({
         />
       </div>
 
+      {/* Weather */}
+      <WeatherSection destination={currentPkg.destination} duration={currentPkg.duration} />
+
+
+
       {/* Itinerary overview strip */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
         <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
