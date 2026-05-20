@@ -72,9 +72,18 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   pkg.itinerary.forEach((d) => {
     lines.push(`Tag ${d.day} — ${d.title}`);
     lines.push(d.description);
+    const w = weatherByDay.get(d.day);
+    if (w) {
+      const src =
+        w.weather.source === "seasonal"
+          ? "Saisonale Schätzung, keine exakte Vorhersage"
+          : w.weather.label;
+      lines.push(
+        `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
+      );
+    }
     lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
     lines.push("");
-  });
   lines.push("=== Aktivitäten ===");
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
