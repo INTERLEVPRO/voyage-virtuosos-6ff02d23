@@ -31,6 +31,11 @@ function Icon({ name, className }: { name: string; className?: string }) {
   return <C className={className} />;
 }
 
+export function WeatherMini({ name }: { name: string }) {
+  const C = ICONS[name] ?? Cloud;
+  return <C className="h-3 w-3" />;
+}
+
 function addDaysISO(days: number) {
   const d = new Date();
   d.setUTCHours(0, 0, 0, 0);
