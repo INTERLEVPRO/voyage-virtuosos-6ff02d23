@@ -23,6 +23,7 @@ import {
   Car,
 } from "lucide-react";
 import { WeatherSection } from "./WeatherSection";
+import { DayWeatherChip, useItineraryWeather } from "./ItineraryDayWeather";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
 import { PriceConfirmation } from "./PriceConfirmation";
