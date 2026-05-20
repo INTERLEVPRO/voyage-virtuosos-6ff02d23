@@ -265,7 +265,7 @@ export function PackageDetail({
           <MapPin className="h-4 w-4" /> Route auf Google Maps
         </a>
         <a
-          href={buildMailto(currentPkg)}
+          href={buildMailto(currentPkg, weatherQuery.data)}
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
         >
           <Mail className="h-4 w-4" /> Plan per E-Mail senden
