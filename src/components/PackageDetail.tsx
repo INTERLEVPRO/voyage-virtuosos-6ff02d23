@@ -28,6 +28,7 @@ import { PriceConfirmation } from "./PriceConfirmation";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
+import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
