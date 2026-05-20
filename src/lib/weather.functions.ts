@@ -226,10 +226,18 @@ export const getWeather = createServerFn({ method: "POST" })
       const startOffset = diffDays(today, travelStart);
       const endOffset = diffDays(today, travelEnd);
 
-      let trip: WeatherResult extends { trip: infer T } ? T : never;
+      type TripBlock = {
+        source: "forecast" | "seasonal";
+        label: string;
+        days: WeatherDay[];
+        clothing: string[];
+        travelTip: string;
+      };
+      let trip: TripBlock;
       let aiTripCtx:
         | { source: "forecast"; days: WeatherDay[] }
         | { source: "seasonal"; month: string; startDate: string; endDate: string };
+
 
       const tripWithinForecast = startOffset >= 0 && startOffset <= 15;
 
