@@ -84,6 +84,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
     }
     lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
     lines.push("");
+  });
   lines.push("=== Aktivitäten ===");
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
