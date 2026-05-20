@@ -22,6 +22,7 @@ import {
   Ticket,
   Car,
 } from "lucide-react";
+import { WeatherSection } from "./WeatherSection";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
 import { PriceConfirmation } from "./PriceConfirmation";
