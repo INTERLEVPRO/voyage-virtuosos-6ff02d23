@@ -441,7 +441,7 @@ export function PackageDetail({
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
-          {currentPkg.itinerary.map((d, i) => (
+          {currentPkg.itinerary.map((d) => (
             <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
