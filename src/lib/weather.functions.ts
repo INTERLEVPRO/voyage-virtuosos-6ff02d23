@@ -79,16 +79,40 @@ function monthNameDE(iso: string): string {
   ][m];
 }
 
-async function geocode(destination: string) {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1&language=de&format=json`;
+async function geocodeOnce(query: string, language: "de" | "en") {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${language}&format=json`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error("Geocoding failed");
+  if (!res.ok) return null;
   const data = (await res.json()) as {
     results?: Array<{ latitude: number; longitude: number; name: string; country: string; timezone: string }>;
   };
-  const r = data.results?.[0];
-  if (!r) throw new Error("Ort nicht gefunden");
-  return r;
+  return data.results?.[0] ?? null;
+}
+
+async function geocode(destination: string) {
+  // Build a list of candidate queries — strip parenthetical, take parts before/after comma,
+  // remove leading emojis/symbols, fall back to first significant word.
+  const cleaned = destination
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "")
+    .replace(/\([^)]*\)/g, "")
+    .trim();
+  const parts = cleaned.split(/[,/|–-]/).map((p) => p.trim()).filter(Boolean);
+  const candidates = Array.from(
+    new Set(
+      [
+        cleaned,
+        ...parts,
+        parts[0]?.split(/\s+/)[0] ?? "",
+      ].filter((s) => s && s.length >= 2),
+    ),
+  );
+  for (const lang of ["de", "en"] as const) {
+    for (const q of candidates) {
+      const r = await geocodeOnce(q, lang);
+      if (r) return r;
+    }
+  }
+  throw new Error("Ort nicht gefunden");
 }
 
 async function fetchForecast(lat: number, lon: number, timezone: string) {
