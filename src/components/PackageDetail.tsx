@@ -461,6 +461,15 @@ export function PackageDetail({
                 </a>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
+                <DayWeatherToggle
+                  day={weatherByDay.get(d.day)}
+                  data={weatherQuery.data}
+                  isLoading={weatherQuery.isLoading}
+                  isError={weatherQuery.isError}
+                  onRefresh={() => weatherQuery.refetch()}
+                  isRefreshing={weatherQuery.isFetching}
+                  generatedAt={weatherQuery.data?.generatedAt}
+                />
                 <a
                   href={bookingHotelUrl(currentPkg.destination)}
                   target="_blank"
