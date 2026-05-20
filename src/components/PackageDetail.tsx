@@ -161,6 +161,12 @@ export function PackageDetail({
 
   const tier = TIER_BADGE[currentPkg.type];
 
+  const weatherQuery = useItineraryWeather(
+    currentPkg.destination,
+    currentPkg.itinerary.map((d) => ({ day: d.day, title: d.title })),
+  );
+  const weatherByDay = new Map((weatherQuery.data?.days ?? []).map((d) => [d.day, d]));
+
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
     setNotice(null);
