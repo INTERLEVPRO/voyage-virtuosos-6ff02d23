@@ -55,7 +55,9 @@ function gygActivityUrl(destination: string, query?: string) {
   const q = query ? `${query} ${destination}` : destination;
   return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
 }
-function buildMailto(pkg: import("@/types/travel").TravelPackage) {
+function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
+  const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
+  weather?.days.forEach((d) => weatherByDay.set(d.day, d));
   const lines: string[] = [];
   lines.push(`Mein Reiseplan: ${pkg.title}`);
   lines.push(`Ziel: ${pkg.destination}`);
