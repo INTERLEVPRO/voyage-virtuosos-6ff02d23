@@ -23,6 +23,7 @@ import {
   Car,
 } from "lucide-react";
 import { WeatherSection } from "./WeatherSection";
+import { DayWeatherChip, WeatherMini, useItineraryWeather } from "./ItineraryDayWeather";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
 import { PriceConfirmation } from "./PriceConfirmation";
@@ -148,6 +149,11 @@ export function PackageDetail({
   const [notice, setNotice] = useState<string | null>(null);
 
   const tier = TIER_BADGE[currentPkg.type];
+  const itineraryWeather = useItineraryWeather(currentPkg.destination, currentPkg.itinerary.length);
+  const weatherDays =
+    itineraryWeather.data && !("error" in itineraryWeather.data)
+      ? itineraryWeather.data.trip.days
+      : [];
 
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
@@ -276,15 +282,29 @@ export function PackageDetail({
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
           {currentPkg.itinerary.map((d, i) => {
             const Icon = DAY_ICONS[i % DAY_ICONS.length];
+            const w = weatherDays[i];
             return (
               <div key={d.day} className="flex flex-col items-center text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
+                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
                   <Icon className="h-5 w-5" />
+                  {w && (
+                    <span
+                      title={`${w.condition} • ${w.tempMax}°/${w.tempMin}°`}
+                      className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-card text-primary shadow-soft"
+                    >
+                      <WeatherMini name={w.conditionIcon} />
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 text-xs font-semibold text-foreground">Tag {d.day}</div>
                 <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
                   {d.title}
                 </div>
+                {w && (
+                  <div className="mt-0.5 text-[10px] font-semibold text-foreground/80">
+                    {w.tempMax}°/{w.tempMin}°
+                  </div>
+                )}
               </div>
             );
           })}
@@ -425,7 +445,7 @@ export function PackageDetail({
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
-          {currentPkg.itinerary.map((d) => (
+          {currentPkg.itinerary.map((d, i) => (
             <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -443,6 +463,13 @@ export function PackageDetail({
                 >
                   <MapPin className="h-3.5 w-3.5" /> Route
                 </a>
+              </div>
+              <div className="mt-3">
+                <DayWeatherChip
+                  dayIndex={i}
+                  data={weatherDays[i]}
+                  isLoading={itineraryWeather.isPending}
+                />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a
