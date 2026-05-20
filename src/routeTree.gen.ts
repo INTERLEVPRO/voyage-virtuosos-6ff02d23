@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTrackClickRouteImport } from './routes/api/track-click'
 import { Route as ApiRefinePackageRouteImport } from './routes/api/refine-package'
+import { Route as ApiItineraryWeatherRouteImport } from './routes/api/itinerary-weather'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -41,6 +42,11 @@ const ApiRefinePackageRoute = ApiRefinePackageRouteImport.update({
   path: '/api/refine-package',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiItineraryWeatherRoute = ApiItineraryWeatherRouteImport.update({
+  id: '/api/itinerary-weather',
+  path: '/api/itinerary-weather',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
   '/api/track-click': typeof ApiTrackClickRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/api/chat'
+    | '/api/itinerary-weather'
     | '/api/refine-package'
     | '/api/track-click'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/api/chat'
+    | '/api/itinerary-weather'
     | '/api/refine-package'
     | '/api/track-click'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/api/chat'
+    | '/api/itinerary-weather'
     | '/api/refine-package'
     | '/api/track-click'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiItineraryWeatherRoute: typeof ApiItineraryWeatherRoute
   ApiRefinePackageRoute: typeof ApiRefinePackageRoute
   ApiTrackClickRoute: typeof ApiTrackClickRoute
 }
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRefinePackageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/itinerary-weather': {
+      id: '/api/itinerary-weather'
+      path: '/api/itinerary-weather'
+      fullPath: '/api/itinerary-weather'
+      preLoaderRoute: typeof ApiItineraryWeatherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -160,9 +180,20 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiItineraryWeatherRoute: ApiItineraryWeatherRoute,
   ApiRefinePackageRoute: ApiRefinePackageRoute,
   ApiTrackClickRoute: ApiTrackClickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
