@@ -28,6 +28,7 @@ import { PriceConfirmation } from "./PriceConfirmation";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
+import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -54,7 +55,9 @@ function gygActivityUrl(destination: string, query?: string) {
   const q = query ? `${query} ${destination}` : destination;
   return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
 }
-function buildMailto(pkg: import("@/types/travel").TravelPackage) {
+function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
+  const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
+  weather?.days.forEach((d) => weatherByDay.set(d.day, d));
   const lines: string[] = [];
   lines.push(`Mein Reiseplan: ${pkg.title}`);
   lines.push(`Ziel: ${pkg.destination}`);
@@ -69,6 +72,16 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage) {
   pkg.itinerary.forEach((d) => {
     lines.push(`Tag ${d.day} — ${d.title}`);
     lines.push(d.description);
+    const w = weatherByDay.get(d.day);
+    if (w) {
+      const src =
+        w.weather.source === "seasonal"
+          ? "Saisonale Schätzung, keine exakte Vorhersage"
+          : w.weather.label;
+      lines.push(
+        `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
+      );
+    }
     lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
     lines.push("");
   });
@@ -147,6 +160,12 @@ export function PackageDetail({
   const [notice, setNotice] = useState<string | null>(null);
 
   const tier = TIER_BADGE[currentPkg.type];
+
+  const weatherQuery = useItineraryWeather(
+    currentPkg.destination,
+    currentPkg.itinerary.map((d) => ({ day: d.day, title: d.title })),
+  );
+  const weatherByDay = new Map((weatherQuery.data?.days ?? []).map((d) => [d.day, d]));
 
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
@@ -246,7 +265,7 @@ export function PackageDetail({
           <MapPin className="h-4 w-4" /> Route auf Google Maps
         </a>
         <a
-          href={buildMailto(currentPkg)}
+          href={buildMailto(currentPkg, weatherQuery.data)}
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
         >
           <Mail className="h-4 w-4" /> Plan per E-Mail senden
@@ -422,7 +441,7 @@ export function PackageDetail({
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
-          {currentPkg.itinerary.map((d, i) => (
+          {currentPkg.itinerary.map((d) => (
             <li key={d.day} className="rounded-xl border border-border bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -442,6 +461,15 @@ export function PackageDetail({
                 </a>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
+                <DayWeatherToggle
+                  day={weatherByDay.get(d.day)}
+                  data={weatherQuery.data}
+                  isLoading={weatherQuery.isLoading}
+                  isError={weatherQuery.isError}
+                  onRefresh={() => weatherQuery.refetch()}
+                  isRefreshing={weatherQuery.isFetching}
+                  generatedAt={weatherQuery.data?.generatedAt}
+                />
                 <a
                   href={bookingHotelUrl(currentPkg.destination)}
                   target="_blank"
