@@ -5,10 +5,25 @@ import ReactMarkdown from "react-markdown";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
 
-const STARTER_PROMPTS = [
-  "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
-  "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
-  "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
+const STARTER_PROMPTS: { emoji: string; title: string; subtitle: string; prompt: string }[] = [
+  {
+    emoji: "🏖️",
+    title: "Mallorca",
+    subtitle: "7 Tage, 2 Personen, Budget 1500€",
+    prompt: "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
+  },
+  {
+    emoji: "🏙️",
+    title: "Städtetrip Lissabon",
+    subtitle: "4 Tage, 1 Person, Budget 1200€",
+    prompt: "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
+  },
+  {
+    emoji: "🌴",
+    title: "Bali Honeymoon",
+    subtitle: "10 Tage, 2 Personen, Budget 5000€",
+    prompt: "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
+  },
 ];
 
 const AGENT_STAGES = [
