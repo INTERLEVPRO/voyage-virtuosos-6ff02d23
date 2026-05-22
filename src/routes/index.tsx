@@ -54,13 +54,13 @@ function Index() {
       <SiteHeader />
 
       <main>
-        <section className="relative overflow-hidden bg-gradient-soft-sky px-5 py-10 text-center shadow-card sm:px-10 sm:py-16 lg:py-20">
+        <section className="relative overflow-hidden bg-gradient-soft-sky px-5 pt-10 pb-8 text-center sm:px-10 sm:pt-14 sm:pb-10">
           <img
             src={assistantImg}
             alt="KI-Reiseassistentin"
             width={180}
             height={180}
-            className="mx-auto h-32 w-32 select-none object-contain sm:h-40 sm:w-40"
+            className="mx-auto h-28 w-28 select-none object-contain sm:h-36 sm:w-36"
           />
           <h1 className="mt-4 text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
@@ -76,7 +76,7 @@ function Index() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl px-5 py-8 lg:py-12">
+        <section className="px-5 pb-8 pt-6 sm:px-10 sm:pt-8">
           <ChatPanel onPackagesReady={setPackages} />
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
