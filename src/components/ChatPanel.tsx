@@ -108,7 +108,7 @@ export function ChatPanel({
   };
 
   return (
-    <div className="flex h-[640px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+    <div className="flex h-[70vh] min-h-[520px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[640px]">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border bg-card px-5 py-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
