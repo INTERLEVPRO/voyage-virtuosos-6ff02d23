@@ -117,13 +117,13 @@ function SiteHeader() {
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
 
   return (
-    <header className="border-b border-border bg-card/80 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
         <Link to="/" className="flex items-center">
           <img
             src={logo}
             alt="Weltweiturlaub.de — Reise planen in 2 Minuten"
-            className="h-12 w-auto md:h-14"
+            className="h-10 w-auto sm:h-12 md:h-14"
           />
         </Link>
         <div className="flex items-center gap-3 text-sm">
