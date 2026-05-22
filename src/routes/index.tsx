@@ -76,7 +76,7 @@ function Index() {
           </div>
         </section>
 
-        <section className="mt-8">
+        <section className="mx-auto max-w-3xl px-5 py-8 lg:py-12">
           <ChatPanel onPackagesReady={setPackages} />
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
