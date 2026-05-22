@@ -41,10 +41,8 @@ function stripJsonBlock(text: string): string {
 
 export function ChatPanel({
   onPackagesReady,
-  autoSendPrompt,
 }: {
   onPackagesReady?: (pkgs: TravelPackage[]) => void;
-  autoSendPrompt?: string;
 }) {
   const transport = new DefaultChatTransport({ api: "/api/chat" });
   const { messages, sendMessage, status, error } = useChat({ transport });
@@ -53,16 +51,8 @@ export function ChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handedOffRef = useRef<Set<string>>(new Set());
-  const autoSentRef = useRef(false);
 
   const isLoading = status === "submitted" || status === "streaming";
-
-  useEffect(() => {
-    if (autoSendPrompt && !autoSentRef.current) {
-      autoSentRef.current = true;
-      sendMessage({ text: autoSendPrompt });
-    }
-  }, [autoSendPrompt, sendMessage]);
 
   useEffect(() => {
     if (status === "submitted") {
