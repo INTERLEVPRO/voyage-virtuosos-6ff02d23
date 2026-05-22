@@ -53,8 +53,8 @@ function Index() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main className="mx-auto max-w-3xl px-5 py-8 lg:py-12">
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-soft-sky px-5 py-8 text-center shadow-card sm:px-10 sm:py-12">
+      <main>
+        <section className="relative overflow-hidden bg-gradient-soft-sky px-5 py-10 text-center shadow-card sm:px-10 sm:py-16 lg:py-20">
           <img
             src={assistantImg}
             alt="KI-Reiseassistentin"
