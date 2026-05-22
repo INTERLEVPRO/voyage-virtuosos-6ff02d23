@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon } from "lucide-react";
+import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Menu } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
 import { ChatPanel } from "@/components/ChatPanel";
