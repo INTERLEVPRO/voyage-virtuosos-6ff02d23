@@ -111,25 +111,6 @@ function FeatureChip({
   );
 }
 
-function Feature({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: typeof Check;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-3.5 w-3.5" />
-      </div>
-      <div className="text-sm font-semibold text-foreground">{title}</div>
-      <div className="text-xs text-muted-foreground">{body}</div>
-    </div>
-  );
-}
 
 function SiteHeader() {
   const { user, signOut } = useAuth();
