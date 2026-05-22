@@ -126,13 +126,22 @@ function SiteHeader() {
             className="h-10 w-auto sm:h-12 md:h-14"
           />
         </Link>
-        <div className="flex items-center gap-3 text-sm">
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Menü öffnen"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            {user ? (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                 {initial}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              </span>
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {user ? (
+              <>
                 <DropdownMenuLabel className="truncate">
                   {user.user_metadata?.full_name || user.email}
                 </DropdownMenuLabel>
@@ -143,22 +152,19 @@ function SiteHeader() {
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" /> Abmelden
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Link to="/login" className="text-muted-foreground hover:text-foreground">
-                Anmelden
-              </Link>
-              <Link
-                to="/register"
-                className="rounded-full bg-primary px-4 py-1.5 text-primary-foreground hover:opacity-90"
-              >
-                Registrieren
-              </Link>
-            </>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link to="/login">Anmelden</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/register">Registrieren</Link>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
