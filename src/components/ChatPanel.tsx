@@ -5,10 +5,25 @@ import ReactMarkdown from "react-markdown";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
 
-const STARTER_PROMPTS = [
-  "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
-  "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
-  "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
+const STARTER_PROMPTS: { emoji: string; title: string; subtitle: string; prompt: string }[] = [
+  {
+    emoji: "🏖️",
+    title: "Mallorca",
+    subtitle: "7 Tage, 2 Personen, Budget 1500€",
+    prompt: "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
+  },
+  {
+    emoji: "🏙️",
+    title: "Städtetrip Lissabon",
+    subtitle: "4 Tage, 1 Person, Budget 1200€",
+    prompt: "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
+  },
+  {
+    emoji: "🌴",
+    title: "Bali Honeymoon",
+    subtitle: "10 Tage, 2 Personen, Budget 5000€",
+    prompt: "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
+  },
 ];
 
 const AGENT_STAGES = [
@@ -113,15 +128,19 @@ export function ChatPanel({
             <p className="text-sm text-muted-foreground">
               Reiseziel, Budget, Dauer, Stil — je mehr du erzählst, desto besser passen die 3 Pakete.
             </p>
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 pt-1 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible">
               {STARTER_PROMPTS.map((p) => (
                 <button
-                  key={p}
-                  onClick={() => submit(p)}
-                  className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5"
+                  key={p.title}
+                  onClick={() => submit(p.prompt)}
+                  className="group flex min-w-[68%] snap-center flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card sm:min-w-0"
                 >
-                  <Sparkles className="mr-1.5 inline h-3.5 w-3.5 text-primary" />
-                  {p}
+                  <span className="text-3xl leading-none" aria-hidden>{p.emoji}</span>
+                  <span className="text-sm font-semibold text-foreground">{p.title}</span>
+                  <span className="text-xs text-muted-foreground">{p.subtitle}</span>
+                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    <Sparkles className="h-3 w-3" /> Paket erstellen
+                  </span>
                 </button>
               ))}
             </div>
