@@ -89,9 +89,6 @@ function Index() {
         <section className="relative -mt-16 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
           <div className="mx-auto max-w-[1100px]">
             <ChatPanel onPackagesReady={setPackages} />
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
-            </p>
           </div>
         </section>
       </main>
