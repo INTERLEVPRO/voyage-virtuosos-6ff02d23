@@ -24,6 +24,10 @@ import {
   ThumbsUp,
   MessageSquare,
   Quote,
+  LayoutGrid,
+  CalendarDays,
+  ShoppingBag,
+  MessageCircle,
 } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
@@ -32,6 +36,7 @@ import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
+import { cn } from "@/lib/utils";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -187,6 +192,7 @@ export function PackageDetail({
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "days" | "book" | "reviews">("overview");
 
   const tier = TIER_BADGE[currentPkg.type];
 
@@ -255,18 +261,51 @@ export function PackageDetail({
   const showPlanCheck = mode.kind !== "planOk";
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
+    <section className="mx-auto max-w-5xl px-4 pb-28 pt-4 sm:px-6 sm:py-10 sm:pb-10">
       {/* Back + tier */}
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
         >
-          <ArrowLeft className="h-4 w-4" /> Zurück zu den Paketen
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span><span className="sm:hidden">Zurück</span>
         </button>
-        <span className={`rounded-md px-2.5 py-1 text-xs font-bold tracking-wider ${tier.cls}`}>
+        <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
           {tier.label}
         </span>
+      </div>
+
+      {/* Mobile sticky tab bar — app-like nav */}
+      <div className="sticky top-[60px] z-10 -mx-4 mb-4 border-b border-border bg-background/95 px-2 backdrop-blur sm:hidden">
+        <div className="flex items-center justify-around">
+          {([
+            { id: "overview", label: "Übersicht", Icon: LayoutGrid },
+            { id: "days", label: "Tage", Icon: CalendarDays },
+            { id: "book", label: "Buchen", Icon: ShoppingBag },
+            { id: "reviews", label: "Reviews", Icon: MessageCircle },
+          ] as const).map(({ id, label, Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(id);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-0.5 border-b-2 px-2 py-2.5 text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
@@ -284,7 +323,7 @@ export function PackageDetail({
       </div>
 
       {/* Top actions: Maps + Email */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className={cn("mt-4 flex flex-wrap gap-2", activeTab !== "overview" && "max-sm:hidden")}>
         <a
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
@@ -306,7 +345,7 @@ export function PackageDetail({
       </div>
 
       {/* Hero image */}
-      <div className="mt-5 overflow-hidden rounded-2xl shadow-card">
+      <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <img
           src={tier.image}
           alt={currentPkg.destination}
@@ -320,7 +359,7 @@ export function PackageDetail({
 
 
       {/* Itinerary overview strip */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
           {currentPkg.itinerary.map((d, i) => {
@@ -341,7 +380,7 @@ export function PackageDetail({
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
-      <div className="mt-5 space-y-3">
+      <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
           title="Flüge"
@@ -385,7 +424,7 @@ export function PackageDetail({
       </div>
 
       {/* Total price strip */}
-      <div className="mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className={cn("mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
           <div className="text-2xl font-extrabold text-foreground">
@@ -400,7 +439,7 @@ export function PackageDetail({
 
       {/* Plan-Check */}
       {showPlanCheck && (
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
           <h2 className="text-lg font-semibold text-foreground">
             Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
           </h2>
@@ -468,7 +507,7 @@ export function PackageDetail({
       )}
 
       {/* Itinerary detail with maps + booking help per day */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "days" && "max-sm:hidden")}>
         <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
@@ -539,7 +578,7 @@ export function PackageDetail({
 
 
       {/* Activities list */}
-      <div className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-5 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <h2 className="text-lg font-semibold text-foreground">Aktivitäten inklusive</h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {currentPkg.activities.map((a) => (
@@ -551,14 +590,14 @@ export function PackageDetail({
       </div>
 
       {currentPkg.whyItFits && (
-        <div className="mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+        <div className={cn("mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6", activeTab !== "overview" && "max-sm:hidden")}>
           <h2 className="text-lg font-semibold text-foreground">Warum dieses Paket zu dir passt</h2>
           <p className="mt-2 text-sm text-foreground/80">{currentPkg.whyItFits}</p>
         </div>
       )}
 
       {/* German Reviews Section */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "reviews" && "max-sm:hidden")}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
@@ -600,15 +639,56 @@ export function PackageDetail({
       </div>
 
       {/* Trust strip */}
-      <div className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3">
+      <div className={cn("mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3", activeTab !== "overview" && "max-sm:hidden")}>
         <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
+      <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
         🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
       </p>
+
+      {/* Mobile sticky bottom action bar — app-like CTA */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 shadow-luxe backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+            <div className="truncate text-lg font-extrabold text-foreground">
+              € {currentPkg.price.toLocaleString("de-DE")}
+            </div>
+          </div>
+          {currentPkg.bookingLinks?.hotel ? (
+            <a
+              href={currentPkg.bookingLinks.hotel}
+              onClick={(event) => {
+                void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
+                event.preventDefault();
+                try {
+                  if (window.top && window.top !== window) {
+                    window.top.location.href = currentPkg.bookingLinks!.hotel!;
+                    return;
+                  }
+                } catch {
+                  // ignore
+                }
+                window.location.href = currentPkg.bookingLinks!.hotel!;
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+            >
+              <Hotel className="h-4 w-4" /> Hotel buchen
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveTab("book")}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+            >
+              <ShoppingBag className="h-4 w-4" /> Jetzt buchen
+            </button>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
