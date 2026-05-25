@@ -606,6 +606,8 @@ function ProviderRow({
   packageId: string;
   ctaCls: string;
 }) {
+  const isHotelProvider = provider === "hotel";
+
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:flex-row sm:items-center">
       <div className="flex flex-1 items-start gap-4">
@@ -628,10 +630,25 @@ function ProviderRow({
         {url && (
           <a
             href={url}
-            target="_blank"
+            target={isHotelProvider ? "_top" : "_blank"}
             rel="noopener"
-            onClick={() => {
+            onClick={(event) => {
               void trackClick(packageId, provider, url);
+
+              if (isHotelProvider) {
+                event.preventDefault();
+
+                try {
+                  if (window.top && window.top !== window) {
+                    window.top.location.href = url;
+                    return;
+                  }
+                } catch {
+                  // ignore and fall back to same-window navigation
+                }
+
+                window.location.href = url;
+              }
             }}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
           >
