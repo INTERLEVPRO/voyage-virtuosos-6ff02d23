@@ -629,7 +629,7 @@ function ProviderRow({
           <button
             onClick={() => {
               trackClick(packageId, provider, url);
-              window.open(url, "_blank", "noopener,noreferrer");
+              window.open(url, "_blank", "noopener");
             }}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
           >
