@@ -24,6 +24,10 @@ import {
   ThumbsUp,
   MessageSquare,
   Quote,
+  LayoutGrid,
+  CalendarDays,
+  ShoppingBag,
+  MessageCircle,
 } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
@@ -32,6 +36,7 @@ import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
+import { cn } from "@/lib/utils";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
