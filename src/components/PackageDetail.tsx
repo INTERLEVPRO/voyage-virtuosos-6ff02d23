@@ -380,7 +380,7 @@ export function PackageDetail({
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
-      <div className="mt-5 space-y-3">
+      <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
           title="Flüge"
