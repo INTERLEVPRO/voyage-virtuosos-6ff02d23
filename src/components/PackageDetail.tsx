@@ -597,7 +597,7 @@ export function PackageDetail({
       )}
 
       {/* German Reviews Section */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "reviews" && "max-sm:hidden")}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
