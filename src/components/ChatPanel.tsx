@@ -173,9 +173,16 @@ export function ChatPanel({
         })}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span className="font-medium">{AGENT_STAGES[stageIdx]}</span>
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft">
+            <div className="flex gap-1">
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">Planung läuft…</span>
+              <span className="text-xs text-muted-foreground">{AGENT_STAGES[stageIdx]}</span>
+            </div>
           </div>
         )}
 
