@@ -47,7 +47,8 @@ async function trackClick(packageId: string, provider: string, url: string) {
 
 function mapsRouteUrl(destination: string, place?: string, origin?: string) {
   const dest = encodeURIComponent(place ? `${place}, ${destination}` : destination);
-  const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : "";
+  // Note: origin is intentionally NOT url-encoded so the comma stays literal — Google Maps requires "lat,lng".
+  const originParam = origin ? `&origin=${origin}` : "";
   return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${dest}&travelmode=driving`;
 }
 
