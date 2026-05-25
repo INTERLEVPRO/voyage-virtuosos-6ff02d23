@@ -359,7 +359,7 @@ export function PackageDetail({
 
 
       {/* Itinerary overview strip */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
           {currentPkg.itinerary.map((d, i) => {
