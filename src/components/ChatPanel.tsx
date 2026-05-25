@@ -133,7 +133,7 @@ export function ChatPanel({
                 <button
                   key={p.title}
                   onClick={() => submit(p.prompt)}
-                  className="group flex min-w-[68%] snap-center flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card sm:min-w-0"
+                  className="group flex w-full max-w-full flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
                 >
                   <span className="text-3xl leading-none" aria-hidden>{p.emoji}</span>
                   <span className="text-sm font-semibold text-foreground">{p.title}</span>
