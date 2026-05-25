@@ -128,12 +128,12 @@ export function ChatPanel({
             <p className="text-sm text-muted-foreground">
               Reiseziel, Budget, Dauer, Stil — je mehr du erzählst, desto besser passen die 3 Pakete.
             </p>
-            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 pt-1 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible">
+            <div className="grid w-full max-w-full grid-cols-1 gap-3 pb-2 pt-1 sm:grid-cols-3">
               {STARTER_PROMPTS.map((p) => (
                 <button
                   key={p.title}
                   onClick={() => submit(p.prompt)}
-                  className="group flex min-w-[68%] snap-center flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card sm:min-w-0"
+                  className="group flex w-full max-w-full flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
                 >
                   <span className="text-3xl leading-none" aria-hidden>{p.emoji}</span>
                   <span className="text-sm font-semibold text-foreground">{p.title}</span>
