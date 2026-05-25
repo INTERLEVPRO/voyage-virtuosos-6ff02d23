@@ -60,19 +60,20 @@ export function RefineComposer({
           placeholder="Beschreibe deine Wünsche…"
           rows={2}
           disabled={loading}
-          className="flex-1 resize-none rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-accent disabled:opacity-50"
+          className="min-w-0 flex-1 resize-none rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-accent disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={loading || !text.trim()}
-          className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-gold px-4 text-sm font-medium text-primary shadow-soft disabled:opacity-50"
+          aria-label="Senden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-gold text-sm font-medium text-primary shadow-soft disabled:opacity-50 sm:w-auto sm:px-4"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />
           )}
-          Senden
+          <span className="hidden sm:inline">Senden</span>
         </button>
       </form>
     </div>
