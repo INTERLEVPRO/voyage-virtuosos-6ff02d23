@@ -77,7 +77,7 @@ export function PackageCard({
           </span>
           <span className="flex flex-col leading-tight">
             <span className="text-[12px] font-bold text-foreground">Top bewertet</span>
-            <span className="text-[10px] text-muted-foreground">Echte deutsche Reviews</span>
+            <span className="text-[10px] text-muted-foreground">Echte Bewertungen aus Deutschland</span>
           </span>
         </div>
       )}
