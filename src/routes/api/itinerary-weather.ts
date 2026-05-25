@@ -106,7 +106,12 @@ type ForecastByDate = Record<string, { tMin: number; tMax: number; code: number;
 
 async function fetchForecast(lat: number, lon: number): Promise<ForecastByDate> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,windspeed_10m_max&timezone=auto&forecast_days=16`;
-  const r = await fetch(url);
+  let r: Response;
+  try {
+    r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+  } catch {
+    return {};
+  }
   if (!r.ok) return {};
   const data = (await r.json()) as {
     daily?: {
