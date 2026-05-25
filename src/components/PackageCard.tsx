@@ -65,8 +65,17 @@ export function PackageCard({
     { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
   ];
 
+  const isTopRated = pkg.rating >= 4.5;
+
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
+      {/* Top rated badge */}
+      {isTopRated && (
+        <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
+          <ThumbsUp className="h-3 w-3" /> Top bewertet
+        </div>
+      )}
+
       {/* Image */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
         <img
