@@ -53,34 +53,46 @@ function Index() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      <main>
-        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-8 pb-8 text-center sm:px-10 sm:pt-14 sm:pb-10">
-          <img
-            src={assistantImg}
-            alt="KI-Reiseassistentin"
-            width={180}
-            height={180}
-            className="mx-auto h-20 w-20 select-none object-contain sm:h-36 sm:w-36"
-          />
-          <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
-          </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
-            Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
-          </p>
+      <main className="w-full max-w-full overflow-x-hidden">
+        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-6 pb-20 text-center sm:px-10 sm:pt-10 sm:pb-28">
+          <div className="mx-auto max-w-[1440px]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/70 shadow-soft ring-1 ring-primary/10 backdrop-blur-sm sm:h-28 sm:w-28">
+              <img
+                src={assistantImg}
+                alt="KI-Reiseassistentin"
+                width={160}
+                height={160}
+                className="h-14 w-14 select-none object-contain sm:h-20 sm:w-20"
+              />
+            </div>
+            <h1
+              className="mt-4 font-semibold leading-tight text-foreground"
+              style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)" }}
+            >
+              Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
+            </h1>
+            <p
+              className="mx-auto mt-3 max-w-md text-muted-foreground"
+              style={{ fontSize: "clamp(0.875rem, 1.6vw, 1rem)" }}
+            >
+              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
+            </p>
 
-          <div className="mt-8 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
-            <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
-            <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
-            <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
+            <div className="mt-6 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
+              <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
+              <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
+              <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
+            </div>
           </div>
         </section>
 
-        <section className="w-full max-w-full px-5 pb-8 pt-6 sm:px-10 sm:pt-8">
-          <ChatPanel onPackagesReady={setPackages} />
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
-          </p>
+        <section className="relative -mt-16 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
+          <div className="mx-auto max-w-[1100px]">
+            <ChatPanel onPackagesReady={setPackages} />
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
+            </p>
+          </div>
         </section>
       </main>
 
