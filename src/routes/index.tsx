@@ -123,7 +123,7 @@ function SiteHeader() {
           <img
             src={logo}
             alt="Weltweiturlaub.de — Reise planen in 2 Minuten"
-            className="h-10 w-auto sm:h-12 md:h-14"
+            className="h-12 w-auto sm:h-12 md:h-14"
           />
         </Link>
         <DropdownMenu>
