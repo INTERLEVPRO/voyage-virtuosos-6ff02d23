@@ -99,7 +99,7 @@ function FeatureChip({
   body: string;
 }) {
   return (
-    <div className="flex min-w-[160px] snap-center items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft">
+    <div className="flex w-full max-w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:min-w-[160px] sm:w-auto">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Icon className="h-4 w-4" />
       </div>
