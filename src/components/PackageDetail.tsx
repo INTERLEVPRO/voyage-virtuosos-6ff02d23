@@ -261,18 +261,51 @@ export function PackageDetail({
   const showPlanCheck = mode.kind !== "planOk";
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
+    <section className="mx-auto max-w-5xl px-4 pb-28 pt-4 sm:px-6 sm:py-10 sm:pb-10">
       {/* Back + tier */}
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
         >
-          <ArrowLeft className="h-4 w-4" /> Zurück zu den Paketen
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span><span className="sm:hidden">Zurück</span>
         </button>
-        <span className={`rounded-md px-2.5 py-1 text-xs font-bold tracking-wider ${tier.cls}`}>
+        <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
           {tier.label}
         </span>
+      </div>
+
+      {/* Mobile sticky tab bar — app-like nav */}
+      <div className="sticky top-[60px] z-10 -mx-4 mb-4 border-b border-border bg-background/95 px-2 backdrop-blur sm:hidden">
+        <div className="flex items-center justify-around">
+          {([
+            { id: "overview", label: "Übersicht", Icon: LayoutGrid },
+            { id: "days", label: "Tage", Icon: CalendarDays },
+            { id: "book", label: "Buchen", Icon: ShoppingBag },
+            { id: "reviews", label: "Reviews", Icon: MessageCircle },
+          ] as const).map(({ id, label, Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(id);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-0.5 border-b-2 px-2 py-2.5 text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
