@@ -639,15 +639,56 @@ export function PackageDetail({
       </div>
 
       {/* Trust strip */}
-      <div className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3">
+      <div className={cn("mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3", activeTab !== "overview" && "max-sm:hidden")}>
         <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
+      <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
         🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
       </p>
+
+      {/* Mobile sticky bottom action bar — app-like CTA */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 shadow-luxe backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+            <div className="truncate text-lg font-extrabold text-foreground">
+              € {currentPkg.price.toLocaleString("de-DE")}
+            </div>
+          </div>
+          {currentPkg.bookingLinks?.hotel ? (
+            <a
+              href={currentPkg.bookingLinks.hotel}
+              onClick={(event) => {
+                void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
+                event.preventDefault();
+                try {
+                  if (window.top && window.top !== window) {
+                    window.top.location.href = currentPkg.bookingLinks!.hotel!;
+                    return;
+                  }
+                } catch {
+                  // ignore
+                }
+                window.location.href = currentPkg.bookingLinks!.hotel!;
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+            >
+              <Hotel className="h-4 w-4" /> Hotel buchen
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveTab("book")}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+            >
+              <ShoppingBag className="h-4 w-4" /> Jetzt buchen
+            </button>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
