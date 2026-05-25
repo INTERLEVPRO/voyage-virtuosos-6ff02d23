@@ -52,7 +52,7 @@ function placeholderLinks(destination: string) {
   const q = encodeURIComponent(destination);
   return {
     hotel: `https://www.booking.com/searchresults.html?ss=${q}`,
-    flight: `https://www.skyscanner.de/transport/fluge-nach/${q}/`,
+    flight: `https://www.skyscanner.de/`,
     activities: `https://www.getyourguide.de/s/?q=${q}`,
   };
 }
