@@ -192,6 +192,7 @@ export function PackageDetail({
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "days" | "book" | "reviews">("overview");
 
   const tier = TIER_BADGE[currentPkg.type];
 
