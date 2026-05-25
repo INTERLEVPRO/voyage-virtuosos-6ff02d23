@@ -160,3 +160,9 @@
 .prose-luxe ul { margin: 0.5rem 0 0.5rem 1.25rem; list-style: disc; }
 .prose-luxe li { margin: 0.25rem 0; }
 .prose-luxe strong { color: var(--primary); font-weight: 600; }
+
+/* Composer textarea: kill native spinners/resize handles */
+.composer-textarea { resize: none !important; -webkit-appearance: none; appearance: none; background-image: none !important; }
+.composer-textarea::-webkit-resizer { display: none; }
+.composer-textarea::-webkit-inner-spin-button,
+.composer-textarea::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; display: none; }
