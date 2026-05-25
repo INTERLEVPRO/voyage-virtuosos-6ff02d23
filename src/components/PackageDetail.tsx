@@ -626,15 +626,17 @@ function ProviderRow({
       <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
         <div className="text-lg font-bold text-foreground">€ {price.toLocaleString("de-DE")}</div>
         {url && (
-          <button
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener"
             onClick={() => {
-              trackClick(packageId, provider, url);
-              window.open(url, "_blank", "noopener");
+              void trackClick(packageId, provider, url);
             }}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
           >
             {ctaLabel} <ExternalLink className="h-3.5 w-3.5" />
-          </button>
+          </a>
         )}
       </div>
     </div>
