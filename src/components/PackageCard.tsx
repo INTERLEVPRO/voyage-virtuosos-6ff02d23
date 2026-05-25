@@ -71,8 +71,14 @@ export function PackageCard({
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
       {/* Top rated badge */}
       {isTopRated && (
-        <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
-          <ThumbsUp className="h-3 w-3" /> Top bewertet
+        <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-2 rounded-2xl bg-white/95 px-3 py-2 shadow-lg ring-1 ring-border backdrop-blur">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50">
+            <ThumbsUp className="h-3.5 w-3.5 text-emerald-600" />
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-[12px] font-bold text-foreground">Top bewertet</span>
+            <span className="text-[10px] text-muted-foreground">Echte deutsche Reviews</span>
+          </span>
         </div>
       )}
 
