@@ -345,7 +345,7 @@ export function PackageDetail({
       </div>
 
       {/* Hero image */}
-      <div className="mt-5 overflow-hidden rounded-2xl shadow-card">
+      <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <img
           src={tier.image}
           alt={currentPkg.destination}
