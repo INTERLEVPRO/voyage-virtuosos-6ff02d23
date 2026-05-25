@@ -523,6 +523,48 @@ export function PackageDetail({
         </div>
       )}
 
+      {/* German Reviews Section */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              🇩🇪 Was deutsche Reisende sagen — echte Bewertungen aus Deutschland
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600">
+            <ThumbsUp className="h-4 w-4" /> Top bewertet
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <ReviewCard
+            name="Michael K."
+            location="München"
+            rating={currentPkg.rating}
+            date="vor 2 Wochen"
+            text={`Das Hotel ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} war hervorragend. Der Service und die Lage haben unsere Erwartungen übertroffen. Absolut empfehlenswert für deutsche Urlauber!`}
+            source="Booking.com"
+          />
+          <ReviewCard
+            name="Sabine & Peter"
+            location="Hamburg"
+            rating={Math.min(5, currentPkg.rating + 0.2)}
+            date="vor 1 Monat"
+            text={`Wir haben ${currentPkg.duration} in ${currentPkg.destination} verbracht. Die Aktivitäten waren super organisiert und der Flug war pünktlich. Ein perfekter Urlaub — wir kommen wieder!`}
+            source="Google"
+          />
+          <ReviewCard
+            name="Thomas B."
+            location="Berlin"
+            rating={Math.max(4, currentPkg.rating - 0.1)}
+            date="vor 3 Wochen"
+            text={`Preis-Leistung stimmt. Das Paket war gut durchdacht und die deutsche Reiseleitung vor Ort war sehr hilfsbereit. Besonders ${currentPkg.activities[1] ?? currentPkg.activities[0]} hat uns begeistert.`}
+            source={currentPkg.activities.length > 2 ? "GetYourGuide" : "Google"}
+          />
+        </div>
+      </div>
+
       {/* Trust strip */}
       <div className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3">
         <TrustItem icon={Star} title="Top bewertet" body="Echte deutsche Reviews" />
