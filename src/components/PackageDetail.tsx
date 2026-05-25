@@ -424,7 +424,7 @@ export function PackageDetail({
       </div>
 
       {/* Total price strip */}
-      <div className="mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className={cn("mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
           <div className="text-2xl font-extrabold text-foreground">
