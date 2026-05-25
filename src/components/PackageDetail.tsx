@@ -439,7 +439,7 @@ export function PackageDetail({
 
       {/* Plan-Check */}
       {showPlanCheck && (
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
           <h2 className="text-lg font-semibold text-foreground">
             Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
           </h2>
