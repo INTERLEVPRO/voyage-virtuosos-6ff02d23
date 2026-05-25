@@ -578,7 +578,7 @@ export function PackageDetail({
 
 
       {/* Activities list */}
-      <div className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-5 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <h2 className="text-lg font-semibold text-foreground">Aktivitäten inklusive</h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {currentPkg.activities.map((a) => (
