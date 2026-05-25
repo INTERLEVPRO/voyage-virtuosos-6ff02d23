@@ -219,7 +219,7 @@ export function ChatPanel({
           aria-label="Senden"
           className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.02] disabled:opacity-50 sm:w-auto sm:px-5"
         >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           <span className="hidden sm:inline">Senden</span>
         </button>
       </form>
