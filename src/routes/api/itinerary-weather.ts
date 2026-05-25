@@ -88,7 +88,7 @@ async function geocode(destination: string): Promise<{ lat: number; lon: number;
     for (const lang of ["de", "en"]) {
       try {
         const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${lang}&format=json`;
-        const r = await fetch(url);
+        const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
         if (!r.ok) continue;
         const data = (await r.json()) as { results?: Array<{ latitude: number; longitude: number; name: string; country?: string }> };
         const hit = data.results?.[0];
