@@ -196,13 +196,18 @@ export function ChatPanel({
       {/* Composer — ChatGPT/Gemini style */}
       <form
         onSubmit={(e) => { e.preventDefault(); submit(input); }}
-        className="border-t border-border bg-card p-3 sm:p-4"
+        className="w-full max-w-full overflow-x-hidden border-t border-border bg-card px-4 py-3 sm:px-6 sm:py-4"
       >
-        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-[28px] border border-border bg-background px-3 py-2 shadow-soft transition-all focus-within:border-primary/50 focus-within:shadow-card">
+        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-[28px] border border-border bg-background px-3 py-2.5 shadow-soft transition-all focus-within:border-primary/50 focus-within:shadow-card">
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 160) + "px";
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -210,20 +215,24 @@ export function ChatPanel({
               }
             }}
             rows={1}
-            placeholder="Beschreibe deinen Traumurlaub… z. B. 7 Tage Mallorca, 2 Personen"
-            className="min-h-[40px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            placeholder="Schreib mir deinen Reisewunsch…"
+            className="min-h-[48px] max-h-[160px] flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-3 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            style={{ height: 48 }}
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
             aria-label="Senden"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
-        <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+        <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground">
+          z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €
+        </p>
+        <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
           <ShieldCheck className="h-3 w-3 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>
