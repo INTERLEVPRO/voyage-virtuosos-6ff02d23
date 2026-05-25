@@ -21,6 +21,9 @@ import {
   Mail,
   Ticket,
   Car,
+  ThumbsUp,
+  MessageSquare,
+  Quote,
 } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import { RefineComposer } from "./RefineComposer";
