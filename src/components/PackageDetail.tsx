@@ -288,7 +288,7 @@ export function PackageDetail({
         <a
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener"
           onClick={(e) => {
             e.preventDefault();
             openRouteInMaps(currentPkg.destination);
@@ -486,7 +486,7 @@ export function PackageDetail({
                 <a
                   href={mapsRouteUrl(currentPkg.destination, d.title)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   onClick={(e) => {
                     e.preventDefault();
                     openRouteInMaps(currentPkg.destination, d.title);
@@ -510,7 +510,7 @@ export function PackageDetail({
                 <a
                   href={bookingHotelUrl(currentPkg.destination)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Hotel className="h-3 w-3" /> Hotel buchen
@@ -518,7 +518,7 @@ export function PackageDetail({
                 <a
                   href={gygActivityUrl(currentPkg.destination, d.title)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Ticket className="h-3 w-3" /> Aktivität buchen
@@ -526,7 +526,7 @@ export function PackageDetail({
                 <a
                   href={transferUrl(currentPkg.destination)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Car className="h-3 w-3" /> Transfer
