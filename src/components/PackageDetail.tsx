@@ -662,3 +662,48 @@ function TrustItem({
     </div>
   );
 }
+
+function ReviewCard({
+  name,
+  location,
+  rating,
+  date,
+  text,
+  source,
+}: {
+  name: string;
+  location: string;
+  rating: number;
+  date: string;
+  text: string;
+  source: string;
+}) {
+  return (
+    <div className="flex flex-col rounded-xl border border-border bg-secondary/30 p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+            {name.split(" ").map((n) => n[0]).join("")}
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-foreground">{name}</div>
+            <div className="text-[11px] text-muted-foreground">{location}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-bold text-amber-600">
+          <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> {rating.toFixed(1)}
+        </div>
+      </div>
+      <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/80">
+        <Quote className="mb-1 mr-1 inline h-3 w-3 text-muted-foreground/50" />
+        {text}
+      </p>
+      <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" /> {source}
+        </span>
+        <span>{date}</span>
+      </div>
+    </div>
+  );
+}
