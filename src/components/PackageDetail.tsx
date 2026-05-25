@@ -288,6 +288,10 @@ export function PackageDetail({
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => {
+            e.preventDefault();
+            openRouteInMaps(currentPkg.destination);
+          }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
         >
           <MapPin className="h-4 w-4" /> Route auf Google Maps
