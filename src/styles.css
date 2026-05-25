@@ -161,8 +161,14 @@
 .prose-luxe li { margin: 0.25rem 0; }
 .prose-luxe strong { color: var(--primary); font-weight: 600; }
 
-/* Composer textarea: kill native spinners/resize handles */
-.composer-textarea { resize: none !important; -webkit-appearance: none; appearance: none; background-image: none !important; }
+/* Composer textarea: kill native spinners/resize handles/scrollbar buttons */
+.composer-textarea { resize: none !important; -webkit-appearance: none; appearance: none; background-image: none !important; scrollbar-width: thin; }
 .composer-textarea::-webkit-resizer { display: none; }
 .composer-textarea::-webkit-inner-spin-button,
 .composer-textarea::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; display: none; }
+.composer-textarea::-webkit-scrollbar { width: 6px; }
+.composer-textarea::-webkit-scrollbar-button,
+.composer-textarea::-webkit-scrollbar-button:single-button,
+.composer-textarea::-webkit-scrollbar-button:start,
+.composer-textarea::-webkit-scrollbar-button:end { display: none !important; height: 0 !important; width: 0 !important; }
+.composer-textarea::-webkit-scrollbar-thumb { background: transparent; }
