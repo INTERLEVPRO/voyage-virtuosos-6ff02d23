@@ -1,4 +1,4 @@
-import { Star, Sparkles, ArrowRight, ThumbsUp, MessageSquare } from "lucide-react";
+import { Star, Sparkles, ArrowRight, ThumbsUp } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
