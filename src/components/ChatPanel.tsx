@@ -215,7 +215,7 @@ export function ChatPanel({
               }
             }}
             rows={1}
-            placeholder="Schreib mir deinen Reisewunsch…"
+            placeholder=""
             className="composer-textarea min-h-[48px] max-h-[160px] flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-3 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 [appearance:none] [-webkit-appearance:none]"
             style={{ height: 48, resize: "none" }}
             disabled={isLoading}
