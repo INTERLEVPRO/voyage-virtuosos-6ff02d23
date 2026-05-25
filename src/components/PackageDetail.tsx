@@ -507,7 +507,7 @@ export function PackageDetail({
       )}
 
       {/* Itinerary detail with maps + booking help per day */}
-      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "days" && "max-sm:hidden")}>
         <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
