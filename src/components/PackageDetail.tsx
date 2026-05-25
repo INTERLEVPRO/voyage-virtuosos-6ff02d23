@@ -567,7 +567,7 @@ export function PackageDetail({
 
       {/* Trust strip */}
       <div className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3">
-        <TrustItem icon={Star} title="Top bewertet" body="Echte deutsche Reviews" />
+        <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
