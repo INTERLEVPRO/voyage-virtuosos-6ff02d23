@@ -323,7 +323,7 @@ export function PackageDetail({
       </div>
 
       {/* Top actions: Maps + Email */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className={cn("mt-4 flex flex-wrap gap-2", activeTab !== "overview" && "max-sm:hidden")}>
         <a
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
