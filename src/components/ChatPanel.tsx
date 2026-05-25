@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
+import { Send, Loader2, Sparkles, MessageCircle, ShieldCheck } from "lucide-react";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
 
 const STARTER_PROMPTS: { emoji: string; title: string; subtitle: string; prompt: string }[] = [
