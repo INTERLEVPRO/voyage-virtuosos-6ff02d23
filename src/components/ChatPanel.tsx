@@ -193,36 +193,38 @@ export function ChatPanel({
         )}
       </div>
 
-      {/* Composer */}
+      {/* Composer — ChatGPT/Gemini style */}
       <form
         onSubmit={(e) => { e.preventDefault(); submit(input); }}
-        className="grid grid-cols-1 gap-2 border-t border-border bg-card p-3 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-3 sm:p-4"
+        className="border-t border-border bg-card p-3 sm:p-4"
       >
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit(input);
-            }
-          }}
-          placeholder="Beschreibe deinen Traumurlaub… z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €"
-          className="min-h-[56px] max-h-[140px] min-w-0 resize-none rounded-[18px] border border-input bg-background px-4 py-3.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          aria-label="Senden"
-          className="flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] bg-primary text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.02] disabled:opacity-50 sm:w-auto sm:px-6"
-        >
-          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          <span className="hidden sm:inline">Senden</span>
-        </button>
-        <p className="col-span-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
+        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-[28px] border border-border bg-background px-3 py-2 shadow-soft transition-all focus-within:border-primary/50 focus-within:shadow-card">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit(input);
+              }
+            }}
+            rows={1}
+            placeholder="Beschreibe deinen Traumurlaub… z. B. 7 Tage Mallorca, 2 Personen"
+            className="min-h-[40px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            aria-label="Senden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </button>
+        </div>
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+          <ShieldCheck className="h-3 w-3 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>
     </div>
