@@ -486,6 +486,10 @@ export function PackageDetail({
                   href={mapsRouteUrl(currentPkg.destination, d.title)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openRouteInMaps(currentPkg.destination, d.title);
+                  }}
                   className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
                   title="Route auf Google Maps anzeigen"
                 >
