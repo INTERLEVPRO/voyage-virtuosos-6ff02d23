@@ -128,7 +128,7 @@ export function ChatPanel({
             <p className="text-sm text-muted-foreground">
               Reiseziel, Budget, Dauer, Stil — je mehr du erzählst, desto besser passen die 3 Pakete.
             </p>
-            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 pt-1 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible">
+            <div className="grid w-full max-w-full grid-cols-1 gap-3 pb-2 pt-1 sm:grid-cols-3">
               {STARTER_PROMPTS.map((p) => (
                 <button
                   key={p.title}
