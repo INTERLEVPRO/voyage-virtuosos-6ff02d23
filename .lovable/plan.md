@@ -1,19 +1,21 @@
-## Badge-Text auf natürlicheres Deutsch umstellen
+## Problem
 
-In `src/components/PackageCard.tsx` (Zeilen 68–73) ist der „Top bewertet"-Badge aktuell mit dem Untertitel **„Echte deutsche Reviews"** beschriftet. „Reviews" ist Anglizismus.
+Die „Route"-Buttons (Header + jeder Tag) öffnen Google Maps mit `origin=My+Location`. Das funktioniert in Google Maps nicht zuverlässig — Maps ignoriert den Parameter oft und zeigt kein Ziel oder eine leere Route. Deshalb wirkt der Button „kaputt".
 
-### Vorschlag (Empfehlung)
-- Titel: **Top bewertet**
-- Untertitel: **Echte Bewertungen aus Deutschland**
+## Lösung
 
-### Alternativen (falls kürzer gewünscht)
-1. „Top bewertet" / **„Echte Kundenbewertungen"**
-2. „Top bewertet" / **„Echte Erfahrungen"**
-3. „Bestens bewertet" / **„Echte Bewertungen"**
+Vor dem Öffnen den echten Standort des Nutzers per Browser-Geolocation-API holen und als `origin=lat,lng` in die Google-Maps-URL einsetzen. Wenn der Nutzer den Standort ablehnt oder kein GPS hat, fallen wir auf eine URL **ohne** `origin` zurück — dann fragt Google Maps selbst nach dem Startpunkt (das ist viel zuverlässiger als `My+Location`).
 
-### Konsistenz
-Im Hero (`src/routes/index.tsx`) steht aktuell der Trust-Chip „Top bewertet — Echte Reviews". Diesen passe ich im selben Schritt an die gewählte Variante an, damit Badge + Hero gleich klingen.
+## Änderungen
 
-Sonst keine weiteren Änderungen.
+**Datei:** `src/components/PackageDetail.tsx`
 
-**Welche Variante soll ich nehmen — Empfehlung (1), Alt 1, Alt 2 oder Alt 3?**
+1. `mapsRouteUrl(destination, place?)` so anpassen, dass es optional `origin` (z. B. `"48.13,11.57"`) entgegennimmt. Ohne `origin` wird der Parameter weggelassen.
+2. Neuer Helper `openRouteInMaps(destination, place?)`:
+   - Versucht `navigator.geolocation.getCurrentPosition` (Timeout 6 s, kein hochpräziser Modus).
+   - Bei Erfolg: öffnet die URL mit `origin=lat,lng`.
+   - Bei Ablehnung/Fehler/Timeout: öffnet die URL ohne `origin` (Google fragt dann selbst).
+   - Öffnet immer in neuem Tab (`window.open(url, "_blank", "noopener")`).
+3. Die zwei `<a href={mapsRouteUrl(...)}>`-Stellen (Header-Button Zeile ~263, Tag-Karten-Button Zeile ~457) bleiben Anker-Tags mit `target="_blank"`, bekommen aber zusätzlich einen `onClick`, der `e.preventDefault()` macht und `openRouteInMaps(...)` aufruft. So gibt es einen sinnvollen `href`-Fallback (Rechtsklick / „in neuem Tab öffnen") und der normale Klick nutzt den echten Standort.
+
+Keine weiteren Dateien betroffen, keine Backend-/Schema-Änderungen.

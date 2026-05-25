@@ -45,9 +45,34 @@ async function trackClick(packageId: string, provider: string, url: string) {
   }
 }
 
-function mapsRouteUrl(destination: string, place?: string) {
+function mapsRouteUrl(destination: string, place?: string, origin?: string) {
   const dest = encodeURIComponent(place ? `${place}, ${destination}` : destination);
-  return `https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${dest}&travelmode=driving`;
+  const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : "";
+  return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${dest}&travelmode=driving`;
+}
+
+function openRouteInMaps(destination: string, place?: string) {
+  const openWith = (origin?: string) => {
+    const url = mapsRouteUrl(destination, place, origin);
+    window.open(url, "_blank", "noopener");
+  };
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    openWith();
+    return;
+  }
+  let done = false;
+  const finish = (origin?: string) => {
+    if (done) return;
+    done = true;
+    openWith(origin);
+  };
+  navigator.geolocation.getCurrentPosition(
+    (pos) => finish(`${pos.coords.latitude},${pos.coords.longitude}`),
+    () => finish(),
+    { timeout: 6000, maximumAge: 60000 },
+  );
+  // Safety net in case the browser never resolves
+  setTimeout(() => finish(), 6500);
 }
 
 function bookingHotelUrl(destination: string) {
@@ -263,6 +288,10 @@ export function PackageDetail({
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => {
+            e.preventDefault();
+            openRouteInMaps(currentPkg.destination);
+          }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
         >
           <MapPin className="h-4 w-4" /> Route auf Google Maps
@@ -457,6 +486,10 @@ export function PackageDetail({
                   href={mapsRouteUrl(currentPkg.destination, d.title)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openRouteInMaps(currentPkg.destination, d.title);
+                  }}
                   className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
                   title="Route auf Google Maps anzeigen"
                 >
