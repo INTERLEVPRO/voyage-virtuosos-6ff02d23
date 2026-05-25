@@ -54,29 +54,29 @@ function Index() {
       <SiteHeader />
 
       <main>
-        <section className="relative overflow-hidden bg-gradient-soft-sky px-5 pt-10 pb-8 text-center sm:px-10 sm:pt-14 sm:pb-10">
+        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-8 pb-8 text-center sm:px-10 sm:pt-14 sm:pb-10">
           <img
             src={assistantImg}
             alt="KI-Reiseassistentin"
             width={180}
             height={180}
-            className="mx-auto h-28 w-28 select-none object-contain sm:h-36 sm:w-36"
+            className="mx-auto h-20 w-20 select-none object-contain sm:h-36 sm:w-36"
           />
-          <h1 className="mt-4 text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+          <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
             Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
             Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
           </p>
 
-          <div className="-mx-2 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 sm:justify-center sm:overflow-visible">
+          <div className="mt-8 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
             <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
             <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
             <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
           </div>
         </section>
 
-        <section className="px-5 pb-8 pt-6 sm:px-10 sm:pt-8">
+        <section className="w-full max-w-full px-5 pb-8 pt-6 sm:px-10 sm:pt-8">
           <ChatPanel onPackagesReady={setPackages} />
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" /> Deine Daten sind sicher und werden nicht weitergegeben.
