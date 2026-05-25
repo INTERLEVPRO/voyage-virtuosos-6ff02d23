@@ -72,7 +72,7 @@ function Index() {
           <div className="-mx-2 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-1 sm:justify-center sm:overflow-visible">
             <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
             <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
-            <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Reviews" />
+            <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
           </div>
         </section>
 
