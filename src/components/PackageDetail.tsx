@@ -139,20 +139,16 @@ function transferUrl(destination: string) {
   return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
 }
 
-const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
-  basic: { label: "BASIC PAKET", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
-  medium: { label: "MEDIUM PAKET", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
-  premium: { label: "PREMIUM PAKET", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
+const TIER_BADGE: Record<TravelPackage["type"], { labelKey: string; cls: string; image: string }> = {
+  basic: { labelKey: "detail.basicLabel", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
+  medium: { labelKey: "detail.mediumLabel", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
+  premium: { labelKey: "detail.premiumLabel", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
 };
 
 const DAY_ICONS = [Plane, Waves, Building2, Camera, Sun, Palmtree, Compass, Utensils];
 
-const QUICK_ACTIONS: { label: string; request: string }[] = [
-  { label: "Anderes Hotel", request: "Bitte schlage ein anderes Hotel vor." },
-  { label: "Günstiger machen", request: "Bitte mache das Paket günstiger." },
-  { label: "Mehr Luxus", request: "Bitte mache das Paket luxuriöser." },
-  { label: "Mehr Aktivitäten", request: "Bitte füge mehr Aktivitäten hinzu." },
-];
+const QUICK_ACTION_KEYS = ["otherHotel", "cheaper", "moreLuxury", "moreActivities"] as const;
+type QuickActionKey = (typeof QUICK_ACTION_KEYS)[number];
 
 type RefineResponse =
   | {
