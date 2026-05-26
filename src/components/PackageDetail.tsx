@@ -213,6 +213,7 @@ export function PackageDetail({
           selectedPackage: currentPkg,
           changeRequest,
           userConfirmedBudget,
+          language: lang,
         }),
       });
       const data = (await res.json()) as RefineResponse;
@@ -229,15 +230,15 @@ export function PackageDetail({
       } else if (data.status === "updated") {
         setCurrentPkg(data.updatedPackage);
         setMode({ kind: "idle" });
-        setNotice(`Alles klar, ich habe dein Paket angepasst. ${data.changeSummary}`);
+        setNotice(t("detail.refineApplied", { summary: data.changeSummary }));
       } else if (data.status === "rejected") {
         setMode({ kind: "idle" });
         setNotice(data.message);
       } else {
-        setNotice(data.message ?? "Etwas ist schiefgegangen.");
+        setNotice(data.message ?? t("detail.refineError"));
       }
     } catch {
-      setNotice("Verbindung fehlgeschlagen. Bitte versuche es erneut.");
+      setNotice(t("detail.refineFailed"));
     } finally {
       setLoading(false);
     }
@@ -255,7 +256,7 @@ export function PackageDetail({
 
   function handleCancelPrice() {
     setMode({ kind: "idle" });
-    setNotice("Kein Problem, ich lasse den ursprünglichen Plan unverändert.");
+    setNotice(t("detail.refineKeep"));
   }
 
   const showPlanCheck = mode.kind !== "planOk";
@@ -268,10 +269,10 @@ export function PackageDetail({
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
         >
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span><span className="sm:hidden">Zurück</span>
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{t("common.backToPackages")}</span><span className="sm:hidden">{t("common.back")}</span>
         </button>
         <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
-          {tier.label}
+          {t(tier.labelKey)}
         </span>
       </div>
 
