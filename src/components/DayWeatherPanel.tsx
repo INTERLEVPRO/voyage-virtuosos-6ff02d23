@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   Cloud,
@@ -50,20 +51,25 @@ function ConditionIcon({ condition, className = "h-5 w-5" }: { condition: string
   return <CloudSun className={className} />;
 }
 
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "short" });
-  } catch {
-    return iso;
-  }
-}
-
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return iso;
-  }
+function useDateFormatters() {
+  const { i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage || "de") === "en" ? "en-US" : "de-DE";
+  return {
+    formatDate(iso: string) {
+      try {
+        return new Date(iso).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" });
+      } catch {
+        return iso;
+      }
+    },
+    formatTime(iso: string) {
+      try {
+        return new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+      } catch {
+        return iso;
+      }
+    },
+  };
 }
 
 export function DayWeatherToggle({
