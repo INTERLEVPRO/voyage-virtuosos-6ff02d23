@@ -654,9 +654,9 @@ export function PackageDetail({
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 shadow-luxe backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("detail.totalPrice")}</div>
             <div className="truncate text-lg font-extrabold text-foreground">
-              € {currentPkg.price.toLocaleString("de-DE")}
+              € {currentPkg.price.toLocaleString(locale)}
             </div>
           </div>
           {currentPkg.bookingLinks?.hotel ? (
@@ -677,7 +677,7 @@ export function PackageDetail({
               }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
-              <Hotel className="h-4 w-4" /> Hotel buchen
+              <Hotel className="h-4 w-4" /> {t("detail.bookHotel")}
             </a>
           ) : (
             <button
@@ -685,7 +685,7 @@ export function PackageDetail({
               onClick={() => setActiveTab("book")}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
-              <ShoppingBag className="h-4 w-4" /> Jetzt buchen
+              <ShoppingBag className="h-4 w-4" /> {t("detail.bookNow")}
             </button>
           )}
         </div>
