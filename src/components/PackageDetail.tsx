@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Sparkles,
@@ -89,46 +90,46 @@ function gygActivityUrl(destination: string, query?: string) {
   const q = query ? `${query} ${destination}` : destination;
   return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
 }
-function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
+function buildMailto(
+  pkg: import("@/types/travel").TravelPackage,
+  t: (k: string, opts?: Record<string, unknown>) => string,
+  locale: string,
+  weather?: WeatherResponse,
+) {
   const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
   weather?.days.forEach((d) => weatherByDay.set(d.day, d));
   const lines: string[] = [];
-  lines.push(`Mein Reiseplan: ${pkg.title}`);
-  lines.push(`Ziel: ${pkg.destination}`);
-  lines.push(`Dauer: ${pkg.duration}`);
-  lines.push(`Preis: € ${pkg.price.toLocaleString("de-DE")}`);
+  lines.push(`${t("detail.mailSubject", { defaultValue: "My trip plan" })}: ${pkg.title}`);
+  lines.push(`${t("detail.mailDest", { defaultValue: "Destination" })}: ${pkg.destination}`);
+  lines.push(`${t("detail.mailDuration", { defaultValue: "Duration" })}: ${pkg.duration}`);
+  lines.push(`${t("detail.totalPrice")}: € ${pkg.price.toLocaleString(locale)}`);
   lines.push("");
-  lines.push(`Hotel: ${pkg.hotel}`);
-  lines.push(`Flug: ${pkg.flight}`);
-  if (pkg.mealPlan) lines.push(`Verpflegung: ${pkg.mealPlan}`);
+  lines.push(`${t("detail.hotel")}: ${pkg.hotel}`);
+  lines.push(`${t("detail.flights")}: ${pkg.flight}`);
+  if (pkg.mealPlan) lines.push(`${t("detail.mailMeal", { defaultValue: "Meal plan" })}: ${pkg.mealPlan}`);
   lines.push("");
-  lines.push("=== Tag für Tag ===");
+  lines.push(`=== ${t("detail.daysTitle")} ===`);
   pkg.itinerary.forEach((d) => {
-    lines.push(`Tag ${d.day} — ${d.title}`);
+    lines.push(`${t("detail.day")} ${d.day} — ${d.title}`);
     lines.push(d.description);
     const w = weatherByDay.get(d.day);
     if (w) {
-      const src =
-        w.weather.source === "seasonal"
-          ? "Saisonale Schätzung, keine exakte Vorhersage"
-          : w.weather.label;
       lines.push(
-        `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
+        `${t("weather.title")}: ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, ${t("weather.rain")} ${w.weather.rainChance}%.`,
       );
     }
-    lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
+    lines.push(`${t("detail.route")}: ${mapsRouteUrl(pkg.destination, d.title)}`);
     lines.push("");
   });
-  lines.push("=== Aktivitäten ===");
+  lines.push(`=== ${t("detail.includedActivities")} ===`);
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
-  lines.push("=== Buchungs-Links ===");
   lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
-  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
-  lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
+  lines.push(`${t("detail.activities")}: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`${t("detail.transfer")}: ${transferUrl(pkg.destination)}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
-  const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
+  const subject = encodeURIComponent(`${t("detail.mailSubject", { defaultValue: "My trip plan" })}: ${pkg.title}`);
   const body = encodeURIComponent(lines.join("\n"));
   return `mailto:?subject=${subject}&body=${body}`;
 }
@@ -138,20 +139,16 @@ function transferUrl(destination: string) {
   return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
 }
 
-const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
-  basic: { label: "BASIC PAKET", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
-  medium: { label: "MEDIUM PAKET", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
-  premium: { label: "PREMIUM PAKET", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
+const TIER_BADGE: Record<TravelPackage["type"], { labelKey: string; cls: string; image: string }> = {
+  basic: { labelKey: "detail.basicLabel", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
+  medium: { labelKey: "detail.mediumLabel", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
+  premium: { labelKey: "detail.premiumLabel", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
 };
 
 const DAY_ICONS = [Plane, Waves, Building2, Camera, Sun, Palmtree, Compass, Utensils];
 
-const QUICK_ACTIONS: { label: string; request: string }[] = [
-  { label: "Anderes Hotel", request: "Bitte schlage ein anderes Hotel vor." },
-  { label: "Günstiger machen", request: "Bitte mache das Paket günstiger." },
-  { label: "Mehr Luxus", request: "Bitte mache das Paket luxuriöser." },
-  { label: "Mehr Aktivitäten", request: "Bitte füge mehr Aktivitäten hinzu." },
-];
+const QUICK_ACTION_KEYS = ["otherHotel", "cheaper", "moreLuxury", "moreActivities"] as const;
+type QuickActionKey = (typeof QUICK_ACTION_KEYS)[number];
 
 type RefineResponse =
   | {
@@ -188,6 +185,9 @@ export function PackageDetail({
   pkg: TravelPackage;
   onBack: () => void;
 }) {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || i18n.language || "de").slice(0, 2);
+  const locale = lang === "en" ? "en-US" : "de-DE";
   const [currentPkg, setCurrentPkg] = useState<TravelPackage>(pkg);
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
@@ -213,6 +213,7 @@ export function PackageDetail({
           selectedPackage: currentPkg,
           changeRequest,
           userConfirmedBudget,
+          language: lang,
         }),
       });
       const data = (await res.json()) as RefineResponse;
@@ -229,15 +230,15 @@ export function PackageDetail({
       } else if (data.status === "updated") {
         setCurrentPkg(data.updatedPackage);
         setMode({ kind: "idle" });
-        setNotice(`Alles klar, ich habe dein Paket angepasst. ${data.changeSummary}`);
+        setNotice(t("detail.refineApplied", { summary: data.changeSummary }));
       } else if (data.status === "rejected") {
         setMode({ kind: "idle" });
         setNotice(data.message);
       } else {
-        setNotice(data.message ?? "Etwas ist schiefgegangen.");
+        setNotice(data.message ?? t("detail.refineError"));
       }
     } catch {
-      setNotice("Verbindung fehlgeschlagen. Bitte versuche es erneut.");
+      setNotice(t("detail.refineFailed"));
     } finally {
       setLoading(false);
     }
@@ -255,7 +256,7 @@ export function PackageDetail({
 
   function handleCancelPrice() {
     setMode({ kind: "idle" });
-    setNotice("Kein Problem, ich lasse den ursprünglichen Plan unverändert.");
+    setNotice(t("detail.refineKeep"));
   }
 
   const showPlanCheck = mode.kind !== "planOk";
@@ -268,10 +269,10 @@ export function PackageDetail({
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
         >
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span><span className="sm:hidden">Zurück</span>
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{t("common.backToPackages")}</span><span className="sm:hidden">{t("common.back")}</span>
         </button>
         <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
-          {tier.label}
+          {t(tier.labelKey)}
         </span>
       </div>
 
@@ -279,10 +280,10 @@ export function PackageDetail({
       <div className="sticky top-[60px] z-10 -mx-4 mb-4 border-b border-border bg-background/95 px-2 backdrop-blur sm:hidden">
         <div className="flex items-center justify-around">
           {([
-            { id: "overview", label: "Übersicht", Icon: LayoutGrid },
-            { id: "days", label: "Tage", Icon: CalendarDays },
-            { id: "book", label: "Buchen", Icon: ShoppingBag },
-            { id: "reviews", label: "Reviews", Icon: MessageCircle },
+            { id: "overview", label: t("detail.tabs.overview"), Icon: LayoutGrid },
+            { id: "days", label: t("detail.tabs.days"), Icon: CalendarDays },
+            { id: "book", label: t("detail.tabs.book"), Icon: ShoppingBag },
+            { id: "reviews", label: t("detail.tabs.reviews"), Icon: MessageCircle },
           ] as const).map(({ id, label, Icon }) => {
             const active = activeTab === id;
             return (
@@ -309,16 +310,16 @@ export function PackageDetail({
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-        Dein Urlaub in {currentPkg.destination}
+        {t("detail.yourTrip", { destination: currentPkg.destination })}
       </h1>
 
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 2 Personen</span>
-        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span>{t("detail.persons")}</span>
+        <span>{t("detail.fromFra")}</span>
         <span className="ml-auto font-semibold text-foreground">
-          Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
+          {t("detail.total", { price: currentPkg.price.toLocaleString(locale) })}
         </span>
       </div>
 
@@ -334,13 +335,13 @@ export function PackageDetail({
           }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
         >
-          <MapPin className="h-4 w-4" /> Route auf Google Maps
+          <MapPin className="h-4 w-4" /> {t("detail.routeOnMaps")}
         </a>
         <a
-          href={buildMailto(currentPkg, weatherQuery.data)}
+          href={buildMailto(currentPkg, t, locale, weatherQuery.data)}
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
         >
-          <Mail className="h-4 w-4" /> Plan per E-Mail senden
+          <Mail className="h-4 w-4" /> {t("detail.sendByEmail")}
         </a>
       </div>
 
@@ -360,7 +361,7 @@ export function PackageDetail({
 
       {/* Itinerary overview strip */}
       <div className={cn("mt-6 rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
-        <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("detail.overviewTitle")}</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
           {currentPkg.itinerary.map((d, i) => {
             const Icon = DAY_ICONS[i % DAY_ICONS.length];
@@ -369,7 +370,7 @@ export function PackageDetail({
                 <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
-                <div className="mt-2 text-xs font-semibold text-foreground">Tag {d.day}</div>
+                <div className="mt-2 text-xs font-semibold text-foreground">{t("detail.day")} {d.day}</div>
                 <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
                   {d.title}
                 </div>
@@ -383,12 +384,12 @@ export function PackageDetail({
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
-          title="Flüge"
+          title={t("detail.flights")}
           subtitle={currentPkg.flight}
           ratingLabel="Google"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
-          ctaLabel="Bei Skyscanner ansehen"
+          ctaLabel={t("detail.seeOnSkyscanner")}
           provider="flight"
           url={currentPkg.bookingLinks?.flight}
           packageId={currentPkg.id}
@@ -396,13 +397,13 @@ export function PackageDetail({
         />
         <ProviderRow
           icon={Hotel}
-          title="Hotel"
+          title={t("detail.hotel")}
           subtitle={currentPkg.hotel}
           ratingLabel="Booking.com"
           rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Booking.com ansehen"
+          ctaLabel={t("detail.seeOnBooking")}
           provider="hotel"
           url={currentPkg.bookingLinks?.hotel}
           packageId={currentPkg.id}
@@ -410,12 +411,12 @@ export function PackageDetail({
         />
         <ProviderRow
           icon={Compass}
-          title="Aktivitäten"
-          subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
+          title={t("detail.activities")}
+          subtitle={t("detail.activitiesIncluded", { count: currentPkg.activities.length })}
           ratingLabel="GetYourGuide"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
-          ctaLabel="Bei GetYourGuide ansehen"
+          ctaLabel={t("detail.seeOnGyg")}
           provider="activities"
           url={currentPkg.bookingLinks?.activities}
           packageId={currentPkg.id}
@@ -426,14 +427,14 @@ export function PackageDetail({
       {/* Total price strip */}
       <div className={cn("mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("detail.totalPrice")}</div>
           <div className="text-2xl font-extrabold text-foreground">
-            € {currentPkg.price.toLocaleString("de-DE")}
+            € {currentPkg.price.toLocaleString(locale)}
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span className="font-semibold text-foreground">{currentPkg.matchScore}% Match</span>
+          <span className="font-semibold text-foreground">{t("detail.match", { score: currentPkg.matchScore })}</span>
         </div>
       </div>
 
@@ -441,7 +442,7 @@ export function PackageDetail({
       {showPlanCheck && (
         <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
           <h2 className="text-lg font-semibold text-foreground">
-            Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
+            {t("detail.planQuestion")}
           </h2>
 
           {notice && (
@@ -461,7 +462,7 @@ export function PackageDetail({
                 }}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90 disabled:opacity-50"
               >
-                <Check className="h-4 w-4" /> Plan OK
+                <Check className="h-4 w-4" /> {t("detail.planOk")}
               </button>
               <button
                 type="button"
@@ -469,17 +470,17 @@ export function PackageDetail({
                 onClick={() => setMode({ kind: "composing" })}
                 className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
               >
-                <Pencil className="h-4 w-4" /> Plan ändern
+                <Pencil className="h-4 w-4" /> {t("detail.changePlan")}
               </button>
-              {QUICK_ACTIONS.map((a) => (
+              {QUICK_ACTION_KEYS.map((key) => (
                 <button
-                  key={a.label}
+                  key={key}
                   type="button"
                   disabled={loading}
-                  onClick={() => handleQuickAction(a.request)}
+                  onClick={() => handleQuickAction(t(`detail.quickRequests.${key}`))}
                   className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
                 >
-                  {a.label}
+                  {t(`detail.quickActions.${key}`)}
                 </button>
               ))}
             </div>
@@ -508,9 +509,9 @@ export function PackageDetail({
 
       {/* Itinerary detail with maps + booking help per day */}
       <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "days" && "max-sm:hidden")}>
-        <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("detail.daysTitle")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
+          {t("detail.daysHint")}
         </p>
         <ol className="mt-4 space-y-5">
           {currentPkg.itinerary.map((d) => (
@@ -518,7 +519,7 @@ export function PackageDetail({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-foreground">
-                    Tag {d.day} — {d.title}
+                    {t("detail.day")} {d.day} — {d.title}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
                 </div>
@@ -531,9 +532,9 @@ export function PackageDetail({
                     openRouteInMaps(currentPkg.destination, d.title);
                   }}
                   className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
-                  title="Route auf Google Maps anzeigen"
+                  title={t("detail.routeAria")}
                 >
-                  <MapPin className="h-3.5 w-3.5" /> Route
+                  <MapPin className="h-3.5 w-3.5" /> {t("detail.route")}
                 </a>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -552,7 +553,7 @@ export function PackageDetail({
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
-                  <Hotel className="h-3 w-3" /> Hotel buchen
+                  <Hotel className="h-3 w-3" /> {t("detail.bookHotel")}
                 </a>
                 <a
                   href={gygActivityUrl(currentPkg.destination, d.title)}
@@ -560,7 +561,7 @@ export function PackageDetail({
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
-                  <Ticket className="h-3 w-3" /> Aktivität buchen
+                  <Ticket className="h-3 w-3" /> {t("detail.bookActivity")}
                 </a>
                 <a
                   href={transferUrl(currentPkg.destination)}
@@ -568,7 +569,7 @@ export function PackageDetail({
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
-                  <Car className="h-3 w-3" /> Transfer
+                  <Car className="h-3 w-3" /> {t("detail.transfer")}
                 </a>
               </div>
             </li>
@@ -579,7 +580,7 @@ export function PackageDetail({
 
       {/* Activities list */}
       <div className={cn("mt-5 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
-        <h2 className="text-lg font-semibold text-foreground">Aktivitäten inklusive</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("detail.includedActivities")}</h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {currentPkg.activities.map((a) => (
             <li key={a} className="flex items-start gap-2 text-sm text-foreground/80">
@@ -591,7 +592,7 @@ export function PackageDetail({
 
       {currentPkg.whyItFits && (
         <div className={cn("mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6", activeTab !== "overview" && "max-sm:hidden")}>
-          <h2 className="text-lg font-semibold text-foreground">Warum dieses Paket zu dir passt</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t("detail.whyFits")}</h2>
           <p className="mt-2 text-sm text-foreground/80">{currentPkg.whyItFits}</p>
         </div>
       )}
@@ -600,13 +601,13 @@ export function PackageDetail({
       <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "reviews" && "max-sm:hidden")}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t("detail.reviewsTitle")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              🇩🇪 Was deutsche Reisende sagen — echte Bewertungen aus Deutschland
+              {t("detail.reviewsSubtitle")}
             </p>
           </div>
           <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600">
-            <ThumbsUp className="h-4 w-4" /> Top bewertet
+            <ThumbsUp className="h-4 w-4" /> {t("detail.topRated")}
           </div>
         </div>
 
@@ -615,24 +616,24 @@ export function PackageDetail({
             name="Michael K."
             location="München"
             rating={currentPkg.rating}
-            date="vor 2 Wochen"
-            text={`Das Hotel ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} war hervorragend. Der Service und die Lage haben unsere Erwartungen übertroffen. Absolut empfehlenswert für deutsche Urlauber!`}
+            date={t("detail.reviewAgo2w")}
+            text={t("detail.review1", { hotel: currentPkg.hotel.split(" ").slice(0, 3).join(" ") })}
             source="Booking.com"
           />
           <ReviewCard
             name="Sabine & Peter"
             location="Hamburg"
             rating={Math.min(5, currentPkg.rating + 0.2)}
-            date="vor 1 Monat"
-            text={`Wir haben ${currentPkg.duration} in ${currentPkg.destination} verbracht. Die Aktivitäten waren super organisiert und der Flug war pünktlich. Ein perfekter Urlaub — wir kommen wieder!`}
+            date={t("detail.reviewAgo1m")}
+            text={t("detail.review2", { duration: currentPkg.duration, destination: currentPkg.destination })}
             source="Google"
           />
           <ReviewCard
             name="Thomas B."
             location="Berlin"
             rating={Math.max(4, currentPkg.rating - 0.1)}
-            date="vor 3 Wochen"
-            text={`Preis-Leistung stimmt. Das Paket war gut durchdacht und die deutsche Reiseleitung vor Ort war sehr hilfsbereit. Besonders ${currentPkg.activities[1] ?? currentPkg.activities[0]} hat uns begeistert.`}
+            date={t("detail.reviewAgo3w")}
+            text={t("detail.review3", { activity: currentPkg.activities[1] ?? currentPkg.activities[0] })}
             source={currentPkg.activities.length > 2 ? "GetYourGuide" : "Google"}
           />
         </div>
@@ -640,22 +641,22 @@ export function PackageDetail({
 
       {/* Trust strip */}
       <div className={cn("mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3", activeTab !== "overview" && "max-sm:hidden")}>
-        <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
-        <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
-        <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
+        <TrustItem icon={Star} title={t("detail.trustTopTitle")} body={t("detail.trustTopBody")} />
+        <TrustItem icon={ShieldCheck} title={t("detail.trustSecureTitle")} body={t("detail.trustSecureBody")} />
+        <TrustItem icon={Headphones} title={t("detail.trustSupportTitle")} body={t("detail.trustSupportBody")} />
       </div>
 
       <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
-        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
+        {t("detail.legalNote")}
       </p>
 
       {/* Mobile sticky bottom action bar — app-like CTA */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 shadow-luxe backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("detail.totalPrice")}</div>
             <div className="truncate text-lg font-extrabold text-foreground">
-              € {currentPkg.price.toLocaleString("de-DE")}
+              € {currentPkg.price.toLocaleString(locale)}
             </div>
           </div>
           {currentPkg.bookingLinks?.hotel ? (
@@ -676,7 +677,7 @@ export function PackageDetail({
               }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
-              <Hotel className="h-4 w-4" /> Hotel buchen
+              <Hotel className="h-4 w-4" /> {t("detail.bookHotel")}
             </a>
           ) : (
             <button
@@ -684,7 +685,7 @@ export function PackageDetail({
               onClick={() => setActiveTab("book")}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
-              <ShoppingBag className="h-4 w-4" /> Jetzt buchen
+              <ShoppingBag className="h-4 w-4" /> {t("detail.bookNow")}
             </button>
           )}
         </div>

@@ -1,50 +1,31 @@
-import { Star, Sparkles, ArrowRight, ThumbsUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Star, Sparkles, ArrowRight } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 
-const TIER_META: Record<
+const TIER_VISUAL: Record<
   TravelPackage["type"],
-  {
-    label: string;
-    tagline: string;
-    badge: string;
-    button: string;
-    price: string;
-    image: string;
-    budgetHint: (price: number) => string;
-  }
+  { badge: string; button: string; price: string; image: string }
 > = {
   basic: {
-    label: "BASIC",
-    tagline: "Bestes Preis-Leistungs-Verhältnis",
     badge: "bg-tier-basic-soft text-tier-basic",
-    button:
-      "border-tier-basic text-tier-basic hover:bg-tier-basic hover:text-white",
+    button: "border-tier-basic text-tier-basic hover:bg-tier-basic hover:text-white",
     price: "text-tier-basic",
     image: beachImg,
-    budgetHint: (p) => `~${Math.round((1 - p / 2000) * 100)}% unter deinem Budget`,
   },
   medium: {
-    label: "MEDIUM",
-    tagline: "Beste Balance für dich",
     badge: "bg-tier-medium-soft text-tier-medium",
-    button:
-      "border-tier-medium text-tier-medium hover:bg-tier-medium hover:text-white",
+    button: "border-tier-medium text-tier-medium hover:bg-tier-medium hover:text-white",
     price: "text-tier-medium",
     image: townImg,
-    budgetHint: () => "Passt zu deinem Budget",
   },
   premium: {
-    label: "PREMIUM",
-    tagline: "Mehr Komfort & Exklusivität",
     badge: "bg-tier-premium-soft text-tier-premium",
-    button:
-      "border-tier-premium text-tier-premium hover:bg-tier-premium hover:text-white",
+    button: "border-tier-premium text-tier-premium hover:bg-tier-premium hover:text-white",
     price: "text-tier-premium",
     image: resortImg,
-    budgetHint: (p) => `~${Math.round((p / 2000 - 1) * 100)}% über deinem Budget`,
   },
 };
 
@@ -55,22 +36,32 @@ export function PackageCard({
   pkg: TravelPackage;
   onSelect: () => void;
 }) {
-  const meta = TIER_META[pkg.type];
+  const { t, i18n } = useTranslation();
+  const meta = TIER_VISUAL[pkg.type];
+  const locale = (i18n.resolvedLanguage || "de") === "en" ? "en-US" : "de-DE";
 
-  // Derive plausible per-provider sub-ratings from the package rating (purely visual; data is the same)
+  const label = t(`card.${pkg.type}`);
+  const tagline = t(`card.${pkg.type}Tagline`);
+
+  const budgetHint = (() => {
+    if (pkg.type === "medium") return t("card.fitsBudget");
+    if (pkg.type === "basic") {
+      const pct = Math.round((1 - pkg.price / 2000) * 100);
+      return `~${pct}% ${t("card.underBudget")}`;
+    }
+    const pct = Math.round((pkg.price / 2000 - 1) * 100);
+    return `~${pct}% ${t("card.overBudget")}`;
+  })();
+
   const r = pkg.rating;
   const ratings = [
-    { provider: "Google", value: r.toFixed(1), color: "text-amber-500" },
-    { provider: "Booking.com", value: Math.min(9.9, (r * 2).toFixed(1) as unknown as number), color: "text-accent" },
-    { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
+    { provider: "Google", value: r.toFixed(1) },
+    { provider: "Booking.com", value: Math.min(9.9, Number((r * 2).toFixed(1))).toString() },
+    { provider: "GetYourGuide", value: Math.min(5, Number((r + 0.1).toFixed(1))).toString() },
   ];
-
-  const isTopRated = pkg.rating >= 4.5;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
-
-      {/* Image */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
         <img
           src={meta.image}
@@ -82,21 +73,19 @@ export function PackageCard({
         />
       </div>
 
-      {/* Body */}
       <div className="flex flex-1 flex-col gap-4 p-5 md:flex-row md:items-stretch">
-        {/* Left: tier + price */}
         <div className="flex flex-1 flex-col">
           <span className={`inline-flex w-fit rounded-md px-2.5 py-1 text-xs font-bold tracking-wider ${meta.badge}`}>
-            {meta.label}
+            {label}
           </span>
           <h3 className="mt-3 text-lg font-bold text-foreground">{pkg.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{meta.tagline}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{tagline}</p>
 
           <div className="mt-4">
             <div className={`text-3xl font-extrabold ${meta.price}`}>
-              € {pkg.price.toLocaleString("de-DE")}
+              € {pkg.price.toLocaleString(locale)}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{meta.budgetHint(pkg.price)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{budgetHint}</p>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -108,16 +97,15 @@ export function PackageCard({
           </div>
         </div>
 
-        {/* Right: rating breakdown + CTA */}
         <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
           <ul className="space-y-1.5 text-sm">
-            <RatingRow provider="Google" value={ratings[0].value as string} iconColor="text-amber-500" />
-            <RatingRow provider="Booking.com" value={String(ratings[1].value)} iconColor="text-accent" />
-            <RatingRow provider="GetYourGuide" value={String(ratings[2].value)} iconColor="text-primary" />
+            <RatingRow provider="Google" value={ratings[0].value} iconColor="text-amber-500" />
+            <RatingRow provider="Booking.com" value={ratings[1].value} iconColor="text-accent" />
+            <RatingRow provider="GetYourGuide" value={ratings[2].value} iconColor="text-primary" />
             <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                AI-Match
+                {t("card.aiMatch")}
               </span>
               <span className="font-semibold text-foreground">{pkg.matchScore}%</span>
             </li>
@@ -127,7 +115,7 @@ export function PackageCard({
             onClick={onSelect}
             className={`flex items-center justify-center gap-1.5 rounded-xl border-2 bg-transparent px-4 py-2.5 text-sm font-semibold transition-colors ${meta.button}`}
           >
-            Paket ansehen <ArrowRight className="h-4 w-4" />
+            {t("card.viewPackage")} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>

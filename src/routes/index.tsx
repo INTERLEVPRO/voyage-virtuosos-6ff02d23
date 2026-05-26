@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Menu } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PackageResults } from "@/components/PackageResults";
 import { PackageDetail } from "@/components/PackageDetail";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { t } = useTranslation();
   const [packages, setPackages] = useState<TravelPackage[]>([]);
   const [selected, setSelected] = useState<TravelPackage | null>(null);
 
@@ -59,7 +62,7 @@ function Index() {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/70 shadow-soft ring-1 ring-primary/10 backdrop-blur-sm sm:h-28 sm:w-28">
               <img
                 src={assistantImg}
-                alt="KI-Reiseassistentin"
+                alt={t("home.heroAlt")}
                 width={160}
                 height={160}
                 className="h-14 w-14 select-none object-contain sm:h-20 sm:w-20"
@@ -69,19 +72,19 @@ function Index() {
               className="mt-4 font-semibold leading-tight text-foreground"
               style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)" }}
             >
-              Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
+              {t("home.hiIm")} <span className="text-primary">{t("home.aiAssistant")}</span> <span aria-hidden>👋</span>
             </h1>
             <p
               className="mx-auto mt-3 max-w-md text-muted-foreground"
               style={{ fontSize: "clamp(0.875rem, 1.6vw, 1rem)" }}
             >
-              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
+              {t("home.intro")}
             </p>
 
             <div className="mt-6 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
-              <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
-              <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
-              <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
+              <FeatureChip icon={Check} title={t("home.chipEasyTitle")} body={t("home.chipEasyBody")} />
+              <FeatureChip icon={Sparkles} title={t("home.chipPersonalTitle")} body={t("home.chipPersonalBody")} />
+              <FeatureChip icon={ShieldCheck} title={t("home.chipTopTitle")} body={t("home.chipTopBody")} />
             </div>
           </div>
         </section>
@@ -122,6 +125,7 @@ function FeatureChip({
 
 
 function SiteHeader() {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
 
@@ -131,58 +135,65 @@ function SiteHeader() {
         <Link to="/" className="flex items-center">
           <img
             src={logo}
-            alt="Weltweiturlaub.de — Reise planen in 2 Minuten"
+            alt="Weltweiturlaub.de"
             className="h-12 w-auto sm:h-12 md:h-14"
           />
         </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Menü öffnen"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            {user ? (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                {initial}
-              </span>
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {user ? (
-              <>
-                <DropdownMenuLabel className="truncate">
-                  {user.user_metadata?.full_name || user.email}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <UserIcon className="mr-2 h-4 w-4" /> Mein Konto
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut()}>
-                  <LogOut className="mr-2 h-4 w-4" /> Abmelden
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link to="/login">Anmelden</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/register">Registrieren</Link>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={t("header.menu")}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {user ? (
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                  {initial}
+                </span>
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {user ? (
+                <>
+                  <DropdownMenuLabel className="truncate">
+                    {user.user_metadata?.full_name || user.email}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>
+                    <UserIcon className="mr-2 h-4 w-4" /> {t("header.myAccount")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" /> {t("header.signOut")}
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/login">{t("header.signIn")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/register">{t("header.signUp")}</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
 }
 
 function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-      Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Lovable AI
+      <div className="flex flex-col items-center gap-3">
+        <span>{t("footer.text")}</span>
+        <LanguageSwitcher variant="footer" />
+      </div>
     </footer>
   );
 }
