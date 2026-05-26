@@ -90,46 +90,46 @@ function gygActivityUrl(destination: string, query?: string) {
   const q = query ? `${query} ${destination}` : destination;
   return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
 }
-function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
+function buildMailto(
+  pkg: import("@/types/travel").TravelPackage,
+  t: (k: string, opts?: Record<string, unknown>) => string,
+  locale: string,
+  weather?: WeatherResponse,
+) {
   const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
   weather?.days.forEach((d) => weatherByDay.set(d.day, d));
   const lines: string[] = [];
-  lines.push(`Mein Reiseplan: ${pkg.title}`);
-  lines.push(`Ziel: ${pkg.destination}`);
-  lines.push(`Dauer: ${pkg.duration}`);
-  lines.push(`Preis: € ${pkg.price.toLocaleString("de-DE")}`);
+  lines.push(`${t("detail.mailSubject", { defaultValue: "My trip plan" })}: ${pkg.title}`);
+  lines.push(`${t("detail.mailDest", { defaultValue: "Destination" })}: ${pkg.destination}`);
+  lines.push(`${t("detail.mailDuration", { defaultValue: "Duration" })}: ${pkg.duration}`);
+  lines.push(`${t("detail.totalPrice")}: € ${pkg.price.toLocaleString(locale)}`);
   lines.push("");
-  lines.push(`Hotel: ${pkg.hotel}`);
-  lines.push(`Flug: ${pkg.flight}`);
-  if (pkg.mealPlan) lines.push(`Verpflegung: ${pkg.mealPlan}`);
+  lines.push(`${t("detail.hotel")}: ${pkg.hotel}`);
+  lines.push(`${t("detail.flights")}: ${pkg.flight}`);
+  if (pkg.mealPlan) lines.push(`${t("detail.mailMeal", { defaultValue: "Meal plan" })}: ${pkg.mealPlan}`);
   lines.push("");
-  lines.push("=== Tag für Tag ===");
+  lines.push(`=== ${t("detail.daysTitle")} ===`);
   pkg.itinerary.forEach((d) => {
-    lines.push(`Tag ${d.day} — ${d.title}`);
+    lines.push(`${t("detail.day")} ${d.day} — ${d.title}`);
     lines.push(d.description);
     const w = weatherByDay.get(d.day);
     if (w) {
-      const src =
-        w.weather.source === "seasonal"
-          ? "Saisonale Schätzung, keine exakte Vorhersage"
-          : w.weather.label;
       lines.push(
-        `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
+        `${t("weather.title")}: ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, ${t("weather.rain")} ${w.weather.rainChance}%.`,
       );
     }
-    lines.push(`Route: ${mapsRouteUrl(pkg.destination, d.title)}`);
+    lines.push(`${t("detail.route")}: ${mapsRouteUrl(pkg.destination, d.title)}`);
     lines.push("");
   });
-  lines.push("=== Aktivitäten ===");
+  lines.push(`=== ${t("detail.includedActivities")} ===`);
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
-  lines.push("=== Buchungs-Links ===");
   lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
-  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
-  lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
+  lines.push(`${t("detail.activities")}: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`${t("detail.transfer")}: ${transferUrl(pkg.destination)}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
-  const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
+  const subject = encodeURIComponent(`${t("detail.mailSubject", { defaultValue: "My trip plan" })}: ${pkg.title}`);
   const body = encodeURIComponent(lines.join("\n"));
   return `mailto:?subject=${subject}&body=${body}`;
 }
