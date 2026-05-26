@@ -185,6 +185,9 @@ export function PackageDetail({
   pkg: TravelPackage;
   onBack: () => void;
 }) {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage || i18n.language || "de").slice(0, 2);
+  const locale = lang === "en" ? "en-US" : "de-DE";
   const [currentPkg, setCurrentPkg] = useState<TravelPackage>(pkg);
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
