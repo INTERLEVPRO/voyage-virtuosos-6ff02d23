@@ -280,10 +280,10 @@ export function PackageDetail({
       <div className="sticky top-[60px] z-10 -mx-4 mb-4 border-b border-border bg-background/95 px-2 backdrop-blur sm:hidden">
         <div className="flex items-center justify-around">
           {([
-            { id: "overview", label: "Übersicht", Icon: LayoutGrid },
-            { id: "days", label: "Tage", Icon: CalendarDays },
-            { id: "book", label: "Buchen", Icon: ShoppingBag },
-            { id: "reviews", label: "Reviews", Icon: MessageCircle },
+            { id: "overview", label: t("detail.tabs.overview"), Icon: LayoutGrid },
+            { id: "days", label: t("detail.tabs.days"), Icon: CalendarDays },
+            { id: "book", label: t("detail.tabs.book"), Icon: ShoppingBag },
+            { id: "reviews", label: t("detail.tabs.reviews"), Icon: MessageCircle },
           ] as const).map(({ id, label, Icon }) => {
             const active = activeTab === id;
             return (
@@ -310,16 +310,16 @@ export function PackageDetail({
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-        Dein Urlaub in {currentPkg.destination}
+        {t("detail.yourTrip", { destination: currentPkg.destination })}
       </h1>
 
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 2 Personen</span>
-        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span>{t("detail.persons")}</span>
+        <span>{t("detail.fromFra")}</span>
         <span className="ml-auto font-semibold text-foreground">
-          Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
+          {t("detail.total", { price: currentPkg.price.toLocaleString(locale) })}
         </span>
       </div>
 
@@ -335,13 +335,13 @@ export function PackageDetail({
           }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
         >
-          <MapPin className="h-4 w-4" /> Route auf Google Maps
+          <MapPin className="h-4 w-4" /> {t("detail.routeOnMaps")}
         </a>
         <a
-          href={buildMailto(currentPkg, weatherQuery.data)}
+          href={buildMailto(currentPkg, t, locale, weatherQuery.data)}
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/40 hover:bg-primary/5"
         >
-          <Mail className="h-4 w-4" /> Plan per E-Mail senden
+          <Mail className="h-4 w-4" /> {t("detail.sendByEmail")}
         </a>
       </div>
 
