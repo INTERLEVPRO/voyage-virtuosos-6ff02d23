@@ -89,6 +89,8 @@ export function DayWeatherToggle({
   isRefreshing: boolean;
   generatedAt?: string;
 }) {
+  const { t } = useTranslation();
+  const { formatDate, formatTime } = useDateFormatters();
   const [open, setOpen] = useState(false);
 
   if (isLoading) {
