@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   Cloud,
@@ -51,25 +50,20 @@ function ConditionIcon({ condition, className = "h-5 w-5" }: { condition: string
   return <CloudSun className={className} />;
 }
 
-function useDateFormatters() {
-  const { i18n } = useTranslation();
-  const locale = (i18n.resolvedLanguage || "de") === "en" ? "en-US" : "de-DE";
-  return {
-    formatDate(iso: string) {
-      try {
-        return new Date(iso).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" });
-      } catch {
-        return iso;
-      }
-    },
-    formatTime(iso: string) {
-      try {
-        return new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
-      } catch {
-        return iso;
-      }
-    },
-  };
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+function formatTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return iso;
+  }
 }
 
 export function DayWeatherToggle({
@@ -89,8 +83,6 @@ export function DayWeatherToggle({
   isRefreshing: boolean;
   generatedAt?: string;
 }) {
-  const { t } = useTranslation();
-  const { formatDate, formatTime } = useDateFormatters();
   const [open, setOpen] = useState(false);
 
   if (isLoading) {
@@ -100,7 +92,7 @@ export function DayWeatherToggle({
         disabled
         className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground"
       >
-        <Cloud className="h-3 w-3 animate-pulse" /> {t("weather.loading")}
+        <Cloud className="h-3 w-3 animate-pulse" /> Wetter lädt…
       </button>
     );
   }
@@ -111,7 +103,7 @@ export function DayWeatherToggle({
         onClick={onRefresh}
         className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-primary/40"
       >
-        <RefreshCw className="h-3 w-3" /> {t("weather.retry")}
+        <RefreshCw className="h-3 w-3" /> Wetter erneut laden
       </button>
     );
   }
@@ -133,7 +125,7 @@ export function DayWeatherToggle({
       >
         <ConditionIcon condition={w.condition} className="h-3.5 w-3.5" />
         <span>
-          🌤 {t("weather.title")} · {w.temperatureMin}°/{w.temperatureMax}°
+          🌤 Wetter · {w.temperatureMin}°/{w.temperatureMax}°
         </span>
       </button>
 
@@ -151,7 +143,7 @@ export function DayWeatherToggle({
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-semibold text-foreground">
-                    {t("detail.day")} {day.day} — {formatDate(day.date)}
+                    Tag {day.day} — {formatDate(day.date)}
                   </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
@@ -173,29 +165,29 @@ export function DayWeatherToggle({
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-md p-1 text-muted-foreground hover:bg-secondary"
-              aria-label={t("common.close")}
+              aria-label="Schließen"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat icon={Thermometer} label={t("weather.temp")} value={`${w.temperatureMin}° – ${w.temperatureMax}°C`} />
-            <Stat icon={Droplets} label={t("weather.rain")} value={`${w.rainChance}%`} />
-            <Stat icon={Wind} label={t("weather.wind")} value={w.windSpeed != null ? `${w.windSpeed} km/h` : "–"} />
-            <Stat icon={Sparkles} label={t("weather.source")} value={isEstimate ? t("weather.seasonal") : t("weather.live")} />
+            <Stat icon={Thermometer} label="Temp." value={`${w.temperatureMin}° – ${w.temperatureMax}°C`} />
+            <Stat icon={Droplets} label="Regen" value={`${w.rainChance}%`} />
+            <Stat icon={Wind} label="Wind" value={w.windSpeed != null ? `${w.windSpeed} km/h` : "–"} />
+            <Stat icon={Sparkles} label="Quelle" value={isEstimate ? "Saisonal" : "Live"} />
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg bg-secondary/50 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("weather.clothing")}
+                Kleidungs-Tipp
               </div>
               <div className="mt-1 text-sm text-foreground">{w.clothing.join(", ")}</div>
             </div>
             <div className="rounded-lg bg-secondary/50 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("weather.travelTip")}
+                Reise-Tipp
               </div>
               <div className="mt-1 text-sm text-foreground">{w.travelTip}</div>
             </div>
@@ -209,13 +201,13 @@ export function DayWeatherToggle({
             {isEstimate ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <Info className="mt-0.5 h-4 w-4 shrink-0" />}
             <div>
               <div className="font-semibold">
-                {isEstimate ? t("weather.seasonalNote") : t("weather.liveNote")}
+                {isEstimate ? "Saisonale Schätzung für diesen Reisetag" : "Live-Vorhersage für diesen Reisetag"}
               </div>
               <div>{w.disclaimer}</div>
               <div className="mt-1 text-[11px] opacity-80">
-                {t("weather.sourceLabel")}: {w.reference}
-                {!isEstimate && generatedAt ? ` · ${t("weather.updated")}: ${formatTime(generatedAt)}` : ""}
-                {isEstimate ? ` · ${t("weather.notExact")}` : ""}
+                Quelle: {w.reference}
+                {!isEstimate && generatedAt ? ` · Zuletzt aktualisiert: ${formatTime(generatedAt)}` : ""}
+                {isEstimate ? " · Hinweis: keine exakte Vorhersage" : ""}
               </div>
             </div>
           </div>
@@ -227,7 +219,7 @@ export function DayWeatherToggle({
               disabled={isRefreshing}
               className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40 disabled:opacity-50"
             >
-              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} /> {t("weather.refresh")}
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} /> Aktualisieren
             </button>
           </div>
         </div>

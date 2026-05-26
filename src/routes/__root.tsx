@@ -10,7 +10,6 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
-import "@/i18n";
 
 import appCss from "../styles.css?url";
 

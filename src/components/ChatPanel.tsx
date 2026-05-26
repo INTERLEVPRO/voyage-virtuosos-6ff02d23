@@ -1,10 +1,38 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Send, Loader2, Sparkles, MessageCircle, ShieldCheck } from "lucide-react";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
+
+const STARTER_PROMPTS: { emoji: string; title: string; subtitle: string; prompt: string }[] = [
+  {
+    emoji: "🏖️",
+    title: "Mallorca",
+    subtitle: "7 Tage, 2 Personen, Budget 1500€",
+    prompt: "Mallorca, 7 Tage, 2 Personen, Budget 1500€, Strand & Entspannung, Abflug Frankfurt",
+  },
+  {
+    emoji: "🏙️",
+    title: "Städtetrip Lissabon",
+    subtitle: "4 Tage, 1 Person, Budget 1200€",
+    prompt: "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München",
+  },
+  {
+    emoji: "🌴",
+    title: "Bali Honeymoon",
+    subtitle: "10 Tage, 2 Personen, Budget 5000€",
+    prompt: "Bali Honeymoon, 10 Tage, 5000€, Wellness & Strand, Abflug Berlin",
+  },
+];
+
+const AGENT_STAGES = [
+  "Concierge hört zu…",
+  "Research-Agent sucht Flüge & Hotels…",
+  "Budget-Agent erstellt 3 Pakete…",
+  "Itinerary-Architekt plant deine Tage…",
+  "Pakete werden zusammengestellt…",
+];
 
 const JSON_BLOCK_RE = /```json\s*([\s\S]*?)```/i;
 
@@ -26,23 +54,12 @@ function stripJsonBlock(text: string): string {
   return text.replace(JSON_BLOCK_RE, "").trim();
 }
 
-type Starter = { emoji: string; title: string; subtitle: string; prompt: string };
-
 export function ChatPanel({
   onPackagesReady,
 }: {
   onPackagesReady?: (pkgs: TravelPackage[]) => void;
 }) {
-  const { t, i18n } = useTranslation();
-  const lang = (i18n.resolvedLanguage || i18n.language || "de").slice(0, 2);
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        body: { language: lang },
-      }),
-    [lang],
-  );
+  const transport = new DefaultChatTransport({ api: "/api/chat" });
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [stageIdx, setStageIdx] = useState(0);
@@ -50,20 +67,17 @@ export function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handedOffRef = useRef<Set<string>>(new Set());
 
-  const stages = t("chat.stages", { returnObjects: true }) as string[];
-  const starters = t("chat.starters", { returnObjects: true }) as Starter[];
-
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     if (status === "submitted") {
       setStageIdx(0);
       const id = setInterval(() => {
-        setStageIdx((i) => (i + 1) % stages.length);
+        setStageIdx((i) => (i + 1) % AGENT_STAGES.length);
       }, 1800);
       return () => clearInterval(id);
     }
-  }, [status, stages.length]);
+  }, [status]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -73,6 +87,7 @@ export function ChatPanel({
     inputRef.current?.focus();
   }, [status]);
 
+  // Detect packages_ready in the latest assistant message (only when streaming has finished)
   useEffect(() => {
     if (status === "streaming" || status === "submitted") return;
     const last = messages[messages.length - 1];
@@ -94,23 +109,27 @@ export function ChatPanel({
 
   return (
     <div className="flex h-[70vh] min-h-[520px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[640px]">
+      {/* Header */}
       <div className="flex items-center gap-3 border-b border-border bg-card px-5 py-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <MessageCircle className="h-5 w-5" />
         </div>
         <div>
-          <div className="text-base font-semibold text-foreground">{t("chat.headerTitle")}</div>
-          <div className="text-xs text-muted-foreground">{t("chat.headerSubtitle")}</div>
+          <div className="text-base font-semibold text-foreground">Lass uns starten</div>
+          <div className="text-xs text-muted-foreground">Erzähl mir kurz von deinem Traumurlaub.</div>
         </div>
       </div>
 
+      {/* Messages */}
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto bg-secondary/30 px-5 py-6">
         {messages.length === 0 && (
           <div className="space-y-4">
-            <p className="text-base font-semibold text-foreground">{t("chat.emptyTitle")}</p>
-            <p className="text-sm text-muted-foreground">{t("chat.emptyBody")}</p>
+            <p className="text-base font-semibold text-foreground">Wohin soll deine Reise gehen?</p>
+            <p className="text-sm text-muted-foreground">
+              Reiseziel, Budget, Dauer, Stil — je mehr du erzählst, desto besser passen die 3 Pakete.
+            </p>
             <div className="grid w-full max-w-full grid-cols-1 gap-3 pb-2 pt-1 sm:grid-cols-3">
-              {starters.map((p) => (
+              {STARTER_PROMPTS.map((p) => (
                 <button
                   key={p.title}
                   onClick={() => submit(p.prompt)}
@@ -120,7 +139,7 @@ export function ChatPanel({
                   <span className="text-sm font-semibold text-foreground">{p.title}</span>
                   <span className="text-xs text-muted-foreground">{p.subtitle}</span>
                   <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                    <Sparkles className="h-3 w-3" /> {t("chat.createPackage")}
+                    <Sparkles className="h-3 w-3" /> Paket erstellen
                   </span>
                 </button>
               ))}
@@ -161,8 +180,8 @@ export function ChatPanel({
               <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">{t("chat.planning")}</span>
-              <span className="text-xs text-muted-foreground">{stages[stageIdx]}</span>
+              <span className="text-sm font-semibold text-foreground">Planung läuft…</span>
+              <span className="text-xs text-muted-foreground">{AGENT_STAGES[stageIdx]}</span>
             </div>
           </div>
         )}
@@ -174,6 +193,7 @@ export function ChatPanel({
         )}
       </div>
 
+      {/* Composer — ChatGPT/Gemini style */}
       <form
         onSubmit={(e) => { e.preventDefault(); submit(input); }}
         className="w-full max-w-full overflow-x-hidden border-t border-border bg-card px-4 py-3 sm:px-6 sm:py-4"
@@ -197,7 +217,7 @@ export function ChatPanel({
               }
             }}
             rows={1}
-            placeholder={t("chat.placeholder")}
+            placeholder="Schreib mir deinen Reisewunsch…"
             className="composer-textarea min-h-[48px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-2 py-3 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 [appearance:none] [-webkit-appearance:none]"
             style={{ height: 48, resize: "none", overflowY: "hidden" }}
             disabled={isLoading}
@@ -205,17 +225,17 @@ export function ChatPanel({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            aria-label={t("common.send")}
+            aria-label="Senden"
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
           >
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
         <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground">
-          {t("chat.example")}
+          z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €
         </p>
         <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-          <ShieldCheck className="h-3 w-3 text-primary" /> {t("chat.safe")}
+          <ShieldCheck className="h-3 w-3 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>
     </div>
