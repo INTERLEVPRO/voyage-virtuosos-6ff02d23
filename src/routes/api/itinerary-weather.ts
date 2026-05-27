@@ -2,7 +2,7 @@ import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { createOpenAIProvider } from "@/lib/openai-provider";
 
 const requestSchema = z.object({
   destination: z.string().min(1).max(200),
@@ -157,10 +157,10 @@ async function seasonalEstimate(
   destination: string,
   days: Array<{ day: number; date: string }>,
 ): Promise<Record<number, z.infer<typeof seasonalSchema>["days"][number]> | null> {
-  const key = process.env.LOVABLE_API_KEY;
+  const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
-  const gateway = createLovableAiGatewayProvider(key);
-  const model = gateway("google/gemini-3-flash-preview");
+  const openai = createOpenAIProvider(key);
+  const model = openai("gpt-4o-mini");
   const prompt = `Schätze das typische saisonale Wetter (KEINE exakte Vorhersage) für folgende Reisetage in ${destination}.
 Nutze typische Klimadaten für den jeweiligen Monat.
 Gib für jeden Tag eine kurze Begründung (1 Satz, deutsch), basierend auf typischem Saisonklima.
