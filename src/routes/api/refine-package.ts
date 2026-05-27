@@ -2,7 +2,7 @@ import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { createOpenAIProvider } from "@/lib/openai-provider";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -90,16 +90,16 @@ export const Route = createFileRoute("/api/refine-package")({
           });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
+        const key = process.env.OPENAI_API_KEY;
         if (!key) {
           return Response.json(
-            { status: "error", message: "AI-Gateway nicht konfiguriert." },
+            { status: "error", message: "OpenAI nicht konfiguriert." },
             { status: 500 },
           );
         }
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const openai = createOpenAIProvider(key);
+        const model = openai("gpt-4o-mini");
 
         const originalForPrompt = JSON.stringify(
           { ...selectedPackage, bookingLinks: undefined, id: undefined },
