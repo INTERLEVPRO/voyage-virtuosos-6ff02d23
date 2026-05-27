@@ -8,7 +8,7 @@ import {
   createUIMessageStreamResponse,
   type UIMessage,
 } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
@@ -66,11 +66,11 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages required", { status: 400 });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("LOVABLE_API_KEY missing", { status: 500 });
+        const key = process.env.OPENAI_API_KEY;
+        if (!key) return new Response("OPENAI_API_KEY missing", { status: 500 });
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const openai = createOpenAIProvider(key);
+        const model = openai("gpt-4o-mini");
         const uiMessages = messages as UIMessage[];
 
         const textOf = (m: UIMessage) =>

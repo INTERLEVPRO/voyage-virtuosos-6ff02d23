@@ -2,7 +2,7 @@ import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { createOpenAIProvider } from "@/lib/openai-provider";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
