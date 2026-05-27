@@ -90,16 +90,16 @@ export const Route = createFileRoute("/api/refine-package")({
           });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
+        const key = process.env.OPENAI_API_KEY;
         if (!key) {
           return Response.json(
-            { status: "error", message: "AI-Gateway nicht konfiguriert." },
+            { status: "error", message: "OpenAI nicht konfiguriert." },
             { status: 500 },
           );
         }
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const openai = createOpenAIProvider(key);
+        const model = openai("gpt-4o-mini");
 
         const originalForPrompt = JSON.stringify(
           { ...selectedPackage, bookingLinks: undefined, id: undefined },
