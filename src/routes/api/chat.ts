@@ -125,6 +125,7 @@ duration: e.g. "7 Tage".
 badges: short German tags like "Direktflug", "Strandnähe", "Frühstück inklusive".
 itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
+Wenn der Nutzer nur einen vagen Reisezeitraum angegeben hat (Saison, Monat, Bereich oder "flexibel"), wähle intern einen plausiblen Monat innerhalb dieses Fensters für saisonale Aktivitäten — gib aber KEIN konkretes Start-/Enddatum im Paket aus. "duration" bleibt rein in Tagen.
 Do NOT include bookingLinks — they are added separately.`;
 
         let rawPackages: ParsedPackage[] = [];
