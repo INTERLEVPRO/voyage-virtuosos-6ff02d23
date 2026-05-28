@@ -1,60 +1,27 @@
-# Plan: Switch from Lovable AI Gateway to OpenAI
+## Goal
+Travel assistant should accept **flexible / vague travel time answers** (e.g. "Sommer", "nächsten Monat", "Juli–August", "in 3 Monaten", "flexibel") and never force an exact calendar date.
 
-## Step 0 — Security (do this FIRST)
-- Revoke the leaked key at https://platform.openai.com/api-keys
-- Generate a new key
-- I'll request it via secure form as `OPENAI_API_KEY` — never paste in chat again
+## Changes
 
-## Step 1 — Store the new key
-Add `OPENAI_API_KEY` as a project secret (runtime env var).
+### 1. `src/routes/api/chat.ts` — Concierge prompt
+Update `CONCIERGE_SYSTEM` so:
+- The required field becomes **Reisezeitraum (flexibel erlaubt)** instead of an exact date.
+- Example question phrasing: *"Wann möchtest du ungefähr reisen? Ein Monat, eine Saison oder ein grober Zeitraum reicht völlig — z. B. ‚im Juli', ‚nächsten Sommer', ‚in 2–3 Monaten' oder ‚flexibel'."*
+- Explicit instruction: **Do NOT ask for an exact date.** Accept months, seasons, ranges, relative time ("nächstes Jahr"), or "flexibel".
+- Treat any of those as a satisfied answer for the travel-time slot.
 
-## Step 2 — Create OpenAI provider helper
-New file `src/lib/openai-provider.ts` using `@ai-sdk/openai` (Vercel AI SDK, already used). All current code uses `streamText` / `generateText` from `ai` — no logic changes needed, only the provider swap.
+### 2. `isPlanningRequest` heuristic (same file)
+Currently only checks budget + destination/type. Keep as is — date is not required to trigger planning, so vague dates won't block the flow.
 
-```ts
-import { createOpenAI } from "@ai-sdk/openai";
-export const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-```
-Install: `bun add @ai-sdk/openai`
+### 3. Packager prompt
+Add one line to `PACKAGER_SYSTEM`: if the user gave only a season/month/range, pick a reasonable specific travel month within that window for itinerary realism, but keep the package `duration` purely in days (no fixed start date shown to user).
 
-## Step 3 — Swap model in all 4 agents
-Replace in both files:
-- `src/routes/api/chat.ts` (concierge + research + itinerary + packager)
-- `src/routes/api/refine-package.ts` (refiner)
+### 4. Itinerary weather route (`itinerary-weather.ts`)
+No prompt change needed — it already accepts an optional `startDate` and falls back to seasonal estimates when no forecast is available. Flexible input keeps working.
 
-**Before:**
-```ts
-const gateway = createLovableAiGatewayProvider(key);
-const model = gateway("google/gemini-3-flash-preview");
-```
-**After:**
-```ts
-const model = openai("gpt-4o-mini");
-```
+## Out of scope
+- No new UI / date-picker component.
+- No DB schema changes.
+- No changes to other agents (research, refine, weather logic).
 
-Also: remove the `LOVABLE_API_KEY` check, replace with `OPENAI_API_KEY` check.
-
-## Step 4 — Model choice
-- **`gpt-4o-mini`** — recommended (cheap ≈ $0.15/1M input tokens, fast, JSON-good)
-- Can switch to `gpt-4o` later if quality needs upgrade
-
-## Step 5 — Verify
-- Test concierge greeting (short reply)
-- Test full planning flow → 3 packages German JSON
-- Test refine flow on detail page
-- Check server logs for errors
-
-## Files touched
-- `src/lib/openai-provider.ts` (new)
-- `src/routes/api/chat.ts` (edit)
-- `src/routes/api/refine-package.ts` (edit)
-- `package.json` (+ `@ai-sdk/openai`)
-
-## What stays the same
-- All prompts (German concierge, research, itinerary, packager, refiner)
-- Zod schemas, DB persistence, UI streaming, booking links, price-gate logic
-- Frontend (`ChatPanel`, `PackageCard`, `PackageDetail`, etc.) — zero changes
-
-## Notes
-- `LOVABLE_API_KEY` won't be deleted — just unused by these routes. Other Lovable services still need it.
-- Billing now goes to your OpenAI account, not Lovable credits — so the 402 error stops.
+Result: user can answer the "when" question casually in natural German, and the concierge moves forward without nagging for a precise date.
