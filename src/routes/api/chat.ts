@@ -52,10 +52,8 @@ function isPlanningRequest(text: string, history: string): boolean {
   const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all);
   const hasDestOrType =
     /\b(in|nach|to|trip|reise|urlaub|holiday|vacation|strand|berge|städt|city|insel|island)\b/.test(all);
-  const hasTravelTime =
-    /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|frühling|fruehling|sommer|herbst|winter|ostern|weihnachten|silvester|saison|nächste[nrs]?|naechste[nrs]?|kommende[nrs]?|in\s+\d+\s+(tag|tagen|woche|wochen|monat|monaten|jahr|jahren)|flexibel|egal|jederzeit|\d{1,2}\.\d{1,2}\.|\d{4}-\d{2}-\d{2})\b/.test(all);
   const longEnough = all.split(/\s+/).length > 8;
-  return hasBudget && hasDestOrType && hasTravelTime && longEnough;
+  return hasBudget && hasDestOrType && longEnough;
 }
 
 function placeholderLinks(destination: string) {
