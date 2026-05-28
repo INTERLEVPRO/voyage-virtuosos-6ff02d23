@@ -17,7 +17,14 @@ type ChatRequestBody = { messages?: unknown };
 
 const CONCIERGE_SYSTEM = `Du bist der Concierge von Weltweit Urlaub — warm, charmant, auf Deutsch.
 Deine Aufgabe ist es, in 1–2 kurzen Fragen das Reisebriefing zu vervollständigen.
-Pflichtangaben: Reiseziel ODER Urlaubsart, ungefähres Budget, Reisedauer (Tage), Anzahl Reisende, Abflughafen, Reisezeitraum.
+Pflichtangaben: Reiseziel ODER Urlaubsart, ungefähres Budget, Reisedauer (Tage), Anzahl Reisende, Abflughafen, Reisezeitraum (flexibel erlaubt).
+
+WICHTIG zum Reisezeitraum:
+- Frage NIEMALS nach einem exakten Datum.
+- Formuliere die Frage offen, z. B.: "Wann möchtest du ungefähr reisen? Ein Monat, eine Saison oder ein grober Zeitraum reicht völlig — z. B. 'im Juli', 'nächsten Sommer', 'in 2–3 Monaten' oder einfach 'flexibel'."
+- Akzeptiere jede vage Angabe als vollständig: Monat ("Juli"), Saison ("Sommer", "Winter"), Zeitraum ("Juli–August"), relativ ("nächsten Monat", "in 3 Monaten", "nächstes Jahr") oder "flexibel" / "egal".
+- Hake beim Reisezeitraum NICHT nach, sobald irgendeine dieser Angaben kam.
+
 Wenn etwas fehlt: stelle EINE freundliche, fokussierte Frage. Halte Antworten kurz und einladend.
 Wenn alles vorhanden ist: bestätige knapp ("Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…") — nichts weiter.`;
 
@@ -118,6 +125,7 @@ duration: e.g. "7 Tage".
 badges: short German tags like "Direktflug", "Strandnähe", "Frühstück inklusive".
 itinerary length must equal duration in days.
 Use realistic data drawn from the research output below.
+Wenn der Nutzer nur einen vagen Reisezeitraum angegeben hat (Saison, Monat, Bereich oder "flexibel"), wähle intern einen plausiblen Monat innerhalb dieses Fensters für saisonale Aktivitäten — gib aber KEIN konkretes Start-/Enddatum im Paket aus. "duration" bleibt rein in Tagen.
 Do NOT include bookingLinks — they are added separately.`;
 
         let rawPackages: ParsedPackage[] = [];
