@@ -45,7 +45,7 @@ export function PackageResults({
         Hinweis: Pakete sind KI-generierte Vorschläge. Klicke auf die Bewertungs-Links, um echte Reviews und aktuelle Preise direkt bei Google, Booking.com und GetYourGuide zu sehen.
       </div>
 
-      </div>
+
     </section>
   );
 }
