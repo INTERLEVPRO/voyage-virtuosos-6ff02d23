@@ -1,4 +1,4 @@
-import { Star, Sparkles, ArrowRight, ThumbsUp } from "lucide-react";
+import { Sparkles, ArrowRight, ExternalLink } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
@@ -57,19 +57,21 @@ export function PackageCard({
 }) {
   const meta = TIER_META[pkg.type];
 
-  // Derive plausible per-provider sub-ratings from the package rating (purely visual; data is the same)
-  const r = pkg.rating;
-  const ratings = [
-    { provider: "Google", value: r.toFixed(1), color: "text-amber-500" },
-    { provider: "Booking.com", value: Math.min(9.9, (r * 2).toFixed(1) as unknown as number), color: "text-accent" },
-    { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
-  ];
-
-  const isTopRated = pkg.rating >= 4.5;
+  // Real reference links — no fabricated numbers.
+  const q = (s: string) => encodeURIComponent(s);
+  const hotelQuery = pkg.hotel ? `${pkg.hotel} ${pkg.destination}` : pkg.destination;
+  const refs = {
+    google: `https://www.google.com/search?q=${q(hotelQuery + " Bewertungen")}`,
+    booking:
+      pkg.bookingLinks?.hotel ??
+      `https://www.booking.com/searchresults.html?ss=${q(hotelQuery)}`,
+    getyourguide:
+      pkg.bookingLinks?.activities ??
+      `https://www.getyourguide.de/s/?q=${q(pkg.destination)}`,
+  };
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
-
       {/* Image */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
         <img
@@ -96,7 +98,9 @@ export function PackageCard({
             <div className={`text-3xl font-extrabold ${meta.price}`}>
               € {pkg.price.toLocaleString("de-DE")}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{meta.budgetHint(pkg.price)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {meta.budgetHint(pkg.price)} · Richtpreis, Live-Preis beim Anbieter
+            </p>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -108,20 +112,25 @@ export function PackageCard({
           </div>
         </div>
 
-        {/* Right: rating breakdown + CTA */}
-        <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
-          <ul className="space-y-1.5 text-sm">
-            <RatingRow provider="Google" value={ratings[0].value as string} iconColor="text-amber-500" />
-            <RatingRow provider="Booking.com" value={String(ratings[1].value)} iconColor="text-accent" />
-            <RatingRow provider="GetYourGuide" value={String(ratings[2].value)} iconColor="text-primary" />
-            <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                AI-Match
-              </span>
-              <span className="font-semibold text-foreground">{pkg.matchScore}%</span>
-            </li>
-          </ul>
+        {/* Right: real reference links + CTA */}
+        <div className="flex flex-col justify-between gap-4 md:w-60 md:border-l md:border-border md:pl-5">
+          <div>
+            <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+              Echte Bewertungen ansehen
+            </p>
+            <ul className="space-y-1.5">
+              <RefRow label="Google" href={refs.google} />
+              <RefRow label="Booking.com" href={refs.booking} />
+              <RefRow label="GetYourGuide" href={refs.getyourguide} />
+              <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  AI-Match
+                </span>
+                <span className="font-semibold text-foreground">{pkg.matchScore}%</span>
+              </li>
+            </ul>
+          </div>
 
           <button
             onClick={onSelect}
@@ -135,22 +144,21 @@ export function PackageCard({
   );
 }
 
-function RatingRow({
-  provider,
-  value,
-  iconColor,
-}: {
-  provider: string;
-  value: string;
-  iconColor: string;
-}) {
+function RefRow({ label, href }: { label: string; href: string }) {
   return (
-    <li className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{provider}</span>
-      <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
-        <Star className={`h-3.5 w-3.5 fill-current ${iconColor}`} />
-        {value}
-      </span>
+    <li>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between rounded-md px-1.5 py-1 text-sm text-foreground transition-colors hover:bg-secondary"
+      >
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+          Ansehen <ExternalLink className="h-3 w-3" />
+        </span>
+      </a>
     </li>
   );
 }
+
