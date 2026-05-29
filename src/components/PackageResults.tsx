@@ -25,9 +25,8 @@ export function PackageResults({
         Hier sind deine 3 persönlichen Pakete
       </h1>
       <p className="mt-2 text-center text-sm text-muted-foreground">
-        KI-kuratierte Vorschläge · Preise & Bewertungen live bei Google, Booking.com und GetYourGuide prüfen
+        Alle Preise enthalten Flüge, Hotel & Aktivitäten
       </p>
-
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {sample?.duration ?? "—"}</span>
@@ -41,11 +40,10 @@ export function PackageResults({
           <PackageCard key={p.id} pkg={p} onSelect={() => onSelect(p)} />
         ))}
       </div>
+
       <div className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-center text-xs text-muted-foreground">
-        Hinweis: Pakete sind KI-generierte Vorschläge. Klicke auf die Bewertungs-Links, um echte Reviews und aktuelle Preise direkt bei Google, Booking.com und GetYourGuide zu sehen.
+        🇩🇪 Bewertungen werden nur von deutschen Nutzern angezeigt. Wir zeigen echte Reviews aus Deutschland für Hotels, Flüge und Aktivitäten.
       </div>
-
-
     </section>
   );
 }
