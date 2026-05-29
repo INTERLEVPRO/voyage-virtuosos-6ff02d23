@@ -56,11 +56,14 @@ Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).`;
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
 function isPlanningRequest(text: string, history: string): boolean {
-  const all = `${history}\n${text}`.toLowerCase();
+  const combined = `${history}\n${text}`.trim();
+  const all = combined.toLowerCase();
 
   const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all);
   const hasDestOrType =
-    /\b(in|nach|to|trip|reise|urlaub|holiday|vacation|strand|berge|städt|stadt|city|insel|island|safari|kreuzfahrt|wander|ski)\b/.test(all);
+    /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
+    /\b(in|nach|to)\s+[a-zäöüß][a-zäöüß.'’-]{2,}(?:\s+[a-zäöüß][a-zäöüß.'’-]{2,}){0,2}\b/i.test(all) ||
+    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined);
   const hasDuration =
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
   const hasTravelers =
@@ -107,12 +110,15 @@ export const Route = createFileRoute("/api/chat")({
           m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
         const lastUser = [...uiMessages].reverse().find((m) => m.role === "user");
         const lastUserText = lastUser ? textOf(lastUser) : "";
-        const fullHistory = uiMessages.map(textOf).join("\n");
+        const userHistory = uiMessages
+          .filter((m) => m.role === "user")
+          .map(textOf)
+          .join("\n");
 
         const modelMessages = await convertToModelMessages(uiMessages);
 
         // Concierge mode
-        if (!isPlanningRequest(lastUserText, fullHistory)) {
+        if (!isPlanningRequest(lastUserText, userHistory)) {
           const result = streamText({
             model,
             system: CONCIERGE_SYSTEM,
@@ -122,7 +128,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         // Multi-agent: research → itinerary → packager (structured)
-        const brief = `${fullHistory}\n\nLetzte Nachricht: ${lastUserText}`;
+        const brief = `${userHistory}\n\nLetzte Nachricht: ${lastUserText}`;
 
         const research = await generateText({
           model,
