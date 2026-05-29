@@ -25,8 +25,9 @@ export function PackageResults({
         Hier sind deine 3 persönlichen Pakete
       </h1>
       <p className="mt-2 text-center text-sm text-muted-foreground">
-        Alle Preise enthalten Flüge, Hotel & Aktivitäten
+        KI-kuratierte Vorschläge · Preise & Bewertungen live bei Google, Booking.com und GetYourGuide prüfen
       </p>
+
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {sample?.duration ?? "—"}</span>
