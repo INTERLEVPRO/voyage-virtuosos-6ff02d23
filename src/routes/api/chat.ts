@@ -12,6 +12,9 @@ import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
+type ChatRequestBody = { messages?: unknown };
+
+
 const CONCIERGE_SYSTEM = `Du bist der Concierge von Weltweit Urlaub — warm, charmant, auf Deutsch.
 Deine Aufgabe ist es, das Reisebriefing zu vervollständigen, bevor das Team Pakete entwirft.
 
