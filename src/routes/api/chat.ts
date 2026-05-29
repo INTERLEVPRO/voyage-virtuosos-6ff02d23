@@ -12,21 +12,27 @@ import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
-
-type ChatRequestBody = { messages?: unknown };
-
 const CONCIERGE_SYSTEM = `Du bist der Concierge von Weltweit Urlaub — warm, charmant, auf Deutsch.
-Deine Aufgabe ist es, in 1–2 kurzen Fragen das Reisebriefing zu vervollständigen.
-Pflichtangaben: Reiseziel ODER Urlaubsart, ungefähres Budget, Reisedauer (Tage), Anzahl Reisende, Abflughafen, Reisezeitraum (flexibel erlaubt).
+Deine Aufgabe ist es, das Reisebriefing zu vervollständigen, bevor das Team Pakete entwirft.
+
+Pflichtangaben (alle 6 müssen vorhanden sein):
+1. Reiseziel ODER Urlaubsart (z. B. "Lissabon", "Strandurlaub")
+2. Ungefähres Budget (in €)
+3. Reisedauer (Tage / Nächte / Wochen)
+4. Anzahl Reisende (Personen / Paar / Familie / solo)
+5. Abflughafen / Abflugort
+6. Reisezeitraum (flexibel erlaubt: Monat, Saison, "in 3 Monaten", "nächstes Jahr", "flexibel" / "egal")
 
 WICHTIG zum Reisezeitraum:
 - Frage NIEMALS nach einem exakten Datum.
-- Formuliere die Frage offen, z. B.: "Wann möchtest du ungefähr reisen? Ein Monat, eine Saison oder ein grober Zeitraum reicht völlig — z. B. 'im Juli', 'nächsten Sommer', 'in 2–3 Monaten' oder einfach 'flexibel'."
-- Akzeptiere jede vage Angabe als vollständig: Monat ("Juli"), Saison ("Sommer", "Winter"), Zeitraum ("Juli–August"), relativ ("nächsten Monat", "in 3 Monaten", "nächstes Jahr") oder "flexibel" / "egal".
-- Hake beim Reisezeitraum NICHT nach, sobald irgendeine dieser Angaben kam.
+- Akzeptiere jede vage Angabe als vollständig: Monat ("Juli"), Saison ("Sommer"), Zeitraum ("Juli–August"), relativ ("nächsten Monat"), oder "flexibel" / "egal".
 
-Wenn etwas fehlt: stelle EINE freundliche, fokussierte Frage. Halte Antworten kurz und einladend.
-Wenn alles vorhanden ist: bestätige knapp ("Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…") — nichts weiter.`;
+Verhaltensregeln:
+- Prüfe nach jeder Nutzerantwort, welche der 6 Pflichtangaben noch fehlen.
+- Wenn mehrere Felder fehlen: stelle sie in EINER kurzen Nachricht gebündelt als Liste, z. B.: "Super, fast alles da! Mir fehlen noch zwei Kleinigkeiten: **Wie viele Personen reisen?** und **wann ungefähr** (Monat/Saison oder einfach 'flexibel')?"
+- Wenn nur EIN Feld fehlt: stelle EINE freundliche, fokussierte Frage.
+- Sage NIEMALS "Perfekt — ich lasse mein Team jetzt 3 Pakete entwerfen…" oder Ähnliches, solange noch ein Pflichtfeld fehlt.
+- Wenn alle 6 Pflichtangaben vorhanden sind: bestätige knapp ("Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…") — nichts weiter.`;
 
 const RESEARCH_SYSTEM = `You are the Research Agent. Given a German travel brief, output realistic plausible flights and hotels.
 Concise bullet data only — no prose.
@@ -48,9 +54,25 @@ const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "p
 
 function isPlanningRequest(text: string, history: string): boolean {
   const all = `${history}\n${text}`.toLowerCase();
+
   const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all);
   const hasDestOrType =
-    /\b(in|nach|to|trip|reise|urlaub|holiday|vacation|strand|berge|städt|city|insel|island)\b/.test(all);
+    /\b(in|nach|to|trip|reise|urlaub|holiday|vacation|strand|berge|städt|stadt|city|insel|island|safari|kreuzfahrt|wander|ski)\b/.test(all);
+  const hasDuration =
+    /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
+  const hasTravelers =
+    /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder)\b/.test(all) ||
+    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert)\b/.test(all);
+  const hasOrigin =
+    /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
+    /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
+  const hasTimeframe =
+    /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mär|mar|apr|jun|jul|aug|sep|okt|nov|dez|january|february|march|may|june|july|october|december|frühling|fruehling|sommer|herbst|winter|ostern|weihnachten|silvester|flexibel|egal|nächst|naechst|kommend)\b/i.test(all) ||
+    /\bin\s+\d+\s?(tag|tage|woche|wochen|monat|monate|monaten)\b/i.test(all);
+
+  return hasBudget && hasDestOrType && hasDuration && hasTravelers && hasOrigin && hasTimeframe;
+}
+
   const longEnough = all.split(/\s+/).length > 8;
   return hasBudget && hasDestOrType && longEnough;
 }
