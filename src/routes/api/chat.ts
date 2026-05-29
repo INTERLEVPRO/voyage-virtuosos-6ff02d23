@@ -64,8 +64,10 @@ function isPlanningRequest(text: string, history: string): boolean {
   const hasDuration =
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
   const hasTravelers =
-    /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder)\b/.test(all) ||
-    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert)\b/.test(all);
+    /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder|pers\.?|pax|adult|adults)\b/.test(all) ||
+    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert|ein(e|er|s)?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\b/i.test(all) ||
+    /(^|[\s,;])([1-9]|1\d|20)\s*[,;]/.test(text) ||
+    /^\s*([1-9]|1\d|20)\s*$/.test(text.trim());
   const hasOrigin =
     /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
     /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
