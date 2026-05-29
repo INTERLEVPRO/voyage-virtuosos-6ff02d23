@@ -41,9 +41,10 @@ export function PackageResults({
           <PackageCard key={p.id} pkg={p} onSelect={() => onSelect(p)} />
         ))}
       </div>
-
       <div className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-center text-xs text-muted-foreground">
-        🇩🇪 Bewertungen werden nur von deutschen Nutzern angezeigt. Wir zeigen echte Reviews aus Deutschland für Hotels, Flüge und Aktivitäten.
+        Hinweis: Pakete sind KI-generierte Vorschläge. Klicke auf die Bewertungs-Links, um echte Reviews und aktuelle Preise direkt bei Google, Booking.com und GetYourGuide zu sehen.
+      </div>
+
       </div>
     </section>
   );
