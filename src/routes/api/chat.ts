@@ -73,10 +73,6 @@ function isPlanningRequest(text: string, history: string): boolean {
   return hasBudget && hasDestOrType && hasDuration && hasTravelers && hasOrigin && hasTimeframe;
 }
 
-  const longEnough = all.split(/\s+/).length > 8;
-  return hasBudget && hasDestOrType && longEnough;
-}
-
 function placeholderLinks(destination: string) {
   const q = encodeURIComponent(destination);
   return {
