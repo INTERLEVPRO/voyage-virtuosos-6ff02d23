@@ -1,8 +1,6 @@
 import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  convertToModelMessages,
-  streamText,
   generateText,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -55,7 +53,9 @@ Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).`;
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
-function isPlanningRequest(text: string, history: string): boolean {
+type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
+
+function getPlanningSignals(text: string, history: string) {
   const combined = `${history}\n${text}`.trim();
   const all = combined.toLowerCase();
 
@@ -78,7 +78,83 @@ function isPlanningRequest(text: string, history: string): boolean {
     /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mär|mar|apr|jun|jul|aug|sep|okt|nov|dez|january|february|march|may|june|july|october|december|frühling|fruehling|sommer|herbst|winter|ostern|weihnachten|silvester|flexibel|egal|nächst|naechst|kommend)\b/i.test(all) ||
     /\bin\s+\d+\s?(tag|tage|woche|wochen|monat|monate|monaten)\b/i.test(all);
 
-  return hasBudget && hasDestOrType && hasDuration && hasTravelers && hasOrigin && hasTimeframe;
+  return {
+    hasBudget,
+    hasDestOrType,
+    hasDuration,
+    hasTravelers,
+    hasOrigin,
+    hasTimeframe,
+  };
+}
+
+function getMissingFields(text: string, history: string): MissingField[] {
+  const signals = getPlanningSignals(text, history);
+  const missing: MissingField[] = [];
+
+  if (!signals.hasDestOrType) missing.push("destination");
+  if (!signals.hasBudget) missing.push("budget");
+  if (!signals.hasDuration) missing.push("duration");
+  if (!signals.hasTravelers) missing.push("travelers");
+  if (!signals.hasOrigin) missing.push("origin");
+  if (!signals.hasTimeframe) missing.push("timeframe");
+
+  return missing;
+}
+
+function formatMissingField(field: MissingField): string {
+  switch (field) {
+    case "destination":
+      return "**Wohin soll es gehen** oder welche Art Urlaub möchtest du?";
+    case "budget":
+      return "**Wie hoch ist dein ungefähres Budget?**";
+    case "duration":
+      return "**Wie lange möchtest du reisen?**";
+    case "travelers":
+      return "**Wie viele Personen reisen?**";
+    case "origin":
+      return "**Von wo möchtest du abfliegen?**";
+    case "timeframe":
+      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel“)";
+  }
+}
+
+function joinWithUnd(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} und ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
+}
+
+function buildConciergeReply(missing: MissingField[]): string {
+  if (missing.length === 0) {
+    return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
+  }
+
+  if (missing.length === 1) {
+    return `Super, fast alles da! Mir fehlt nur noch: ${formatMissingField(missing[0])}`;
+  }
+
+  return `Super, ich brauche noch kurz ${missing.length} Angaben: ${joinWithUnd(
+    missing.map(formatMissingField),
+  )}`;
+}
+
+function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
+  const stream = createUIMessageStream({
+    execute: ({ writer }) => {
+      const id = `msg-${Date.now()}`;
+      writer.write({ type: "start" });
+      writer.write({ type: "start-step" });
+      writer.write({ type: "text-start", id });
+      writer.write({ type: "text-delta", id, delta: text });
+      writer.write({ type: "text-end", id });
+      writer.write({ type: "finish-step" });
+      writer.write({ type: "finish" });
+    },
+    originalMessages,
+  });
+
+  return createUIMessageStreamResponse({ stream });
 }
 
 function placeholderLinks(destination: string) {
@@ -114,17 +190,11 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
-
-        const modelMessages = await convertToModelMessages(uiMessages);
+        const missingFields = getMissingFields(lastUserText, userHistory);
 
         // Concierge mode
-        if (!isPlanningRequest(lastUserText, userHistory)) {
-          const result = streamText({
-            model,
-            system: CONCIERGE_SYSTEM,
-            messages: modelMessages,
-          });
-          return result.toUIMessageStreamResponse({ originalMessages: uiMessages });
+        if (missingFields.length > 0) {
+          return createTextStreamResponse(buildConciergeReply(missingFields), uiMessages);
         }
 
         // Multi-agent: research → itinerary → packager (structured)
@@ -256,20 +326,7 @@ Do NOT include bookingLinks — they are added separately.`;
         const intro = `Perfekt ✨ Mein Team hat **3 Pakete** für dich entworfen — Basic, Medium und Premium. Schau sie dir gleich an…`;
         const finalText = `${intro}\n\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
 
-        const stream = createUIMessageStream({
-          execute: ({ writer }) => {
-            const id = `pkg-${Date.now()}`;
-            writer.write({ type: "start" });
-            writer.write({ type: "start-step" });
-            writer.write({ type: "text-start", id });
-            writer.write({ type: "text-delta", id, delta: finalText });
-            writer.write({ type: "text-end", id });
-            writer.write({ type: "finish-step" });
-            writer.write({ type: "finish" });
-          },
-          originalMessages: uiMessages,
-        });
-        return createUIMessageStreamResponse({ stream });
+        return createTextStreamResponse(finalText, uiMessages);
       },
     },
   },
