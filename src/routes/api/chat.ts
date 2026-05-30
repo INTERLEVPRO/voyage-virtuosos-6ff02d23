@@ -258,6 +258,71 @@ function parseResearchData(text: string): ResearchData {
   return { flights, hotels };
 }
 
+function extractInterests(history: string): string[] {
+  const lower = history.toLowerCase();
+  const pool = [
+    ["strand", "Strand & Entspannung"],
+    ["kultur", "Kultur & Altstadt"],
+    ["wellness", "Wellness & Ruhe"],
+    ["essen", "Kulinarik & lokale Küche"],
+    ["natur", "Natur & Aussichtspunkte"],
+    ["abenteuer", "Abenteuer & Aktivität"],
+    ["shopping", "Shopping & Bummeln"],
+    ["kunst", "Kunst & Museen"],
+  ] as const;
+
+  const matched = pool.filter(([key]) => lower.includes(key)).map(([, label]) => label);
+  return matched.length > 0 ? matched : ["Highlights entdecken", "Entspannung", "Lokales erleben"];
+}
+
+function buildDeterministicItinerary(destination: string, days: number, interests: string[]) {
+  const titles = [
+    "Ankunft und Orientierung",
+    ...Array.from({ length: Math.max(days - 2, 0) }, (_, index) => interests[index % interests.length]),
+    ...(days > 1 ? ["Abschluss und Rückreise"] : []),
+  ].slice(0, days);
+
+  return titles.map((title, index) => {
+    const day = index + 1;
+    if (day === 1) {
+      return {
+        day,
+        title,
+        description: `Vormittag: Anreise nach ${destination} · Nachmittag: entspannt ankommen und die Umgebung kennenlernen · Abend: erster gemütlicher Einstieg in die Reise.`,
+      };
+    }
+
+    if (day === days) {
+      return {
+        day,
+        title,
+        description: `Vormittag: letzte freie Zeit in ${destination} · Nachmittag: entspannter Transfer für die Rückreise · Abend: Heimreise mit vielen Eindrücken.`,
+      };
+    }
+
+    return {
+      day,
+      title: `${title} ${day}`,
+      description: `Vormittag: entspannter Start in ${destination} · Nachmittag: ${title.toLowerCase()} mit passendem Tagesprogramm · Abend: ruhiger Ausklang mit lokalen Eindrücken.`,
+    };
+  });
+}
+
+function buildFallbackResearchData(destination: string): ResearchData {
+  return {
+    flights: [
+      `Direktflug nach ${destination} · Economy Smart · ca. 11h`,
+      `Linienflug nach ${destination} · Komfort Tarif · ca. 11h`,
+      `Premium Linienflug nach ${destination} · flexible Zeiten · ca. 11h`,
+    ],
+    hotels: [
+      `Solides Mittelklassehotel in ${destination} · gute Lage · Frühstück`,
+      `Komforthotel in ${destination} · zentrale Lage · Frühstück inklusive`,
+      `Premium Resort in ${destination} · hochwertige Ausstattung · Extras inklusive`,
+    ],
+  };
+}
+
 function buildPackageSummary(type: "basic" | "medium" | "premium", destination: string, durationDays: number) {
   if (type === "basic") return `Ein preisbewusstes ${durationDays}-Tage-Paket für ${destination} mit starkem Gegenwert und den wichtigsten Highlights.`;
   if (type === "medium") return `Ein ausgewogenes ${durationDays}-Tage-Paket für ${destination} mit Komfort, guter Lage und abwechslungsreichen Erlebnissen.`;
