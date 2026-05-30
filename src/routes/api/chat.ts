@@ -25,7 +25,8 @@ HOTELS:
 
 const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan in GERMAN.
 Use the duration from the brief (default 5 days). For each day output:
-Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).`;
+Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).
+Return one line per day and include EVERY day up to the requested duration.`;
 
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
@@ -132,6 +133,72 @@ function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
   });
 
   return createUIMessageStreamResponse({ stream });
+}
+
+function parseDurationDays(value: string): number | null {
+  const match = value.match(/(\d{1,2})\s*(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)/i);
+  if (!match) return null;
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  if (Number.isNaN(amount) || amount <= 0) return null;
+
+  if (unit.startsWith("woche")) return amount * 7;
+  return amount;
+}
+
+function extractRequestedDurationDays(history: string): number {
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const days = parseDurationDays(lines[i]);
+    if (days) return days;
+  }
+
+  return 5;
+}
+
+function parseItineraryDraft(text: string, expectedDays: number, destination: string) {
+  const parsed = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const match = line.match(/^tag\s*(\d+)\s*[—-]\s*([^:]+):\s*(.+)$/i);
+      if (!match) return null;
+
+      const day = Number(match[1]);
+      if (!Number.isFinite(day) || day <= 0) return null;
+
+      return {
+        day,
+        title: match[2].trim(),
+        description: match[3].trim(),
+      };
+    })
+    .filter((item): item is { day: number; title: string; description: string } => Boolean(item))
+    .sort((a, b) => a.day - b.day);
+
+  const byDay = new Map(parsed.map((item) => [item.day, item]));
+  const completed = [] as { day: number; title: string; description: string }[];
+
+  for (let day = 1; day <= expectedDays; day += 1) {
+    const existing = byDay.get(day);
+    completed.push(
+      existing ?? {
+        day,
+        title: day === 1 ? "Ankunft und Orientierung" : day === expectedDays ? "Abschluss und Rückreise" : `Erlebnisse in ${destination}`,
+        description:
+          day === 1
+            ? `Vormittag: Anreise nach ${destination} · Nachmittag: entspannt ankommen und einchecken · Abend: erste Eindrücke sammeln.`
+            : day === expectedDays
+              ? `Vormittag: letzte freie Zeit in ${destination} · Nachmittag: Transfer und Rückreise · Abend: Heimreise.`
+              : `Vormittag: entspannt in den Tag starten · Nachmittag: neue Eindrücke in ${destination} erleben · Abend: den Tag gemütlich ausklingen lassen.`,
+      },
+    );
+  }
+
+  return completed;
 }
 
 function placeholderLinks(destination: string) {
