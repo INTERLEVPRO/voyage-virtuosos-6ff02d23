@@ -32,6 +32,10 @@ Return one line per day and include EVERY day up to the requested duration.`;
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
 type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
+type ResearchData = {
+  flights: string[];
+  hotels: string[];
+};
 
 function getPlanningSignals(text: string, history: string) {
   const combined = `${history}\n${text}`.trim();
@@ -199,6 +203,122 @@ function parseItineraryDraft(text: string, expectedDays: number, destination: st
   }
 
   return completed;
+}
+
+function extractDestination(history: string): string {
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([a-zäöüß][a-zäöüß.'’\- ]{2,})/i);
+    if (explicit?.[1]) return explicit[1].trim();
+
+    const byPrep = line.match(/(?:nach|to|in)\s+([a-zäöüß][a-zäöüß.'’\- ]{2,})/i);
+    if (byPrep?.[1]) return byPrep[1].split(",")[0].trim();
+
+    const firstChunk = line.split(",")[0]?.trim();
+    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl)/i.test(firstChunk)) {
+      return firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub)\s+/i, "").trim();
+    }
+  }
+
+  return "deinem Reiseziel";
+}
+
+function extractBudgetAmount(history: string): number {
+  const matches = [...history.matchAll(/(\d{2,5})(?:[.,]\d{3})?\s?(€|eur|euro)/gi)];
+  const last = matches.at(-1);
+  return last ? Number(last[1].replace(/\./g, "")) : 1500;
+}
+
+function parseResearchData(text: string): ResearchData {
+  const lines = text.split(/\n+/).map((line) => line.trim());
+  const flights: string[] = [];
+  const hotels: string[] = [];
+  let section: "flights" | "hotels" | null = null;
+
+  for (const line of lines) {
+    if (/^flights:/i.test(line)) {
+      section = "flights";
+      continue;
+    }
+    if (/^hotels:/i.test(line)) {
+      section = "hotels";
+      continue;
+    }
+    if (!line.startsWith("- ")) continue;
+
+    const value = line.replace(/^[-•]\s*/, "").trim();
+    if (!value) continue;
+
+    if (section === "flights") flights.push(value);
+    if (section === "hotels") hotels.push(value);
+  }
+
+  return { flights, hotels };
+}
+
+function buildPackageSummary(type: "basic" | "medium" | "premium", destination: string, durationDays: number) {
+  if (type === "basic") return `Ein preisbewusstes ${durationDays}-Tage-Paket für ${destination} mit starkem Gegenwert und den wichtigsten Highlights.`;
+  if (type === "medium") return `Ein ausgewogenes ${durationDays}-Tage-Paket für ${destination} mit Komfort, guter Lage und abwechslungsreichen Erlebnissen.`;
+  return `Ein hochwertiges ${durationDays}-Tage-Paket für ${destination} mit mehr Komfort, stärkeren Leistungen und besonderem Reisegefühl.`;
+}
+
+function buildPackageBadges(type: "basic" | "medium" | "premium", research: ResearchData) {
+  const base = ["Preis-Leistung", "Sorgfältig geplant"];
+  if (research.flights.some((flight) => /direkt/i.test(flight))) base.unshift("Direktflug");
+  if (type === "medium") base.push("Komfort-Upgrade");
+  if (type === "premium") base.push("Premium Auswahl", "Mehr Inklusivleistungen");
+  if (type === "basic") base.push("Budgetfreundlich");
+  return Array.from(new Set(base)).slice(0, type === "premium" ? 4 : 3);
+}
+
+function buildPackagesFromResearch(params: {
+  budget: number;
+  destination: string;
+  itineraryTemplate: ParsedPackage["itinerary"];
+  research: ResearchData;
+}): ParsedPackage[] {
+  const { budget, destination, itineraryTemplate, research } = params;
+  const durationDays = itineraryTemplate.length;
+
+  return TIER_ORDER.map((type, index) => {
+    const multiplier = type === "basic" ? 0.85 : type === "medium" ? 1 : 1.15;
+    const hotel = research.hotels[index] ?? research.hotels.at(-1) ?? `Sorgfältig ausgewähltes Hotel in ${destination}`;
+    const flight = research.flights[index] ?? research.flights.at(-1) ?? `Passender Flug nach ${destination}`;
+    const badges = buildPackageBadges(type, research);
+    const activities = Array.from(new Set(itineraryTemplate.map((day) => day.title))).slice(0, 8);
+
+    return {
+      type,
+      title:
+        type === "basic"
+          ? `${destination} Smart Paket`
+          : type === "medium"
+            ? `${destination} Komfort Paket`
+            : `${destination} Premium Paket`,
+      destination,
+      price: Math.round(budget * multiplier),
+      currency: "EUR",
+      rating: type === "basic" ? 4.2 : type === "medium" ? 4.5 : 4.8,
+      reviews: type === "basic" ? 320 : type === "medium" ? 980 : 1840,
+      matchScore: type === "basic" ? 86 : type === "medium" ? 92 : 97,
+      duration: `${durationDays} Tage`,
+      hotel,
+      flight,
+      mealPlan: type === "basic" ? "Frühstück" : type === "medium" ? "Frühstück inklusive" : "Frühstück & ausgewählte Extras",
+      summary: buildPackageSummary(type, destination, durationDays),
+      whyItFits:
+        type === "basic"
+          ? `Ideal, wenn du ${destination} länger erleben möchtest und dein Budget im Blick behalten willst.`
+          : type === "medium"
+            ? `Passt gut, wenn du für ${destination} eine starke Balance aus Preis, Lage und Komfort suchst.`
+            : `Passt gut, wenn du bei ${destination} für die lange Reisedauer mehr Komfort und Qualität priorisierst.`,
+      badges,
+      activities: activities.length > 0 ? activities : [`Highlights in ${destination}`],
+      itinerary: itineraryTemplate,
+    };
+  });
 }
 
 function placeholderLinks(destination: string) {
