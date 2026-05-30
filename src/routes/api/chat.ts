@@ -244,6 +244,8 @@ export const Route = createFileRoute("/api/chat")({
         // Multi-agent: research → itinerary → packager (structured)
         const brief = `${userHistory}\n\nLetzte Nachricht: ${lastUserText}`;
 
+        const requestedDurationDays = extractRequestedDurationDays(userHistory);
+
         const research = await generateText({
           model,
           system: RESEARCH_SYSTEM,
@@ -253,8 +255,14 @@ export const Route = createFileRoute("/api/chat")({
         const itinerary = await generateText({
           model,
           system: ITINERARY_SYSTEM,
-          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German.`,
+          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
         });
+
+        const itineraryTemplate = parseItineraryDraft(
+          itinerary.text,
+          requestedDurationDays,
+          lastUserText,
+        );
 
         const PACKAGER_SYSTEM = `You are the Packager Agent for Weltweit Urlaub.
 Produce EXACTLY 3 travel packages in this order: basic, medium, premium.
@@ -275,8 +283,9 @@ Do NOT include bookingLinks — they are added separately.`;
         try {
           const { text } = await generateText({
             model,
-            system: `${PACKAGER_SYSTEM}\n\nReturn ONLY a valid JSON array of 3 package objects. No prose, no markdown, no code fences. Each object MUST contain: title, destination, price (number), rating (0-5), reviews (int), matchScore (0-100), duration, hotel, flight, summary, badges (string[]), activities (string[]), itinerary (array of {day:int,title,description}). Optional: type, currency, mealPlan, whyItFits.`,
-            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary draft:\n${itinerary.text}\n\nReturn EXACTLY 3 packages as a JSON array, in order: basic, medium, premium.`,
+            maxTokens: 12000,
+            system: `${PACKAGER_SYSTEM}\n\nReturn ONLY a valid JSON array of 3 package objects. No prose, no markdown, no code fences. Each object MUST contain: title, destination, price (number), rating (0-5), reviews (int), matchScore (0-100), duration, hotel, flight, summary, badges (string[]), activities (string[]), itinerary (array of {day:int,title,description}). Optional: type, currency, mealPlan, whyItFits. Preserve the itinerary day count exactly as provided in the itinerary template.`,
+            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary template (MUST stay ${requestedDurationDays} days long for every package):\n${JSON.stringify(itineraryTemplate, null, 2)}\n\nReturn EXACTLY 3 packages as a JSON array, in order: basic, medium, premium.`,
           });
           // Strip optional code fences
           const cleaned = text
@@ -293,7 +302,19 @@ Do NOT include bookingLinks — they are added separately.`;
           rawPackages = arr
             .map((p) => packageSchema.safeParse(p))
             .filter((r) => r.success)
-            .map((r) => (r as { success: true; data: ParsedPackage }).data);
+            .map((r) => (r as { success: true; data: ParsedPackage }).data)
+            .map((pkg) => ({
+              ...pkg,
+              itinerary:
+                pkg.itinerary.length === requestedDurationDays
+                  ? pkg.itinerary
+                  : itineraryTemplate.map((day, index) => ({
+                      day: day.day,
+                      title: pkg.itinerary[index]?.title ?? day.title,
+                      description: pkg.itinerary[index]?.description ?? day.description,
+                    })),
+              duration: `${requestedDurationDays} Tage`,
+            }));
           if (rawPackages.length === 0) throw new Error("No valid packages parsed");
         } catch (err) {
           console.error("[packager] generation failed", err);
