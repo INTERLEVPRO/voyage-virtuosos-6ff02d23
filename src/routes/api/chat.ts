@@ -431,27 +431,39 @@ export const Route = createFileRoute("/api/chat")({
 
         const requestedDurationDays = extractRequestedDurationDays(userHistory);
 
-        const research = await generateText({
-          model,
-          system: RESEARCH_SYSTEM,
-          prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
-        });
-
-        const itinerary = await generateText({
-          model,
-          system: ITINERARY_SYSTEM,
-          prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
-        });
-
-        const itineraryTemplate = parseItineraryDraft(
-          itinerary.text,
-          requestedDurationDays,
-          lastUserText,
-        );
-
         const destination = extractDestination(userHistory);
         const budget = extractBudgetAmount(userHistory);
-        const researchData = parseResearchData(research.text);
+        const interests = extractInterests(userHistory);
+
+        let researchText = "";
+        let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
+          destination,
+          requestedDurationDays,
+          interests,
+        );
+
+        if (requestedDurationDays <= 14) {
+          const research = await generateText({
+            model,
+            system: RESEARCH_SYSTEM,
+            prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
+          });
+          researchText = research.text;
+
+          const itinerary = await generateText({
+            model,
+            system: ITINERARY_SYSTEM,
+            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
+          });
+
+          itineraryTemplate = parseItineraryDraft(
+            itinerary.text,
+            requestedDurationDays,
+            destination,
+          );
+        }
+
+        const researchData = researchText ? parseResearchData(researchText) : buildFallbackResearchData(destination);
         const rawPackages = buildPackagesFromResearch({
           budget,
           destination,
