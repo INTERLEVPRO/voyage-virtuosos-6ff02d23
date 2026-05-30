@@ -13,7 +13,7 @@ const TIER_META: Record<
     button: string;
     price: string;
     image: string;
-    budgetHint: (price: number) => string;
+    budgetHint: (price: number, requestedBudget?: number) => string;
   }
 > = {
   basic: {
@@ -24,7 +24,11 @@ const TIER_META: Record<
       "border-tier-basic text-tier-basic hover:bg-tier-basic hover:text-white",
     price: "text-tier-basic",
     image: beachImg,
-    budgetHint: (p) => `~${Math.round((1 - p / 2000) * 100)}% unter deinem Budget`,
+    budgetHint: (price, requestedBudget) => {
+      if (!requestedBudget || requestedBudget <= 0) return "Budgetfreundliche Auswahl";
+      const diff = Math.max(0, Math.round(((requestedBudget - price) / requestedBudget) * 100));
+      return `~${diff}% unter deinem Budget`;
+    },
   },
   medium: {
     label: "MEDIUM",
@@ -34,7 +38,12 @@ const TIER_META: Record<
       "border-tier-medium text-tier-medium hover:bg-tier-medium hover:text-white",
     price: "text-tier-medium",
     image: townImg,
-    budgetHint: () => "Passt zu deinem Budget",
+    budgetHint: (price, requestedBudget) => {
+      if (!requestedBudget || requestedBudget <= 0) return "Passt zu deinem Budget";
+      const delta = Math.abs(price - requestedBudget);
+      const percent = Math.round((delta / requestedBudget) * 100);
+      return percent <= 5 ? "Passt zu deinem Budget" : price < requestedBudget ? `~${percent}% unter deinem Budget` : `~${percent}% über deinem Budget`;
+    },
   },
   premium: {
     label: "PREMIUM",
@@ -44,7 +53,11 @@ const TIER_META: Record<
       "border-tier-premium text-tier-premium hover:bg-tier-premium hover:text-white",
     price: "text-tier-premium",
     image: resortImg,
-    budgetHint: (p) => `~${Math.round((p / 2000 - 1) * 100)}% über deinem Budget`,
+    budgetHint: (price, requestedBudget) => {
+      if (!requestedBudget || requestedBudget <= 0) return "Mehr Komfort & Exklusivität";
+      const diff = Math.max(0, Math.round(((price - requestedBudget) / requestedBudget) * 100));
+      return `~${diff}% über deinem Budget`;
+    },
   },
 };
 
@@ -64,8 +77,6 @@ export function PackageCard({
     { provider: "Booking.com", value: Math.min(9.9, (r * 2).toFixed(1) as unknown as number), color: "text-accent" },
     { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
   ];
-
-  const isTopRated = pkg.rating >= 4.5;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
@@ -96,7 +107,7 @@ export function PackageCard({
             <div className={`text-3xl font-extrabold ${meta.price}`}>
               € {pkg.price.toLocaleString("de-DE")}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{meta.budgetHint(pkg.price)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{meta.budgetHint(pkg.price, pkg.requestedBudget)}</p>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5">

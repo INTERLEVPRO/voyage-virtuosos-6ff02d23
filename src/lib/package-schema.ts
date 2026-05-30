@@ -17,6 +17,7 @@ export const packageSchema = z.object({
   title: z.string(),
   destination: z.string(),
   price: z.number(),
+  requestedBudget: z.number().min(0).optional(),
   currency: z.string().optional(),
   rating: z.number().min(0).max(5),
   reviews: z.number().int().min(0),

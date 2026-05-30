@@ -391,6 +391,7 @@ function buildPackagesFromResearch(params: {
             : `${destination} Premium Paket`,
       destination,
       price: Math.round(budget * multiplier),
+      requestedBudget: budget,
       currency: "EUR",
       rating: type === "basic" ? 4.2 : type === "medium" ? 4.5 : 4.8,
       reviews: type === "basic" ? 320 : type === "medium" ? 980 : 1840,

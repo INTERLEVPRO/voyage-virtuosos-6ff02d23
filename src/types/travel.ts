@@ -18,6 +18,7 @@ export type TravelPackage = {
   title: string;
   destination: string;
   price: number;
+  requestedBudget?: number;
   currency: string;
   rating: number;
   reviews: number;
