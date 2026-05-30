@@ -283,7 +283,7 @@ Do NOT include bookingLinks — they are added separately.`;
         try {
           const { text } = await generateText({
             model,
-            maxTokens: 12000,
+            maxOutputTokens: 12000,
             system: `${PACKAGER_SYSTEM}\n\nReturn ONLY a valid JSON array of 3 package objects. No prose, no markdown, no code fences. Each object MUST contain: title, destination, price (number), rating (0-5), reviews (int), matchScore (0-100), duration, hotel, flight, summary, badges (string[]), activities (string[]), itinerary (array of {day:int,title,description}). Optional: type, currency, mealPlan, whyItFits. Preserve the itinerary day count exactly as provided in the itinerary template.`,
             prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary template (MUST stay ${requestedDurationDays} days long for every package):\n${JSON.stringify(itineraryTemplate, null, 2)}\n\nReturn EXACTLY 3 packages as a JSON array, in order: basic, medium, premium.`,
           });
