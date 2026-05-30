@@ -35,10 +35,22 @@ const res = await fetch(`${BASE}/api/chat`, {
 });
 
 assert(res.status === 200, `HTTP ${res.status}`);
-const text = await res.text();
+const raw = await res.text();
+
+// UI message stream uses SSE-like "data: {json}\n\n" lines. Concatenate text-delta chunks.
+let text = "";
+for (const line of raw.split(/\r?\n/)) {
+  const m = line.match(/^data:\s*(.+)$/);
+  if (!m) continue;
+  try {
+    const evt = JSON.parse(m[1]);
+    if (evt?.type === "text-delta" && typeof evt.delta === "string") text += evt.delta;
+  } catch {}
+}
+if (!text) text = raw; // fallback
 
 const jsonMatch = text.match(/```json\s*([\s\S]+?)\s*```/);
-assert(jsonMatch, "no json block in response");
+assert(jsonMatch, `no json block in response. Raw start: ${raw.slice(0, 300)}`);
 const payload = JSON.parse(jsonMatch![1]);
 
 assert(payload.status === "packages_ready", `status=${payload.status}`);
