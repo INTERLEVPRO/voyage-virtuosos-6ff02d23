@@ -384,60 +384,20 @@ export const Route = createFileRoute("/api/chat")({
           lastUserText,
         );
 
-        const PACKAGER_SYSTEM = `You are the Packager Agent for Weltweit Urlaub.
-Produce EXACTLY 3 travel packages in this order: basic, medium, premium.
-- basic price ≈ user budget × 0.85
-- medium price ≈ user budget × 1.0
-- premium price ≈ user budget × 1.15
-All user-facing strings (title, destination, summary, whyItFits, hotel, flight, mealPlan, badges, activities, itinerary titles & descriptions) MUST be in GERMAN.
-matchScore: integer 80–98, premium highest.
-rating: 4.0–4.9. reviews: 200–3000.
-duration: e.g. "7 Tage".
-badges: short German tags like "Direktflug", "Strandnähe", "Frühstück inklusive".
-itinerary length must equal duration in days.
-Use realistic data drawn from the research output below.
-Wenn der Nutzer nur einen vagen Reisezeitraum angegeben hat (Saison, Monat, Bereich oder "flexibel"), wähle intern einen plausiblen Monat innerhalb dieses Fensters für saisonale Aktivitäten — gib aber KEIN konkretes Start-/Enddatum im Paket aus. "duration" bleibt rein in Tagen.
-Do NOT include bookingLinks — they are added separately.`;
+        const destination = extractDestination(userHistory);
+        const budget = extractBudgetAmount(userHistory);
+        const researchData = parseResearchData(research.text);
+        const rawPackages = buildPackagesFromResearch({
+          budget,
+          destination,
+          itineraryTemplate,
+          research: researchData,
+        })
+          .map((pkg) => packageSchema.safeParse(pkg))
+          .filter((r) => r.success)
+          .map((r) => (r as { success: true; data: ParsedPackage }).data);
 
-        let rawPackages: ParsedPackage[] = [];
-        try {
-          const { text } = await generateText({
-            model,
-            maxOutputTokens: 12000,
-            system: `${PACKAGER_SYSTEM}\n\nReturn ONLY a valid JSON array of 3 package objects. No prose, no markdown, no code fences. Each object MUST contain: title, destination, price (number), rating (0-5), reviews (int), matchScore (0-100), duration, hotel, flight, summary, badges (string[]), activities (string[]), itinerary (array of {day:int,title,description}). Optional: type, currency, mealPlan, whyItFits. Preserve the itinerary day count exactly as provided in the itinerary template.`,
-            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nItinerary template (MUST stay ${requestedDurationDays} days long for every package):\n${JSON.stringify(itineraryTemplate, null, 2)}\n\nReturn EXACTLY 3 packages as a JSON array, in order: basic, medium, premium.`,
-          });
-          // Strip optional code fences
-          const cleaned = text
-            .trim()
-            .replace(/^```(?:json)?\s*/i, "")
-            .replace(/\s*```$/, "")
-            .trim();
-          // Find first '[' to last ']' to be defensive
-          const start = cleaned.indexOf("[");
-          const end = cleaned.lastIndexOf("]");
-          const jsonStr = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
-          const parsed = JSON.parse(jsonStr);
-          const arr = Array.isArray(parsed) ? parsed : [];
-          rawPackages = arr
-            .map((p) => packageSchema.safeParse(p))
-            .filter((r) => r.success)
-            .map((r) => (r as { success: true; data: ParsedPackage }).data)
-            .map((pkg) => ({
-              ...pkg,
-              itinerary:
-                pkg.itinerary.length === requestedDurationDays
-                  ? pkg.itinerary
-                  : itineraryTemplate.map((day, index) => ({
-                      day: day.day,
-                      title: pkg.itinerary[index]?.title ?? day.title,
-                      description: pkg.itinerary[index]?.description ?? day.description,
-                    })),
-              duration: `${requestedDurationDays} Tage`,
-            }));
-          if (rawPackages.length === 0) throw new Error("No valid packages parsed");
-        } catch (err) {
-          console.error("[packager] generation failed", err);
+        if (rawPackages.length === 0) {
           return new Response(
             "Entschuldigung, die Paketerstellung ist fehlgeschlagen. Bitte versuche es noch einmal.",
             { status: 502 },
