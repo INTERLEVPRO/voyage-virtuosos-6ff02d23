@@ -205,20 +205,35 @@ function parseItineraryDraft(text: string, expectedDays: number, destination: st
   return completed;
 }
 
+function cleanDestination(raw: string): string {
+  // Stop at sentence/clause boundaries and strip filler words
+  const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
+  const words = stopped.split(/\s+/);
+  // Take up to 3 words and drop trailing common verbs/fillers
+  const stopWords = /^(reisen|urlaub|fliegen|fahren|machen|gehen|sein|mein|dein|budget|beträgt|ca|ungefähr|etwa|für|mit|und|oder|circa)$/i;
+  const kept: string[] = [];
+  for (const w of words.slice(0, 4)) {
+    if (stopWords.test(w)) break;
+    kept.push(w);
+  }
+  return (kept.join(" ") || stopped).trim();
+}
+
 function extractDestination(history: string): string {
   const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
-    const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([a-zäöüß][a-zäöüß.'’\- ]{2,})/i);
-    if (explicit?.[1]) return explicit[1].trim();
+    const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    if (explicit?.[1]) return cleanDestination(explicit[1]);
 
-    const byPrep = line.match(/(?:nach|to|in)\s+([a-zäöüß][a-zäöüß.'’\- ]{2,})/i);
-    if (byPrep?.[1]) return byPrep[1].split(",")[0].trim();
+    const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    if (byPrep?.[1]) return cleanDestination(byPrep[1]);
 
     const firstChunk = line.split(",")[0]?.trim();
     if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl)/i.test(firstChunk)) {
-      return firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub)\s+/i, "").trim();
+      const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
+      return cleanDestination(cleaned);
     }
   }
 
@@ -226,9 +241,21 @@ function extractDestination(history: string): string {
 }
 
 function extractBudgetAmount(history: string): number {
-  const matches = [...history.matchAll(/(\d{2,5})(?:[.,]\d{3})?\s?(€|eur|euro)/gi)];
-  const last = matches.at(-1);
-  return last ? Number(last[1].replace(/\./g, "")) : 1500;
+  // 1) Try "<amount> € / EUR / Euro"
+  const withCurrency = [...history.matchAll(/(\d{1,3}(?:[.,]\d{3})*|\d{2,6})\s*(€|eur|euro)/gi)];
+  const lastCur = withCurrency.at(-1);
+  if (lastCur) {
+    const n = Number(lastCur[1].replace(/[.,]/g, ""));
+    if (n >= 100) return n;
+  }
+  // 2) Try "budget ... <amount>" within ~30 chars
+  const budgetCtx = history.match(/budget[^\d]{0,30}(\d{1,3}(?:[.,]\d{3})*|\d{2,6})/i);
+  if (budgetCtx?.[1]) {
+    const n = Number(budgetCtx[1].replace(/[.,]/g, ""));
+    if (n >= 100) return n;
+  }
+  // 3) Fallback
+  return 1500;
 }
 
 function parseResearchData(text: string): ResearchData {
