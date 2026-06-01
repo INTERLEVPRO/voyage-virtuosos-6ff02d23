@@ -412,12 +412,12 @@ export function PackageDetail({
           icon={Compass}
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
-          ratingLabel="GetYourGuide"
+          ratingLabel="Klook"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
-          ctaLabel="Bei GetYourGuide ansehen"
+          ctaLabel="Bei Klook ansehen"
           provider="activities"
-          url={currentPkg.bookingLinks?.activities}
+          url="https://klook.tpm.li/WzC9L2in"
           packageId={currentPkg.id}
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
