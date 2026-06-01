@@ -385,14 +385,27 @@ export function PackageDetail({
           icon={Plane}
           title="Flüge"
           subtitle={currentPkg.flight}
-          ratingLabel="Google"
+          ratingLabel="Aviasales"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
-          ctaLabel="Bei Skyscanner ansehen"
+          ctaLabel="Bei Aviasales ansehen"
           provider="flight"
-          url={currentPkg.bookingLinks?.flight}
+          url="https://aviasales.tpm.li/o8SBry1n"
           packageId={currentPkg.id}
           ctaCls="bg-accent text-accent-foreground hover:bg-accent/90"
+        />
+        <ProviderRow
+          icon={Car}
+          title="Flughafen-Transfer"
+          subtitle="Privater Taxi-Transfer vom/zum Flughafen"
+          ratingLabel="Kiwitaxi"
+          rating={`${currentPkg.rating.toFixed(1)}/5`}
+          price={Math.round(currentPkg.price * 0.05)}
+          ctaLabel="Bei Kiwitaxi ansehen"
+          provider="taxi"
+          url="https://kiwitaxi.tpm.li/RgYDJiUT"
+          packageId={currentPkg.id}
+          ctaCls="bg-secondary text-secondary-foreground hover:bg-secondary/90"
         />
         <ProviderRow
           icon={Hotel}
