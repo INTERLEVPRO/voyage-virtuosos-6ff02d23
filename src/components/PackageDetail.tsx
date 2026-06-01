@@ -411,11 +411,11 @@ export function PackageDetail({
           icon={Hotel}
           title="Hotel"
           subtitle={currentPkg.hotel}
-          ratingLabel="Booking.com"
+          ratingLabel="Klook"
           rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Booking.com ansehen"
+          ctaLabel="Bei Klook ansehen"
           provider="hotel"
           url="https://klook.tpm.li/WzC9L2in"
           packageId={currentPkg.id}
