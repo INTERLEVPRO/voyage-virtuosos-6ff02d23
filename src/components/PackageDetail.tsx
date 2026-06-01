@@ -674,18 +674,10 @@ export function PackageDetail({
           {currentPkg.bookingLinks?.hotel ? (
             <a
               href={currentPkg.bookingLinks.hotel}
-              onClick={(event) => {
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
                 void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
-                event.preventDefault();
-                try {
-                  if (window.top && window.top !== window) {
-                    window.top.location.href = currentPkg.bookingLinks!.hotel!;
-                    return;
-                  }
-                } catch {
-                  // ignore
-                }
-                window.location.href = currentPkg.bookingLinks!.hotel!;
               }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
@@ -757,25 +749,10 @@ function ProviderRow({
         {url && (
           <a
             href={url}
-            target={isHotelProvider ? "_top" : "_blank"}
-            rel="noopener"
-            onClick={(event) => {
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
               void trackClick(packageId, provider, url);
-
-              if (isHotelProvider) {
-                event.preventDefault();
-
-                try {
-                  if (window.top && window.top !== window) {
-                    window.top.location.href = url;
-                    return;
-                  }
-                } catch {
-                  // ignore and fall back to same-window navigation
-                }
-
-                window.location.href = url;
-              }
             }}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
           >
