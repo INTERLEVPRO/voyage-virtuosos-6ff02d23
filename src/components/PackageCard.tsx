@@ -151,14 +151,25 @@ function RatingRow({
   provider,
   value,
   iconColor,
+  url,
 }: {
   provider: string;
   value: string;
   iconColor: string;
+  url: string;
 }) {
   return (
     <li className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{provider}</span>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        onClick={(e) => e.stopPropagation()}
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+      >
+        {provider}
+        <ExternalLink className="h-3 w-3 opacity-60" />
+      </a>
       <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
         <Star className={`h-3.5 w-3.5 fill-current ${iconColor}`} />
         {value}
