@@ -123,9 +123,9 @@ export function PackageCard({
         {/* Right: rating breakdown + CTA */}
         <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
           <ul className="space-y-1.5 text-sm">
-            <RatingRow provider="Google" value={ratings[0].value as string} iconColor="text-amber-500" />
-            <RatingRow provider="Booking.com" value={String(ratings[1].value)} iconColor="text-accent" />
-            <RatingRow provider="GetYourGuide" value={String(ratings[2].value)} iconColor="text-primary" />
+            {ratings.map((rt) => (
+              <RatingRow key={rt.provider} provider={rt.provider} value={rt.value} iconColor={rt.iconColor} url={rt.url} />
+            ))}
             <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
