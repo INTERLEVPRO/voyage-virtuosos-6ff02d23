@@ -674,18 +674,10 @@ export function PackageDetail({
           {currentPkg.bookingLinks?.hotel ? (
             <a
               href={currentPkg.bookingLinks.hotel}
-              onClick={(event) => {
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
                 void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
-                event.preventDefault();
-                try {
-                  if (window.top && window.top !== window) {
-                    window.top.location.href = currentPkg.bookingLinks!.hotel!;
-                    return;
-                  }
-                } catch {
-                  // ignore
-                }
-                window.location.href = currentPkg.bookingLinks!.hotel!;
               }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
