@@ -1,4 +1,4 @@
-import { Star, Sparkles, ArrowRight, ThumbsUp } from "lucide-react";
+import { Star, Sparkles, ArrowRight, ThumbsUp, ExternalLink } from "lucide-react";
 import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
@@ -70,12 +70,13 @@ export function PackageCard({
 }) {
   const meta = TIER_META[pkg.type];
 
-  // Derive plausible per-provider sub-ratings from the package rating (purely visual; data is the same)
+  // Real review search URLs per provider — users can verify ratings on the source sites
+  const q = encodeURIComponent(`${pkg.hotel ? pkg.hotel + " " : ""}${pkg.destination}`.trim());
   const r = pkg.rating;
   const ratings = [
-    { provider: "Google", value: r.toFixed(1), color: "text-amber-500" },
-    { provider: "Booking.com", value: Math.min(9.9, (r * 2).toFixed(1) as unknown as number), color: "text-accent" },
-    { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
+    { provider: "Google", value: r.toFixed(1), iconColor: "text-amber-500", url: `https://www.google.com/search?q=${q}+bewertungen` },
+    { provider: "Booking.com", value: Math.min(9.9, Number((r * 2).toFixed(1))).toFixed(1), iconColor: "text-accent", url: `https://www.booking.com/searchresults.de.html?ss=${q}` },
+    { provider: "GetYourGuide", value: Math.min(5, Number((r + 0.1).toFixed(1))).toFixed(1), iconColor: "text-primary", url: `https://www.getyourguide.de/s/?q=${q}` },
   ];
 
   return (
@@ -122,9 +123,9 @@ export function PackageCard({
         {/* Right: rating breakdown + CTA */}
         <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
           <ul className="space-y-1.5 text-sm">
-            <RatingRow provider="Google" value={ratings[0].value as string} iconColor="text-amber-500" />
-            <RatingRow provider="Booking.com" value={String(ratings[1].value)} iconColor="text-accent" />
-            <RatingRow provider="GetYourGuide" value={String(ratings[2].value)} iconColor="text-primary" />
+            {ratings.map((rt) => (
+              <RatingRow key={rt.provider} provider={rt.provider} value={rt.value} iconColor={rt.iconColor} url={rt.url} />
+            ))}
             <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -150,14 +151,25 @@ function RatingRow({
   provider,
   value,
   iconColor,
+  url,
 }: {
   provider: string;
   value: string;
   iconColor: string;
+  url: string;
 }) {
   return (
     <li className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{provider}</span>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        onClick={(e) => e.stopPropagation()}
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+      >
+        {provider}
+        <ExternalLink className="h-3 w-3 opacity-60" />
+      </a>
       <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
         <Star className={`h-3.5 w-3.5 fill-current ${iconColor}`} />
         {value}
