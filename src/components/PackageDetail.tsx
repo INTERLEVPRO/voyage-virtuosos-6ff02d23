@@ -404,7 +404,7 @@ export function PackageDetail({
           price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei Booking.com ansehen"
           provider="hotel"
-          url={currentPkg.bookingLinks?.hotel}
+          url="https://klook.tpm.li/WzC9L2in"
           packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
         />
