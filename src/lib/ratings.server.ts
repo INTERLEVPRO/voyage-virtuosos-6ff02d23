@@ -9,9 +9,10 @@ function extractRating(text: string): { value: number; scale: number } | null {
   const patterns: Array<{ re: RegExp; scaleFromMatch?: (m: RegExpMatchArray) => number; defaultScale?: number }> = [
     { re: /(\d(?:\.\d)?)\s*\/\s*(5|10)\b/, scaleFromMatch: (m) => Number(m[2]) },
     { re: /(\d(?:\.\d)?)\s*(?:von|out of|aus)\s*(5|10)\b/i, scaleFromMatch: (m) => Number(m[2]) },
-    { re: /\b(\d\.\d)\s*(?:stars?|sterne?)\b/i, defaultScale: 5 },
+    { re: /\b(\d\.\d)\s*(?:stars?|sterne?|punkte?)\b/i, defaultScale: 5 },
     { re: /\brated\s+(\d(?:\.\d)?)\b/i, defaultScale: 5 },
     { re: /\bscore[:\s]+(\d(?:\.\d)?)\b/i, defaultScale: 10 },
+    { re: /\bbewertung[:\s]+(\d(?:\.\d)?)\b/i, defaultScale: 5 },
     { re: /\b(\d\.\d)\s*\/\s*5\b/, defaultScale: 5 },
   ];
 
@@ -57,7 +58,7 @@ function sourceFromUrl(url: string): string {
   }
 }
 
-type SearchResult = { url?: string; title?: string; description?: string };
+type SearchResult = { url?: string; title?: string; description?: string; markdown?: string };
 
 const TARGET_SITES = [
   "tripadvisor.com",
@@ -80,7 +81,6 @@ export async function fetchPackageRatings(params: {
   const firecrawl = new Firecrawl({ apiKey });
   const limit = params.limit ?? 8;
 
-  // Run multiple targeted queries in parallel — one per source — for broader coverage.
   const queries = [
     `${params.hotel} ${params.destination} review rating`,
     ...TARGET_SITES.map((s) => `${params.hotel} ${params.destination} site:${s}`),
@@ -90,7 +90,7 @@ export async function fetchPackageRatings(params: {
     const responses = await Promise.all(
       queries.map((q) =>
         firecrawl
-          .search(q, { limit: 5 })
+          .search(q, { limit: 4 })
           .catch((e) => {
             console.error("Firecrawl search failed for", q, e);
             return null;
@@ -98,9 +98,11 @@ export async function fetchPackageRatings(params: {
       ),
     );
 
-    const ratings: PackageRating[] = [];
+    // Collect candidate URLs (one per source priority) from search results.
+    type Candidate = { url: string; snippet: string };
+    const candidates: Candidate[] = [];
     const seenUrls = new Set<string>();
-    const sourceCount = new Map<string, number>();
+    const sourceSeen = new Map<string, number>();
 
     for (const res of responses) {
       if (!res) continue;
@@ -113,23 +115,74 @@ export async function fetchPackageRatings(params: {
       for (const item of items) {
         if (!item?.url) continue;
         if (seenUrls.has(item.url)) continue;
-        const text = `${item.title ?? ""} ${item.description ?? ""}`;
-        const extracted = extractRating(text);
-        if (!extracted) continue;
         const source = sourceFromUrl(item.url);
-        // allow up to 2 entries per source (different hotels / pages)
-        const count = sourceCount.get(source) ?? 0;
+        const count = sourceSeen.get(source) ?? 0;
         if (count >= 2) continue;
         seenUrls.add(item.url);
-        sourceCount.set(source, count + 1);
-        ratings.push({
-          source,
-          value: extracted.value,
-          scale: extracted.scale,
+        sourceSeen.set(source, count + 1);
+        candidates.push({
           url: item.url,
+          snippet: `${item.title ?? ""} ${item.description ?? ""}`,
         });
-        if (ratings.length >= limit) break;
       }
+    }
+
+    // Cap how many pages we open to keep latency reasonable.
+    const toVerify = candidates.slice(0, Math.max(limit * 2, 12));
+
+    // Open each page and confirm the rating from the actual page content.
+    const verified = await Promise.all(
+      toVerify.map(async (c) => {
+        // Try snippet first — fast path.
+        const snippetHit = extractRating(c.snippet);
+
+        try {
+          const scraped = await firecrawl.scrape(c.url, {
+            formats: ["markdown"],
+            onlyMainContent: true,
+          });
+          const md =
+            (scraped as { markdown?: string }).markdown ??
+            (scraped as { data?: { markdown?: string } }).data?.markdown ??
+            "";
+          // Only inspect the top of the page — ratings appear near the header.
+          const head = md.slice(0, 4000);
+          const pageHit = extractRating(head);
+          const chosen = pageHit ?? snippetHit;
+          if (!chosen) return null;
+          return {
+            source: sourceFromUrl(c.url),
+            value: chosen.value,
+            scale: chosen.scale,
+            url: c.url,
+            verified: !!pageHit,
+          };
+        } catch (e) {
+          console.error("Firecrawl scrape failed for", c.url, e);
+          if (!snippetHit) return null;
+          return {
+            source: sourceFromUrl(c.url),
+            value: snippetHit.value,
+            scale: snippetHit.scale,
+            url: c.url,
+            verified: false,
+          };
+        }
+      }),
+    );
+
+    // Prefer page-verified ratings; dedupe per source (max 2 per source).
+    const ratings: PackageRating[] = [];
+    const perSource = new Map<string, number>();
+    const sorted = verified
+      .filter((r): r is NonNullable<typeof r> => !!r)
+      .sort((a, b) => Number(b.verified) - Number(a.verified));
+
+    for (const r of sorted) {
+      const used = perSource.get(r.source) ?? 0;
+      if (used >= 2) continue;
+      perSource.set(r.source, used + 1);
+      ratings.push({ source: r.source, value: r.value, scale: r.scale, url: r.url });
       if (ratings.length >= limit) break;
     }
 
