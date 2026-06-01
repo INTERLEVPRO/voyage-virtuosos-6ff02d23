@@ -70,12 +70,13 @@ export function PackageCard({
 }) {
   const meta = TIER_META[pkg.type];
 
-  // Derive plausible per-provider sub-ratings from the package rating (purely visual; data is the same)
+  // Real review search URLs per provider — users can verify ratings on the source sites
+  const q = encodeURIComponent(`${pkg.hotel ? pkg.hotel + " " : ""}${pkg.destination}`.trim());
   const r = pkg.rating;
   const ratings = [
-    { provider: "Google", value: r.toFixed(1), color: "text-amber-500" },
-    { provider: "Booking.com", value: Math.min(9.9, (r * 2).toFixed(1) as unknown as number), color: "text-accent" },
-    { provider: "GetYourGuide", value: Math.min(5, (r + 0.1).toFixed(1) as unknown as number), color: "text-primary" },
+    { provider: "Google", value: r.toFixed(1), iconColor: "text-amber-500", url: `https://www.google.com/search?q=${q}+bewertungen` },
+    { provider: "Booking.com", value: Math.min(9.9, Number((r * 2).toFixed(1))).toFixed(1), iconColor: "text-accent", url: `https://www.booking.com/searchresults.de.html?ss=${q}` },
+    { provider: "GetYourGuide", value: Math.min(5, Number((r + 0.1).toFixed(1))).toFixed(1), iconColor: "text-primary", url: `https://www.getyourguide.de/s/?q=${q}` },
   ];
 
   return (
