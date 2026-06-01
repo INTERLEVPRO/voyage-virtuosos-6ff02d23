@@ -9,6 +9,7 @@ import {
 import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
+import { fetchPackageRatings } from "@/lib/ratings.server";
 
 type ChatRequestBody = { messages?: unknown };
 
@@ -533,9 +534,16 @@ export const Route = createFileRoute("/api/chat")({
           // non-fatal
         }
 
-        const packagesWithLinks = normalized.map((p) => ({
+        const ratingsPerPackage = await Promise.all(
+          normalized.map((p) =>
+            fetchPackageRatings({ hotel: p.hotel, destination: p.destination }),
+          ),
+        );
+
+        const packagesWithLinks = normalized.map((p, i) => ({
           ...p,
           bookingLinks: placeholderLinks(p.destination),
+          ratings: ratingsPerPackage[i] ?? [],
         }));
 
         const inserted: { id: string }[] = [];

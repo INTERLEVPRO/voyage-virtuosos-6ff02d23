@@ -12,6 +12,13 @@ export const bookingLinksSchema = z.object({
   activities: z.string().url().optional(),
 });
 
+export const packageRatingSchema = z.object({
+  source: z.string().min(1),
+  value: z.union([z.number(), z.string()]),
+  scale: z.number().optional(),
+  url: z.string().url(),
+});
+
 export const packageSchema = z.object({
   type: z.enum(["basic", "medium", "premium"]).optional(),
   title: z.string(),
@@ -31,6 +38,7 @@ export const packageSchema = z.object({
   badges: z.array(z.string()).min(1),
   activities: z.array(z.string()).min(1),
   itinerary: z.array(itineraryDaySchema).min(1),
+  ratings: z.array(packageRatingSchema).optional(),
 });
 
 export type ParsedPackage = z.infer<typeof packageSchema>;
