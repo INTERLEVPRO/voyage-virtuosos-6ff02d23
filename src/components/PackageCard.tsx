@@ -70,14 +70,23 @@ export function PackageCard({
 }) {
   const meta = TIER_META[pkg.type];
 
-  // Real review search URLs per provider — users can verify ratings on the source sites
-  const q = encodeURIComponent(pkg.destination.trim());
-  const r = pkg.rating;
-  const ratings = [
-    { provider: "Tripadvisor", value: r.toFixed(1), iconColor: "text-emerald-600", url: `https://www.tripadvisor.de/Search?q=${q}` },
-    { provider: "Booking.com", value: Math.min(9.9, Number((r * 2).toFixed(1))).toFixed(1), iconColor: "text-accent", url: `https://www.booking.com/searchresults.de.html?ss=${q}` },
-    { provider: "GetYourGuide", value: Math.min(5, Number((r + 0.1).toFixed(1))).toFixed(1), iconColor: "text-primary", url: `https://www.getyourguide.de/s/?q=${q}` },
-  ];
+  // Echte Ratings + Quell-Link sind Pflicht. Ohne Link wird nichts angezeigt.
+  // Keine Limitierung auf 3 Quellen — alles vom Backend Gelieferte wird gerendert.
+  const ratings = (pkg.ratings ?? [])
+    .filter((rt) => !!rt && typeof rt.url === "string" && rt.url.trim().length > 0)
+    .map((rt, i) => {
+      const palette = ["text-emerald-600", "text-accent", "text-primary", "text-tier-premium", "text-tier-medium"];
+      const num = typeof rt.value === "number" ? rt.value : Number(rt.value);
+      const value = Number.isFinite(num)
+        ? (rt.scale === 10 ? num.toFixed(1) : num.toFixed(1))
+        : String(rt.value);
+      return {
+        provider: rt.source,
+        value,
+        iconColor: palette[i % palette.length],
+        url: rt.url,
+      };
+    });
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
@@ -123,9 +132,15 @@ export function PackageCard({
         {/* Right: rating breakdown + CTA */}
         <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
           <ul className="space-y-1.5 text-sm">
-            {ratings.filter((rt) => !!rt.url).map((rt) => (
-              <RatingRow key={rt.provider} provider={rt.provider} value={rt.value} iconColor={rt.iconColor} url={rt.url} />
-            ))}
+            {ratings.length === 0 ? (
+              <li className="text-xs italic text-muted-foreground">
+                Keine verifizierten Bewertungen mit Quell-Link verfügbar.
+              </li>
+            ) : (
+              ratings.map((rt) => (
+                <RatingRow key={`${rt.provider}-${rt.url}`} provider={rt.provider} value={rt.value} iconColor={rt.iconColor} url={rt.url} />
+              ))
+            )}
             <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
