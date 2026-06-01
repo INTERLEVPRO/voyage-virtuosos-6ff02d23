@@ -12,6 +12,13 @@ export type BookingLinks = {
   activities?: string;
 };
 
+export type PackageRating = {
+  source: string;
+  value: number | string;
+  scale?: number; // e.g. 5 or 10
+  url: string;   // mandatory: ohne Link wird das Rating nicht angezeigt
+};
+
 export type TravelPackage = {
   id: string;
   type: TravelPackageType;
@@ -33,6 +40,7 @@ export type TravelPackage = {
   activities: string[];
   itinerary: ItineraryDay[];
   bookingLinks?: BookingLinks;
+  ratings?: PackageRating[];
 };
 
 export type PackagesPayload = {
