@@ -156,8 +156,9 @@ function RatingRow({
   provider: string;
   value: string;
   iconColor: string;
-  url: string;
+  url?: string;
 }) {
+  if (!url) return null;
   return (
     <li className="flex items-center justify-between">
       <a
