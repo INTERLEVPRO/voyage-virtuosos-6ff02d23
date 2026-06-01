@@ -71,10 +71,10 @@ export function PackageCard({
   const meta = TIER_META[pkg.type];
 
   // Real review search URLs per provider — users can verify ratings on the source sites
-  const q = encodeURIComponent(`${pkg.hotel ? pkg.hotel + " " : ""}${pkg.destination}`.trim());
+  const q = encodeURIComponent(pkg.destination.trim());
   const r = pkg.rating;
   const ratings = [
-    { provider: "Google", value: r.toFixed(1), iconColor: "text-amber-500", url: `https://www.google.com/search?q=${q}+bewertungen` },
+    { provider: "Tripadvisor", value: r.toFixed(1), iconColor: "text-emerald-600", url: `https://www.tripadvisor.de/Search?q=${q}` },
     { provider: "Booking.com", value: Math.min(9.9, Number((r * 2).toFixed(1))).toFixed(1), iconColor: "text-accent", url: `https://www.booking.com/searchresults.de.html?ss=${q}` },
     { provider: "GetYourGuide", value: Math.min(5, Number((r + 0.1).toFixed(1))).toFixed(1), iconColor: "text-primary", url: `https://www.getyourguide.de/s/?q=${q}` },
   ];
