@@ -9,6 +9,7 @@ import {
 import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
+import { fetchPackageRatings } from "@/lib/ratings.server";
 
 type ChatRequestBody = { messages?: unknown };
 
