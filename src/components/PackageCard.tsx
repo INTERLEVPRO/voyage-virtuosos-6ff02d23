@@ -123,9 +123,12 @@ export function PackageCard({
         {/* Right: rating breakdown + CTA */}
         <div className="flex flex-col justify-between gap-4 md:w-56 md:border-l md:border-border md:pl-5">
           <ul className="space-y-1.5 text-sm">
-            {ratings.map((rt) => (
+            {ratings.filter((rt) => !!rt.url).map((rt) => (
               <RatingRow key={rt.provider} provider={rt.provider} value={rt.value} iconColor={rt.iconColor} url={rt.url} />
             ))}
+            {ratings.filter((rt) => !rt.url).length > 0 && (
+              <li className="text-xs text-muted-foreground">Bewertungen verifizieren – Quellenlinks folgen bald</li>
+            )}
             <li className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
