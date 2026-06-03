@@ -500,7 +500,9 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
-        const missingFields = getMissingFields(lastUserText, userHistory);
+        const missingRaw = getMissingFields(lastUserText, userHistory);
+        const answered = getAnsweredFieldsFromDialog(uiMessages);
+        const missingFields = missingRaw.filter((f) => !answered.has(f));
 
         // Concierge mode
         if (missingFields.length > 0) {
