@@ -54,11 +54,7 @@ function stripJsonBlock(text: string): string {
   return text.replace(JSON_BLOCK_RE, "").trim();
 }
 
-export function ChatPanel({
-  onPackagesReady,
-}: {
-  onPackagesReady?: (pkgs: TravelPackage[]) => void;
-}) {
+export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: TravelPackage[]) => void }) {
   const transport = new DefaultChatTransport({ api: "/api/chat" });
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
@@ -135,7 +131,9 @@ export function ChatPanel({
                   onClick={() => submit(p.prompt)}
                   className="group flex w-full max-w-full flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
                 >
-                  <span className="text-3xl leading-none" aria-hidden>{p.emoji}</span>
+                  <span className="text-3xl leading-none" aria-hidden>
+                    {p.emoji}
+                  </span>
                   <span className="text-sm font-semibold text-foreground">{p.title}</span>
                   <span className="text-xs text-muted-foreground">{p.subtitle}</span>
                   <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
@@ -195,7 +193,10 @@ export function ChatPanel({
 
       {/* Composer — ChatGPT/Gemini style */}
       <form
-        onSubmit={(e) => { e.preventDefault(); submit(input); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(input);
+        }}
         className="w-full max-w-full overflow-x-hidden border-t border-border bg-card px-4 py-3 sm:px-6 sm:py-4"
       >
         <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-[28px] border border-border bg-background px-3 py-2.5 shadow-soft transition-all focus-within:border-primary/50 focus-within:shadow-card">
@@ -232,7 +233,7 @@ export function ChatPanel({
           </button>
         </div>
         <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground">
-          z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €, Juni, ab Frankfurt
+          <b> z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €, Juni, ab Frankfurt </b>
         </p>
         <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
           <ShieldCheck className="h-3 w-3 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
