@@ -303,15 +303,18 @@ function extractDestination(history: string): string {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (explicit?.[1]) return cleanDestination(explicit[1]);
+    if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (byPrep?.[1]) return cleanDestination(byPrep[1]);
+    if (byPrep?.[1] && !isDateLike(byPrep[1])) {
+      const cand = cleanDestination(byPrep[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
 
     const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl)/i.test(firstChunk)) {
+    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
       const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      return cleanDestination(cleaned);
+      if (cleaned && !isDateLike(cleaned)) return cleanDestination(cleaned);
     }
   }
 
