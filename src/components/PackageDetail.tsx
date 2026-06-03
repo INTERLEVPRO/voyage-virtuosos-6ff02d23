@@ -37,6 +37,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
+import { buildSkyscannerUrl, buildBookingUrl, lookupOriginIata } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -305,8 +306,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 2 Personen</span>
-        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span>👥 {currentPkg.travelers ?? 2} {(currentPkg.travelers ?? 2) === 1 ? "Person" : "Personen"}</span>
+        {currentPkg.origin && (
+          <span>✈️ Ab {currentPkg.origin}{lookupOriginIata(currentPkg.origin) ? ` (${lookupOriginIata(currentPkg.origin)})` : ""}</span>
+        )}
         <span className="ml-auto font-semibold text-foreground">
           Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
         </span>
@@ -373,8 +376,19 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {(() => {
         const dest = currentPkg.destination || "";
         const q = encodeURIComponent(dest);
-        const flightUrl = `https://www.skyscanner.de/transport/fluge-nach/${q}/`;
-        const hotelUrl = `https://www.booking.com/searchresults.html?ss=${q}`;
+        const flightUrl = buildSkyscannerUrl({
+          destination: dest,
+          origin: currentPkg.origin,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          durationDays: currentPkg.durationDays,
+        });
+        const hotelUrl = buildBookingUrl({
+          destination: dest,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          durationDays: currentPkg.durationDays,
+        });
         const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
         const activitiesUrl = `https://www.getyourguide.de/s/?q=${q}`;
         return (
