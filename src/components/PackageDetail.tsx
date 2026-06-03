@@ -306,8 +306,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 2 Personen</span>
-        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span>👥 {currentPkg.travelers ?? 2} {(currentPkg.travelers ?? 2) === 1 ? "Person" : "Personen"}</span>
+        {currentPkg.origin && (
+          <span>✈️ Ab {currentPkg.origin}{lookupOriginIata(currentPkg.origin) ? ` (${lookupOriginIata(currentPkg.origin)})` : ""}</span>
+        )}
         <span className="ml-auto font-semibold text-foreground">
           Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
         </span>
