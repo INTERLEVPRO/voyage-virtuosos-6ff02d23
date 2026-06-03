@@ -380,7 +380,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei Aviasales ansehen"
           provider="flight"
-          url="https://www.booking.com/"
+          url="https://www.skyscanner.net/"
           packageId={currentPkg.id}
           ctaCls="bg-accent text-accent-foreground hover:bg-accent/90"
         />
