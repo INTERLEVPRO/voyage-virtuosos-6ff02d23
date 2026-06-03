@@ -232,8 +232,8 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
-        <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground">
-          <b> z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €, Juni, ab Frankfurt </b>
+        <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground font-bold">
+          z. B. 7 Tage Mallorca, 2 Personen, Budget 1.500 €, Juni, ab Frankfurt
         </p>
         <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
           <ShieldCheck className="h-3 w-3 text-primary" /> Deine Daten sind sicher und werden nicht weitergegeben.
