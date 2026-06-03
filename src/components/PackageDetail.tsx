@@ -375,10 +375,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Plane}
           title="Flüge"
           subtitle={currentPkg.flight}
-          ratingLabel="Aviasales"
+          ratingLabel="skyscanner"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
-          ctaLabel="Bei Aviasales ansehen"
+          ctaLabel="Bei skyscanner ansehen"
           provider="flight"
           url="https://www.skyscanner.net/"
           packageId={currentPkg.id}
@@ -401,11 +401,11 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Hotel}
           title="Hotel"
           subtitle={currentPkg.hotel}
-          ratingLabel="Klook"
+          ratingLabel="booking.com"
           rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Klook ansehen"
+          ctaLabel="Bei booking.com ansehen"
           provider="hotel"
           url="https://www.booking.com/"
           packageId={currentPkg.id}
@@ -415,12 +415,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Compass}
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
-          ratingLabel="Klook"
+          ratingLabel="getyourguide"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
-          url="https://www.getyourguide.de"
+          url="https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}"
           packageId={currentPkg.id}
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
