@@ -24,10 +24,19 @@ HOTELS:
 - <name> · <neighborhood> · <€/night> · <one-line vibe> · <star rating>
 (3 options: budget / mid / luxury)`;
 
-const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan in GERMAN.
-Use the duration from the brief (default 5 days). For each day output:
-Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).
-Return one line per day and include EVERY day up to the requested duration.`;
+const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a realistic day-by-day plan in GERMAN with REAL, NAMED places/attractions for the destination — no generic filler.
+
+RULES:
+- The <Thema> MUST be a real area, neighborhood, attraction, or theme tied to the destination (e.g. "Altstadt & Kathedrale", "Taj Mahal & Agra Fort", "Strand Es Trenc & Cap de Ses Salines"). Never write "Erlebnisse in <Stadt>" or generic placeholders.
+- Vormittag/Nachmittag/Abend each MUST mention concrete real place names, restaurants, viewpoints, beaches, museums, or activities that actually exist at the destination.
+- Group places by geographic proximity so each day is logistically feasible (no zig-zag across the country).
+- Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
+- Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
+
+FORMAT (EXACTLY one line per day, nothing else):
+Tag N — <Thema mit echtem Ort>: Vormittag: <konkrete Orte/Aktivitäten> · Nachmittag: <konkrete Orte/Aktivitäten> · Abend: <konkrete Orte/Aktivitäten>
+
+Include EVERY day from Tag 1 up to the requested duration.`;
 
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
@@ -216,12 +225,18 @@ function extractRequestedDurationDays(history: string): number {
 }
 
 function parseItineraryDraft(text: string, expectedDays: number, destination: string) {
-  const parsed = text
+  // Strip markdown bold/italics & bullets, then match flexible separators
+  const normalized = text
+    .replace(/\*\*/g, "")
+    .replace(/^[\s>*-]+/gm, "")
+    .replace(/[–—−-]/g, "—");
+
+  const parsed = normalized
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const match = line.match(/^tag\s*(\d+)\s*[—-]\s*([^:]+):\s*(.+)$/i);
+      const match = line.match(/^tag\s*(\d+)\s*[—:]\s*([^:]+?)\s*:\s*(.+)$/i);
       if (!match) return null;
 
       const day = Number(match[1]);
@@ -258,6 +273,16 @@ function parseItineraryDraft(text: string, expectedDays: number, destination: st
   return completed;
 }
 
+const MONTH_RE = /^(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)$/i;
+
+function isDateLike(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (/^\d/.test(t)) return true; // starts with number
+  const firstWord = t.split(/\s+/)[0] ?? "";
+  return MONTH_RE.test(firstWord);
+}
+
 function cleanDestination(raw: string): string {
   // Stop at sentence/clause boundaries and strip filler words
   const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
@@ -278,15 +303,18 @@ function extractDestination(history: string): string {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (explicit?.[1]) return cleanDestination(explicit[1]);
+    if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (byPrep?.[1]) return cleanDestination(byPrep[1]);
+    if (byPrep?.[1] && !isDateLike(byPrep[1])) {
+      const cand = cleanDestination(byPrep[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
 
     const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl)/i.test(firstChunk)) {
+    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
       const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      return cleanDestination(cleaned);
+      if (cleaned && !isDateLike(cleaned)) return cleanDestination(cleaned);
     }
   }
 
