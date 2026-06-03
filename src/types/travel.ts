@@ -31,6 +31,7 @@ export type TravelPackage = {
   reviews: number;
   matchScore: number;
   duration: string;
+  durationDays?: number;
   hotel: string;
   flight: string;
   mealPlan?: string;
@@ -41,6 +42,10 @@ export type TravelPackage = {
   itinerary: ItineraryDay[];
   bookingLinks?: BookingLinks;
   ratings?: PackageRating[];
+  // Brief context for deep links (Skyscanner, Booking …)
+  origin?: string;
+  travelers?: number;
+  travelMonth?: string;
 };
 
 export type PackagesPayload = {
