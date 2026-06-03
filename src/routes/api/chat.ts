@@ -24,10 +24,19 @@ HOTELS:
 - <name> · <neighborhood> · <€/night> · <one-line vibe> · <star rating>
 (3 options: budget / mid / luxury)`;
 
-const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan in GERMAN.
-Use the duration from the brief (default 5 days). For each day output:
-Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).
-Return one line per day and include EVERY day up to the requested duration.`;
+const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a realistic day-by-day plan in GERMAN with REAL, NAMED places/attractions for the destination — no generic filler.
+
+RULES:
+- The <Thema> MUST be a real area, neighborhood, attraction, or theme tied to the destination (e.g. "Altstadt & Kathedrale", "Taj Mahal & Agra Fort", "Strand Es Trenc & Cap de Ses Salines"). Never write "Erlebnisse in <Stadt>" or generic placeholders.
+- Vormittag/Nachmittag/Abend each MUST mention concrete real place names, restaurants, viewpoints, beaches, museums, or activities that actually exist at the destination.
+- Group places by geographic proximity so each day is logistically feasible (no zig-zag across the country).
+- Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
+- Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
+
+FORMAT (EXACTLY one line per day, nothing else):
+Tag N — <Thema mit echtem Ort>: Vormittag: <konkrete Orte/Aktivitäten> · Nachmittag: <konkrete Orte/Aktivitäten> · Abend: <konkrete Orte/Aktivitäten>
+
+Include EVERY day from Tag 1 up to the requested duration.`;
 
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
