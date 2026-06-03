@@ -273,6 +273,16 @@ function parseItineraryDraft(text: string, expectedDays: number, destination: st
   return completed;
 }
 
+const MONTH_RE = /^(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)$/i;
+
+function isDateLike(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (/^\d/.test(t)) return true; // starts with number
+  const firstWord = t.split(/\s+/)[0] ?? "";
+  return MONTH_RE.test(firstWord);
+}
+
 function cleanDestination(raw: string): string {
   // Stop at sentence/clause boundaries and strip filler words
   const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
