@@ -37,6 +37,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
+import { buildSkyscannerUrl, buildBookingUrl, lookupOriginIata } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
