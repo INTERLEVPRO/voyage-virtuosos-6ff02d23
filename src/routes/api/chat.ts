@@ -400,7 +400,7 @@ function extractTravelMonth(history: string): string | undefined {
   return m?.[1].toLowerCase();
 }
 
-
+function extractInterests(history: string): string[] {
   const lower = history.toLowerCase();
   const pool = [
     ["strand", "Strand & Entspannung"],
