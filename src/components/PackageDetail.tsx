@@ -370,6 +370,14 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
+      {(() => {
+        const dest = currentPkg.destination || "";
+        const q = encodeURIComponent(dest);
+        const flightUrl = `https://www.skyscanner.de/transport/fluge-nach/${q}/`;
+        const hotelUrl = `https://www.booking.com/searchresults.html?ss=${q}`;
+        const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
+        const activitiesUrl = `https://www.getyourguide.de/s/?q=${q}`;
+        return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
@@ -380,7 +388,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei skyscanner ansehen"
           provider="flight"
-          url="https://www.skyscanner.net/"
+          url={flightUrl}
           packageId={currentPkg.id}
           ctaCls="bg-accent text-accent-foreground hover:bg-accent/90"
         />
@@ -393,7 +401,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.05)}
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
-          url="https://kiwitaxi.tpm.li/RgYDJiUT"
+          url={taxiUrl}
           packageId={currentPkg.id}
           ctaCls="bg-secondary text-secondary-foreground hover:bg-secondary/90"
         />
@@ -407,7 +415,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei booking.com ansehen"
           provider="hotel"
-          url="https://www.booking.com/searchresults.html?ss=Lissabon"
+          url={hotelUrl}
           packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
         />
@@ -420,11 +428,13 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.18)}
           ctaLabel="Bei getyourguide ansehen"
           provider="activities"
-          url="https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}"
+          url={activitiesUrl}
           packageId={currentPkg.id}
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
       </div>
+        );
+      })()}
 
       {/* Total price strip */}
       <div
