@@ -366,7 +366,41 @@ function parseResearchData(text: string): ResearchData {
   return { flights, hotels };
 }
 
-function extractInterests(history: string): string[] {
+function extractOrigin(history: string): string | undefined {
+  const m = history.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+  if (!m) return undefined;
+  // take first 1-2 words before comma/punct
+  const cleaned = m[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 2).join(" ");
+  return cleaned || undefined;
+}
+
+const WORD_NUMS: Record<string, number> = {
+  allein: 1, solo: 1, "ein": 1, "eine": 1, "einer": 1, "eins": 1,
+  paar: 2, pärchen: 2, paerchen: 2, "zu zweit": 2, zwei: 2,
+  "zu dritt": 3, drei: 3,
+  "zu viert": 4, vier: 4, familie: 4,
+  fünf: 5, fuenf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10,
+};
+
+function extractTravelers(history: string): number | undefined {
+  const lower = history.toLowerCase();
+  const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
+  if (num) {
+    const n = Number(num[1]);
+    if (n > 0 && n < 30) return n;
+  }
+  for (const [word, n] of Object.entries(WORD_NUMS)) {
+    if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+  }
+  return undefined;
+}
+
+function extractTravelMonth(history: string): string | undefined {
+  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december)\b/i);
+  return m?.[1].toLowerCase();
+}
+
+
   const lower = history.toLowerCase();
   const pool = [
     ["strand", "Strand & Entspannung"],
