@@ -85,6 +85,41 @@ function getMissingFields(text: string, history: string): MissingField[] {
   return missing;
 }
 
+// Identify which field the assistant last asked about, based on the question text.
+function detectAskedField(assistantText: string): MissingField | null {
+  const t = assistantText.toLowerCase();
+  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) return "destination";
+  if (/budget/.test(t)) return "budget";
+  if (/wie lange|reisedauer|wie viele tage/.test(t)) return "duration";
+  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) return "travelers";
+  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) return "origin";
+  if (/wann.*reisen|reisezeit|monat.*saison/.test(t)) return "timeframe";
+  return null;
+}
+
+// Walk the dialog: when the assistant asked about a field and the user replied
+// next with non-empty text, mark that field as answered.
+function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField> {
+  const answered = new Set<MissingField>();
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (let i = 0; i < uiMessages.length - 1; i += 1) {
+    const m = uiMessages[i];
+    if (m.role !== "assistant") continue;
+    const asked = detectAskedField(textOf(m));
+    if (!asked) continue;
+    for (let j = i + 1; j < uiMessages.length; j += 1) {
+      const next = uiMessages[j];
+      if (next.role === "user") {
+        if (textOf(next).trim().length > 0) answered.add(asked);
+        break;
+      }
+    }
+  }
+  return answered;
+}
+
 function formatMissingField(field: MissingField): string {
   switch (field) {
     case "destination":
@@ -465,7 +500,9 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
-        const missingFields = getMissingFields(lastUserText, userHistory);
+        const missingRaw = getMissingFields(lastUserText, userHistory);
+        const answered = getAnsweredFieldsFromDialog(uiMessages);
+        const missingFields = missingRaw.filter((f) => !answered.has(f));
 
         // Concierge mode
         if (missingFields.length > 0) {
