@@ -407,11 +407,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei booking.com ansehen"
           provider="hotel"
-          url="href="
-          https:packageId={
-            //www.booking.com/searchresults.html?ss=Lissabon""
-            currentPkg.id
-          }
+          url="https://www.booking.com/searchresults.html?ss=Lissabon"
+          packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
         />
         <ProviderRow
