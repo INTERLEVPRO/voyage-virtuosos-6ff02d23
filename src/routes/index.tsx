@@ -39,11 +39,7 @@ function Index() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <PackageResults
-          packages={packages}
-          onSelect={setSelected}
-          onBack={() => setPackages([])}
-        />
+        <PackageResults packages={packages} onSelect={setSelected} onBack={() => setPackages([])} />
         <Footer />
       </div>
     );
@@ -75,7 +71,8 @@ function Index() {
               className="mx-auto mt-3 max-w-md text-muted-foreground"
               style={{ fontSize: "clamp(0.875rem, 1.6vw, 1rem)" }}
             >
-              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in einem Paket.
+              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in
+              einem Paket.
             </p>
 
             <div className="mt-6 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
@@ -98,15 +95,7 @@ function Index() {
   );
 }
 
-function FeatureChip({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: typeof Check;
-  title: string;
-  body: string;
-}) {
+function FeatureChip({ icon: Icon, title, body }: { icon: typeof Check; title: string; body: string }) {
   return (
     <div className="flex w-full max-w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:min-w-[160px] sm:w-auto">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -120,7 +109,6 @@ function FeatureChip({
   );
 }
 
-
 function SiteHeader() {
   const { user, signOut } = useAuth();
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
@@ -129,11 +117,7 @@ function SiteHeader() {
     <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
         <Link to="/" className="flex items-center">
-          <img
-            src={logo}
-            alt="Weltweiturlaub.de — Reise planen in 2 Minuten"
-            className="h-12 w-auto sm:h-12 md:h-14"
-          />
+          <img src={logo} alt="Weltweiturlaub.de — Reise planen in 2 Minuten" className="h-12 w-auto sm:h-12 md:h-14" />
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -182,7 +166,7 @@ function SiteHeader() {
 function Footer() {
   return (
     <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-      Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Lovable AI
+      Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Agents
     </footer>
   );
 }
