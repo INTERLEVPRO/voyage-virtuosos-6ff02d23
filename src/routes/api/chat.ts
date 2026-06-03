@@ -662,6 +662,10 @@ export const Route = createFileRoute("/api/chat")({
 
         const packagesWithLinks = normalized.map((p, i) => ({
           ...p,
+          durationDays: requestedDurationDays,
+          origin,
+          travelers,
+          travelMonth,
           bookingLinks: placeholderLinks(p.destination),
           ratings: ratingsPerPackage[i] ?? [],
         }));
