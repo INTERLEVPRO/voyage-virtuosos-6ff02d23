@@ -421,7 +421,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           ratingLabel="getyourguide"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
-          ctaLabel="Bei Klook ansehen"
+          ctaLabel="Bei getyourguide ansehen"
           provider="activities"
           url="https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}"
           packageId={currentPkg.id}
