@@ -580,6 +580,9 @@ export const Route = createFileRoute("/api/chat")({
         const destination = extractDestination(userHistory);
         const budget = extractBudgetAmount(userHistory);
         const interests = extractInterests(userHistory);
+        const origin = extractOrigin(userHistory);
+        const travelers = extractTravelers(userHistory);
+        const travelMonth = extractTravelMonth(userHistory);
 
         let researchText = "";
         let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
