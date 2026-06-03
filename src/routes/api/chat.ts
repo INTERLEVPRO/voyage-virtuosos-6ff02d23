@@ -469,7 +469,8 @@ export const Route = createFileRoute("/api/chat")({
 
         // Concierge mode
         if (missingFields.length > 0) {
-          return createTextStreamResponse(buildConciergeReply(missingFields), uiMessages);
+          const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
+          return createTextStreamResponse(buildConciergeReply(missingFields, userMessageCount), uiMessages);
         }
 
         // Multi-agent: research → itinerary → packager (structured)
