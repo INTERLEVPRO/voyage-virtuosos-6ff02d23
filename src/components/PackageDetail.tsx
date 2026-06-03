@@ -376,8 +376,19 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {(() => {
         const dest = currentPkg.destination || "";
         const q = encodeURIComponent(dest);
-        const flightUrl = `https://www.skyscanner.de/transport/fluge-nach/${q}/`;
-        const hotelUrl = `https://www.booking.com/searchresults.html?ss=${q}`;
+        const flightUrl = buildSkyscannerUrl({
+          destination: dest,
+          origin: currentPkg.origin,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          durationDays: currentPkg.durationDays,
+        });
+        const hotelUrl = buildBookingUrl({
+          destination: dest,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          durationDays: currentPkg.durationDays,
+        });
         const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
         const activitiesUrl = `https://www.getyourguide.de/s/?q=${q}`;
         return (
