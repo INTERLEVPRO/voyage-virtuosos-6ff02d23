@@ -108,18 +108,35 @@ function joinWithUnd(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
 }
 
-function buildConciergeReply(missing: MissingField[]): string {
+function buildConciergeReply(missing: MissingField[], userMessageCount: number): string {
   if (missing.length === 0) {
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  if (missing.length === 1) {
-    return `Super, fast alles da! Mir fehlt nur noch: ${formatMissingField(missing[0])}`;
+  const nextQuestion = formatMissingField(missing[0]);
+
+  // First user message → warm welcome + example, then ask only the first missing detail
+  if (userMessageCount <= 1) {
+    return [
+      "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
+      "",
+      "Du kannst mir z. B. einfach schreiben:",
+      "> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni“*",
+      "",
+      "Keine Sorge, wenn dir noch Details fehlen — ich frage Schritt für Schritt nach. 😊",
+      "",
+      `Lass uns starten: ${nextQuestion}`,
+    ].join("\n");
   }
 
-  return `Super, ich brauche noch kurz ${missing.length} Angaben: ${joinWithUnd(
-    missing.map(formatMissingField),
-  )}`;
+  // Subsequent turns → ask just the next missing detail (step-by-step, friendly)
+  const remaining = missing.length - 1;
+  const tail =
+    remaining > 0
+      ? `\n\n_(Danach brauche ich nur noch ${remaining} ${remaining === 1 ? "Angabe" : "Angaben"} — versprochen!)_`
+      : "\n\n_(Das ist meine letzte Frage — danach lege ich los! ✨)_";
+
+  return `Super, danke dir! ${nextQuestion}${tail}`;
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
@@ -452,7 +469,8 @@ export const Route = createFileRoute("/api/chat")({
 
         // Concierge mode
         if (missingFields.length > 0) {
-          return createTextStreamResponse(buildConciergeReply(missingFields), uiMessages);
+          const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
+          return createTextStreamResponse(buildConciergeReply(missingFields, userMessageCount), uiMessages);
         }
 
         // Multi-agent: research → itinerary → packager (structured)
