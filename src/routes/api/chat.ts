@@ -225,12 +225,18 @@ function extractRequestedDurationDays(history: string): number {
 }
 
 function parseItineraryDraft(text: string, expectedDays: number, destination: string) {
-  const parsed = text
+  // Strip markdown bold/italics & bullets, then match flexible separators
+  const normalized = text
+    .replace(/\*\*/g, "")
+    .replace(/^[\s>*-]+/gm, "")
+    .replace(/[–—−-]/g, "—");
+
+  const parsed = normalized
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const match = line.match(/^tag\s*(\d+)\s*[—-]\s*([^:]+):\s*(.+)$/i);
+      const match = line.match(/^tag\s*(\d+)\s*[—:]\s*([^:]+?)\s*:\s*(.+)$/i);
       if (!match) return null;
 
       const day = Number(match[1]);
