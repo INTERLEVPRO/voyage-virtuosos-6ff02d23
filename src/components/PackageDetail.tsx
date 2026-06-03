@@ -408,7 +408,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           ctaLabel="Bei booking.com ansehen"
           provider="hotel"
           url="href="
-          https:packageId={ //www.booking.com/searchresults.html?ss=Lissabon""
+          https:packageId={
+            //www.booking.com/searchresults.html?ss=Lissabon""
             currentPkg.id
           }
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
