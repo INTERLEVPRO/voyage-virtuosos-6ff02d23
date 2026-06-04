@@ -674,9 +674,19 @@ export const Route = createFileRoute("/api/chat")({
         const destination = dialog.destination
           ? cleanPlace(dialog.destination)
           : extractDestination(userHistory);
-        const budget = dialog.budget
-          ? extractBudgetAmount(dialog.budget) || extractBudgetAmount(userHistory)
-          : extractBudgetAmount(userHistory);
+        const budget = (() => {
+          if (dialog.budget) {
+            const bare = dialog.budget.replace(/[.,\s]/g, "").match(/(\d{3,6})/);
+            if (bare) {
+              const n = Number(bare[1]);
+              if (n >= 100) return n;
+            }
+            const v = extractBudgetAmount(dialog.budget);
+            if (v && v !== 1500) return v;
+          }
+          return extractBudgetAmount(userHistory);
+        })();
+
         const interests = extractInterests(userHistory);
         const origin = dialog.origin
           ? cleanPlace(dialog.origin)
