@@ -666,14 +666,27 @@ export const Route = createFileRoute("/api/chat")({
         // Multi-agent: research → itinerary → packager (structured)
         const brief = `${userHistory}\n\nLetzte Nachricht: ${lastUserText}`;
 
-        const requestedDurationDays = extractRequestedDurationDays(userHistory);
+        const dialog = getDialogAnswers(uiMessages);
 
-        const destination = extractDestination(userHistory);
-        const budget = extractBudgetAmount(userHistory);
+        const dialogDuration = dialog.duration ? parseAnswerDurationDays(dialog.duration) : null;
+        const requestedDurationDays = dialogDuration ?? extractRequestedDurationDays(userHistory);
+
+        const destination = dialog.destination
+          ? cleanPlace(dialog.destination)
+          : extractDestination(userHistory);
+        const budget = dialog.budget
+          ? extractBudgetAmount(dialog.budget) || extractBudgetAmount(userHistory)
+          : extractBudgetAmount(userHistory);
         const interests = extractInterests(userHistory);
-        const origin = extractOrigin(userHistory);
-        const travelers = extractTravelers(userHistory);
-        const travelMonth = extractTravelMonth(userHistory);
+        const origin = dialog.origin
+          ? cleanPlace(dialog.origin)
+          : extractOrigin(userHistory);
+        const dialogTravelers = dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null;
+        const travelers = dialogTravelers ?? extractTravelers(userHistory);
+        const travelMonth = dialog.timeframe
+          ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory))
+          : extractTravelMonth(userHistory);
+
 
         let researchText = "";
         let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
