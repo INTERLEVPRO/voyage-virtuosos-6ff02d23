@@ -29,11 +29,12 @@ export function PackageResults({
       </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {sample?.duration ?? "—"}</span>
-        <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> 2 Personen</span>
-        <span className="inline-flex items-center gap-1.5"><Plane className="h-3.5 w-3.5" /> Ab Frankfurt (FRA)</span>
-        <span className="inline-flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Budget berücksichtigt</span>
+        <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {sample?.durationDays ? `${sample.durationDays} Tage` : (sample?.duration ?? "—")}</span>
+        <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {sample?.travelers ? `${sample.travelers} ${sample.travelers === 1 ? "Person" : "Personen"}` : "—"}</span>
+        <span className="inline-flex items-center gap-1.5"><Plane className="h-3.5 w-3.5" /> {sample?.origin ? `Ab ${sample.origin}` : "Abflugort offen"}</span>
+        <span className="inline-flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> {sample?.requestedBudget ? `Budget ${sample.requestedBudget} €` : "Budget berücksichtigt"}</span>
       </div>
+
 
       <div className="mt-10 grid gap-5">
         {packages.map((p) => (

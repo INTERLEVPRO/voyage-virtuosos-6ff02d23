@@ -129,6 +129,97 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
   return answered;
 }
 
+// Collect the literal user reply that followed each assistant question.
+// Latest answer wins if a field was asked multiple times.
+function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField, string>> {
+  const answers: Partial<Record<MissingField, string>> = {};
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (let i = 0; i < uiMessages.length - 1; i += 1) {
+    const m = uiMessages[i];
+    if (m.role !== "assistant") continue;
+    const asked = detectAskedField(textOf(m));
+    if (!asked) continue;
+    for (let j = i + 1; j < uiMessages.length; j += 1) {
+      const next = uiMessages[j];
+      if (next.role === "user") {
+        const t = textOf(next).trim();
+        if (t.length > 0) answers[asked] = t;
+        break;
+      }
+    }
+  }
+  return answers;
+}
+
+const WORD_NUM_BASIC: Record<string, number> = {
+  one: 1, ein: 1, eine: 1, einer: 1, eins: 1,
+  two: 2, zwei: 2,
+  three: 3, drei: 3,
+  four: 4, vier: 4,
+  five: 5, fünf: 5, fuenf: 5,
+  six: 6, sechs: 6,
+  seven: 7, sieben: 7,
+  eight: 8, acht: 8,
+  nine: 9, neun: 9,
+  ten: 10, zehn: 10,
+};
+
+function parseAnswerDurationDays(value: string): number | null {
+  const t = value.toLowerCase().trim();
+  // numeric with unit
+  const num = t.match(/(\d{1,3})\s*(tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|night|nights|day|days|woche|wochen|week|weeks|monat|monate|monaten|month|months)\b/);
+  if (num) {
+    const n = Number(num[1]);
+    const u = num[2];
+    if (u.startsWith("woche") || u.startsWith("week")) return n * 7;
+    if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
+    return n;
+  }
+  // word number + unit ("one month", "ein monat")
+  const word = t.match(/^(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|nacht|nächte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
+  if (word) {
+    const n = WORD_NUM_BASIC[word[1]] ?? 1;
+    const u = word[2];
+    if (u.startsWith("woche") || u.startsWith("week")) return n * 7;
+    if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
+    return n;
+  }
+  // bare number
+  const bare = t.match(/^(\d{1,3})$/);
+  if (bare) {
+    const n = Number(bare[1]);
+    if (n > 0 && n <= 365) return n;
+  }
+  return null;
+}
+
+function parseAnswerTravelers(value: string): number | null {
+  const t = value.toLowerCase().trim();
+  const bare = t.match(/^(\d{1,2})\b/);
+  if (bare) {
+    const n = Number(bare[1]);
+    if (n > 0 && n < 30) return n;
+  }
+  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
+    if (new RegExp(`\\b${word}\\b`).test(t)) return n;
+  }
+  if (/\b(allein|solo)\b/.test(t)) return 1;
+  if (/\b(paar|pärchen|paerchen|zu zweit)\b/.test(t)) return 2;
+  if (/\bfamilie\b/.test(t)) return 4;
+  return null;
+}
+
+function cleanPlace(value: string): string {
+  const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
+  // Take up to 3 words
+  const words = first.split(/\s+/).slice(0, 3);
+  return words
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+    .join(" ");
+}
+
 function formatMissingField(field: MissingField): string {
   switch (field) {
     case "destination":
@@ -575,14 +666,37 @@ export const Route = createFileRoute("/api/chat")({
         // Multi-agent: research → itinerary → packager (structured)
         const brief = `${userHistory}\n\nLetzte Nachricht: ${lastUserText}`;
 
-        const requestedDurationDays = extractRequestedDurationDays(userHistory);
+        const dialog = getDialogAnswers(uiMessages);
 
-        const destination = extractDestination(userHistory);
-        const budget = extractBudgetAmount(userHistory);
+        const dialogDuration = dialog.duration ? parseAnswerDurationDays(dialog.duration) : null;
+        const requestedDurationDays = dialogDuration ?? extractRequestedDurationDays(userHistory);
+
+        const destination = dialog.destination
+          ? cleanPlace(dialog.destination)
+          : extractDestination(userHistory);
+        const budget = (() => {
+          if (dialog.budget) {
+            const bare = dialog.budget.replace(/[.,\s]/g, "").match(/(\d{3,6})/);
+            if (bare) {
+              const n = Number(bare[1]);
+              if (n >= 100) return n;
+            }
+            const v = extractBudgetAmount(dialog.budget);
+            if (v && v !== 1500) return v;
+          }
+          return extractBudgetAmount(userHistory);
+        })();
+
         const interests = extractInterests(userHistory);
-        const origin = extractOrigin(userHistory);
-        const travelers = extractTravelers(userHistory);
-        const travelMonth = extractTravelMonth(userHistory);
+        const origin = dialog.origin
+          ? cleanPlace(dialog.origin)
+          : extractOrigin(userHistory);
+        const dialogTravelers = dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null;
+        const travelers = dialogTravelers ?? extractTravelers(userHistory);
+        const travelMonth = dialog.timeframe
+          ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory))
+          : extractTravelMonth(userHistory);
+
 
         let researchText = "";
         let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
