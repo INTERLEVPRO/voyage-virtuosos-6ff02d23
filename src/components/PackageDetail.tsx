@@ -398,10 +398,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Plane}
           title="Flüge"
           subtitle={currentPkg.flight}
-          ratingLabel="skyscanner"
+          ratingLabel="Aviasales"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
-          ctaLabel="Bei skyscanner ansehen"
+          ctaLabel="Bei Aviasales ansehen"
           provider="flight"
           url={flightUrl}
           packageId={currentPkg.id}
