@@ -144,24 +144,48 @@ export function buildSkyscannerUrl(opts: {
   return `https://www.skyscanner.de/transport/fluge-nach/${slug(opts.destination)}/?adultsv2=${adults}`;
 }
 
-export function buildBookingUrl(opts: {
+/** Klook affiliate deeplink (tracked redirect). */
+export const KLOOK_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
+
+/**
+ * Hotel deeplink — uses the Klook affiliate redirect.
+ * Klook's tpm.li shortlink doesn't forward query params, but we still build
+ * a fully-parameterised Klook search URL as a fallback / for reference.
+ */
+export function buildKlookHotelUrl(opts: {
   destination: string;
   travelers?: number;
   month?: string;
   durationDays?: number;
 }): string {
-  const params = new URLSearchParams({ ss: opts.destination });
-  if (opts.travelers && opts.travelers > 0) {
-    params.set("group_adults", String(opts.travelers));
-    params.set("no_rooms", "1");
-  }
+  // Affiliate tracker first — required by partner agreement.
+  return KLOOK_AFFILIATE_URL;
+}
+
+/** Direct Klook hotel search URL with pre-filled fields (no affiliate tracking). */
+export function buildKlookSearchUrl(opts: {
+  destination: string;
+  travelers?: number;
+  month?: string;
+  durationDays?: number;
+}): string {
+  const params = new URLSearchParams({
+    room_num: "1",
+    adult_num: String(Math.max(1, opts.travelers ?? 2)),
+    child_num: "0",
+    age: "",
+  });
   const dates = isoDatesFromMonth(opts.month, opts.durationDays ?? 7);
   if (dates) {
-    params.set("checkin", dates[0]);
-    params.set("checkout", dates[1]);
+    params.set("check_in", dates[0]);
+    params.set("check_out", dates[1]);
   }
-  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+  if (opts.destination) params.set("keyword", opts.destination);
+  return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
+
+/** @deprecated kept for backwards compatibility — now routes through Klook. */
+export const buildBookingUrl = buildKlookHotelUrl;
 
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
   if (!month) return null;

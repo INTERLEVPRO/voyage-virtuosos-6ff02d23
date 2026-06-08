@@ -82,8 +82,8 @@ function openRouteInMaps(destination: string, place?: string) {
   setTimeout(() => finish(), 6500);
 }
 
-function bookingHotelUrl(destination: string) {
-  return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destination)}`;
+function bookingHotelUrl(_destination: string) {
+  return "https://klook.tpm.li/WzC9L2in/";
 }
 
 function gygActivityUrl(destination: string, query?: string) {
@@ -423,11 +423,11 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Hotel}
           title="Hotel"
           subtitle={currentPkg.hotel}
-          ratingLabel="booking.com"
+          ratingLabel="Klook"
           rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei booking.com ansehen"
+          ctaLabel="Bei Klook ansehen"
           provider="hotel"
           url={hotelUrl}
           packageId={currentPkg.id}
