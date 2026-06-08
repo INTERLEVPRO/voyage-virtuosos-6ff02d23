@@ -122,7 +122,28 @@ export function travelDatesFromMonth(month?: string, durationDays = 7): [string,
   return [yymmdd(dep), yymmdd(ret)];
 }
 
-export function buildSkyscannerUrl(opts: {
+/** Aviasales (Travelpayouts) affiliate deeplink — tracked redirect. */
+export const AVIASALES_AFFILIATE_URL = "https://aviasales.tpm.li/o8SBry1n";
+
+/**
+ * Flight deeplink — uses the Aviasales affiliate redirect.
+ * The tpm.li shortlink doesn't forward query params, so we always return the
+ * tracked short link to guarantee commission tracking. A fully-parameterised
+ * Aviasales search URL is available via `buildAviasalesSearchUrl` for cases
+ * where we want to deep-link directly into a search result.
+ */
+export function buildSkyscannerUrl(_opts: {
+  destination: string;
+  origin?: string;
+  travelers?: number;
+  month?: string;
+  durationDays?: number;
+}): string {
+  return AVIASALES_AFFILIATE_URL;
+}
+
+/** Direct Aviasales search URL with pre-filled fields (IATA-based). */
+export function buildAviasalesSearchUrl(opts: {
   destination: string;
   origin?: string;
   travelers?: number;
@@ -133,16 +154,18 @@ export function buildSkyscannerUrl(opts: {
   const originIata = lookupOriginIata(opts.origin);
   const destIata = lookupDestIata(opts.destination);
   const dates = travelDatesFromMonth(opts.month, opts.durationDays ?? 7);
-
   if (originIata && destIata && dates) {
-    return `https://www.skyscanner.de/transport/fluge/${originIata.toLowerCase()}/${destIata.toLowerCase()}/${dates[0]}/${dates[1]}/?adultsv2=${adults}&rtn=1&preferdirects=false`;
+    // Aviasales search URL pattern: /search/{ORIG}{DEPYYMMDD}{DEST}{RETYYMMDD}{ADULTS}
+    return `https://www.aviasales.com/search/${originIata}${dates[0]}${destIata}${dates[1]}${adults}?marker=travelpayouts`;
   }
   if (originIata && destIata) {
-    return `https://www.skyscanner.de/transport/fluge/${originIata.toLowerCase()}/${destIata.toLowerCase()}/?adultsv2=${adults}&rtn=1`;
+    return `https://www.aviasales.com/search/${originIata}0000${destIata}00001?marker=travelpayouts`;
   }
-  // Fallback: city-name search page with adults pre-filled
-  return `https://www.skyscanner.de/transport/fluge-nach/${slug(opts.destination)}/?adultsv2=${adults}`;
+  return `https://www.aviasales.com/search?destination=${encodeURIComponent(opts.destination)}&adults=${adults}&marker=travelpayouts`;
 }
+
+/** Travelpayouts API token (public affiliate marker). */
+export const TRAVELPAYOUTS_TOKEN = "bdf35dd22b712ff287b1a4eecb16882f";
 
 /** Klook affiliate deeplink (tracked redirect). */
 export const KLOOK_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
