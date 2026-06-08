@@ -154,17 +154,24 @@ export const KLOOK_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
  */
 export function buildKlookHotelUrl(opts: {
   destination: string;
+  hotel?: string;
   travelers?: number;
   month?: string;
   durationDays?: number;
 }): string {
-  // Affiliate tracker first — required by partner agreement.
+  // If we have a concrete hotel name, deep-link to a Klook search that pre-fills
+  // hotel + destination so the user lands on the right property page.
+  if (opts.hotel && opts.hotel.trim()) {
+    return buildKlookSearchUrl(opts);
+  }
+  // Otherwise fall back to the tracked affiliate shortlink.
   return KLOOK_AFFILIATE_URL;
 }
 
-/** Direct Klook hotel search URL with pre-filled fields (no affiliate tracking). */
+/** Direct Klook hotel search URL with pre-filled fields. */
 export function buildKlookSearchUrl(opts: {
   destination: string;
+  hotel?: string;
   travelers?: number;
   month?: string;
   durationDays?: number;
@@ -180,7 +187,8 @@ export function buildKlookSearchUrl(opts: {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
   }
-  if (opts.destination) params.set("keyword", opts.destination);
+  const keyword = [opts.hotel, opts.destination].filter(Boolean).join(" ").trim();
+  if (keyword) params.set("keyword", keyword);
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
 

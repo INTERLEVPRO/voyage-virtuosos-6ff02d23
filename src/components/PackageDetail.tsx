@@ -385,6 +385,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         });
         const hotelUrl = buildBookingUrl({
           destination: dest,
+          hotel: currentPkg.hotel,
           travelers: currentPkg.travelers,
           month: currentPkg.travelMonth,
           durationDays: currentPkg.durationDays,
