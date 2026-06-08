@@ -82,8 +82,8 @@ function openRouteInMaps(destination: string, place?: string) {
   setTimeout(() => finish(), 6500);
 }
 
-function bookingHotelUrl(destination: string) {
-  return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destination)}`;
+function bookingHotelUrl(_destination: string) {
+  return "https://klook.tpm.li/WzC9L2in/";
 }
 
 function gygActivityUrl(destination: string, query?: string) {
