@@ -187,7 +187,8 @@ export function buildKlookSearchUrl(opts: {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
   }
-  if (opts.destination) params.set("keyword", opts.destination);
+  const keyword = [opts.hotel, opts.destination].filter(Boolean).join(" ").trim();
+  if (keyword) params.set("keyword", keyword);
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
 
