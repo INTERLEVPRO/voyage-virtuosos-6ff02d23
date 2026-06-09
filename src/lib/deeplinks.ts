@@ -168,7 +168,7 @@ export function buildAviasalesSearchUrl(opts: {
 export const TRAVELPAYOUTS_TOKEN = "bdf35dd22b712ff287b1a4eecb16882f";
 
 /** Klook affiliate deeplink (tracked redirect). */
-export const KLOOK_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
+export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
 
 /**
  * Hotel deeplink — uses the Klook affiliate redirect.
