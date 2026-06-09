@@ -131,8 +131,8 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   return `mailto:?subject=${subject}&body=${body}`;
 }
 
-function transferUrl(destination: string) {
-  return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
+function transferUrl(_destination: string) {
+  return buildTransferUrl();
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
