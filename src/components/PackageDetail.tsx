@@ -86,10 +86,10 @@ function bookingHotelUrl(_destination: string) {
   return "https://klook.tpm.li/WzC9L2in/";
 }
 
-function gygActivityUrl(destination: string, query?: string) {
-  const q = query ? `${query} ${destination}` : destination;
-  return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
+function klookActivityUrl(_destination: string, _query?: string) {
+  return "https://klook.tpm.li/WzC9L2in/";
 }
+
 function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
   const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
   weather?.days.forEach((d) => weatherByDay.set(d.day, d));
@@ -122,7 +122,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   lines.push("");
   lines.push("=== Buchungs-Links ===");
   lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
-  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`Aktivitäten: ${klookActivityUrl(pkg.destination)}`);
   lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
@@ -391,7 +391,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           durationDays: currentPkg.durationDays,
         });
         const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
-        const activitiesUrl = `https://www.getyourguide.de/s/?q=${q}`;
+        const activitiesUrl = `https://klook.tpm.li/WzC9L2in/`;
         return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
@@ -438,10 +438,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Compass}
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
-          ratingLabel="getyourguide"
+          ratingLabel="Klook"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
-          ctaLabel="Bei getyourguide ansehen"
+          ctaLabel="Bei Klook ansehen"
           provider="activities"
           url={activitiesUrl}
           packageId={currentPkg.id}
@@ -594,7 +594,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Hotel className="h-3 w-3" /> Hotel buchen
                 </a>
                 <a
-                  href={gygActivityUrl(currentPkg.destination, d.title)}
+                  href={klookActivityUrl(currentPkg.destination, d.title)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
