@@ -37,7 +37,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
-import { buildSkyscannerUrl, buildBookingUrl, lookupOriginIata } from "@/lib/deeplinks";
+import { buildSkyscannerUrl, buildBookingUrl, lookupOriginIata, buildTransferUrl } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -131,8 +131,8 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   return `mailto:?subject=${subject}&body=${body}`;
 }
 
-function transferUrl(destination: string) {
-  return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
+function transferUrl(_destination: string) {
+  return buildTransferUrl();
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
@@ -390,7 +390,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           month: currentPkg.travelMonth,
           durationDays: currentPkg.durationDays,
         });
-        const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
+        const taxiUrl = buildTransferUrl();
         const activitiesUrl = `https://klook.tpm.li/WzC9L2in/`;
         return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>

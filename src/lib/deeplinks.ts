@@ -170,6 +170,9 @@ export const TRAVELPAYOUTS_TOKEN = "bdf35dd22b712ff287b1a4eecb16882f";
 /** Klook affiliate deeplink (tracked redirect). */
 export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
 
+/** KiwiTaxi affiliate deeplink (tracked redirect). */
+export const KIWI_TAXI_AFFILIATE_URL = "https://kiwitaxi.tpm.li/RgYDJiUT";
+
 /**
  * Hotel deeplink — uses the Klook affiliate redirect.
  * Klook's tpm.li shortlink doesn't forward query params, but we still build
@@ -213,6 +216,14 @@ export function buildKlookSearchUrl(opts: {
 
 /** @deprecated kept for backwards compatibility — now routes through Klook. */
 export const buildBookingUrl = buildKlookHotelUrl;
+
+/**
+ * Transfer deeplink — uses the KiwiTaxi affiliate redirect.
+ */
+export function buildTransferUrl(_destination?: string): string {
+  // Always use the tracked affiliate shortlink to guarantee commission tracking.
+  return KIWI_TAXI_AFFILIATE_URL;
+}
 
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
   if (!month) return null;
