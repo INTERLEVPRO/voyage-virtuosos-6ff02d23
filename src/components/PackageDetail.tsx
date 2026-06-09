@@ -390,7 +390,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           month: currentPkg.travelMonth,
           durationDays: currentPkg.durationDays,
         });
-        const taxiUrl = `https://kiwitaxi.com/search?to=${q}`;
+        const taxiUrl = buildTransferUrl();
         const activitiesUrl = `https://klook.tpm.li/WzC9L2in/`;
         return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
