@@ -175,19 +175,15 @@ export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
  * Klook's tpm.li shortlink doesn't forward query params, but we still build
  * a fully-parameterised Klook search URL as a fallback / for reference.
  */
-export function buildKlookHotelUrl(opts: {
+export function buildKlookHotelUrl(_opts: {
   destination: string;
   hotel?: string;
   travelers?: number;
   month?: string;
   durationDays?: number;
 }): string {
-  // If we have a concrete hotel name, deep-link to a Klook search that pre-fills
-  // hotel + destination so the user lands on the right property page.
-  if (opts.hotel && opts.hotel.trim()) {
-    return buildKlookSearchUrl(opts);
-  }
-  // Otherwise fall back to the tracked affiliate shortlink.
+  // Always use the tracked affiliate shortlink to guarantee commission tracking.
+  // Parameterised search URLs strip the affiliate marker on some redirects.
   return KLOOK_ACTIVITIES_AFFILIATE_URL;
 }
 
