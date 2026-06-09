@@ -217,6 +217,14 @@ export function buildKlookSearchUrl(opts: {
 /** @deprecated kept for backwards compatibility — now routes through Klook. */
 export const buildBookingUrl = buildKlookHotelUrl;
 
+/**
+ * Transfer deeplink — uses the KiwiTaxi affiliate redirect.
+ */
+export function buildTransferUrl(_destination?: string): string {
+  // Always use the tracked affiliate shortlink to guarantee commission tracking.
+  return KIWI_TAXI_AFFILIATE_URL;
+}
+
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
   if (!month) return null;
   const m = MONTHS[month.toLowerCase().trim()];
