@@ -188,7 +188,7 @@ export function buildKlookHotelUrl(opts: {
     return buildKlookSearchUrl(opts);
   }
   // Otherwise fall back to the tracked affiliate shortlink.
-  return KLOOK_AFFILIATE_URL;
+  return KLOOK_ACTIVITIES_AFFILIATE_URL;
 }
 
 /** Direct Klook hotel search URL with pre-filled fields. */
