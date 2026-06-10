@@ -142,18 +142,61 @@ export function buildSkyscannerUrl(_opts: {
   return AVIASALES_AFFILIATE_URL;
 }
 
+/** Parse a user-provided start date ("10. Juni 2026", "10.06.2026", "2026-06-10") to a Date. */
+export function parseStartDate(input?: string): Date | null {
+  if (!input) return null;
+  const s = input.trim();
+  // ISO YYYY-MM-DD
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
+  m = s.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/);
+  if (m) {
+    const yr = Number(m[3]);
+    return new Date(yr < 100 ? 2000 + yr : yr, Number(m[2]) - 1, Number(m[1]));
+  }
+  // "10. Juni 2026" or "10. Juni"
+  m = s.match(/(\d{1,2})\.\s*([a-zäöüß]+)(?:\s+(\d{4}))?/i);
+  if (m) {
+    const monthIdx = MONTHS[m[2].toLowerCase()];
+    if (monthIdx) {
+      const day = Number(m[1]);
+      const now = new Date();
+      let year = m[3] ? Number(m[3]) : now.getFullYear();
+      if (!m[3]) {
+        const candidate = new Date(year, monthIdx - 1, day);
+        if (candidate < now) year += 1;
+      }
+      return new Date(year, monthIdx - 1, day);
+    }
+  }
+  return null;
+}
+
 /** Direct Aviasales search URL with pre-filled fields (IATA-based). */
 export function buildAviasalesSearchUrl(opts: {
   destination: string;
   origin?: string;
   travelers?: number;
   month?: string;
+  startDate?: string;
   durationDays?: number;
 }): string {
   const adults = Math.max(1, opts.travelers ?? 1);
   const originIata = lookupOriginIata(opts.origin);
   const destIata = lookupDestIata(opts.destination);
-  const dates = travelDatesFromMonth(opts.month, opts.durationDays ?? 7);
+  const duration = Math.max(1, opts.durationDays ?? 7);
+
+  let dates: [string, string] | null = null;
+  const parsed = parseStartDate(opts.startDate);
+  if (parsed) {
+    const ret = new Date(parsed);
+    ret.setDate(ret.getDate() + duration);
+    dates = [yymmdd(parsed), yymmdd(ret)];
+  } else {
+    dates = travelDatesFromMonth(opts.month, duration);
+  }
+
   if (originIata && destIata && dates) {
     // Aviasales search URL pattern: /search/{ORIG}{DEPYYMMDD}{DEST}{RETYYMMDD}{ADULTS}
     return `https://www.aviasales.com/search/${originIata}${dates[0]}${destIata}${dates[1]}${adults}?marker=travelpayouts`;
