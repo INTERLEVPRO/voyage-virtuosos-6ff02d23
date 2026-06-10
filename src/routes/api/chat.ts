@@ -176,7 +176,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "destination":
       return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
     case "budget":
-      return /\b\d{2,6}\b/.test(v) || /\b\d{2,5}\s?(€|eur|euro|usd|\$)\b/i.test(v);
+      return parseBudgetValue(v) !== null;
     case "duration":
       return parseAnswerDurationDays(v) !== null;
     case "travelers":
