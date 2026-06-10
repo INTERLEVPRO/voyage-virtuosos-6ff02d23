@@ -285,27 +285,20 @@ export function buildKlookActivitiesUrl(opts: {
 /** @deprecated kept for backwards compatibility — now routes through Klook. */
 export const buildBookingUrl = buildKlookHotelUrl;
 
-/** Transfer deeplink — pre-filled KiwiTaxi search URL when destination known. */
-export function buildTransferUrl(opts?: {
+/**
+ * Transfer deeplink — always the tracked KiwiTaxi affiliate redirect.
+ * Kiwitaxi's /search endpoint requires internal place IDs from their autocomplete,
+ * so free-text/IATA query params land on a "No results" page. The affiliate
+ * shortlink opens the homepage with marker tracking intact, where the user can
+ * pick airports from autocomplete.
+ */
+export function buildTransferUrl(_opts?: {
   destination?: string;
   travelers?: number;
   startDate?: string;
   month?: string;
   durationDays?: number;
 }): string {
-  if (opts?.destination) {
-    const params = new URLSearchParams({
-      marker: TRAVELPAYOUTS_TOKEN,
-      to: opts.destination,
-      passengers: String(Math.max(1, opts.travelers ?? 2)),
-    });
-    const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
-    if (dates) {
-      params.set("date", dates[0]);
-      params.set("return_date", dates[1]);
-    }
-    return `https://kiwitaxi.com/search?${params.toString()}`;
-  }
   return KIWI_TAXI_AFFILIATE_URL;
 }
 
