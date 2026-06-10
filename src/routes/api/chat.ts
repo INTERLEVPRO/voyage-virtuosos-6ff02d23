@@ -237,7 +237,7 @@ function formatMissingField(field: MissingField): string {
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return '**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel")';
+      return 'Wann möchtest du deine Reise starten? Bitte nenne ein konkretes Startdatum, z. B. 10. Juni 2026. Wenn du flexibel bist, kannst du auch „flexibel im Juni" schreiben.';
   }
 }
 
