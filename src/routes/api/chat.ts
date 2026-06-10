@@ -269,7 +269,7 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
       "",
       "Du kannst mir z. B. einfach schreiben:",
-      "> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*",
+      '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
       "",
       `Lass uns starten: ${formatMissingField(missing[0])}`,
     ].join("\n");
