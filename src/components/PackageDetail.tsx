@@ -384,15 +384,27 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           startDate: currentPkg.travelStartDate,
           durationDays: currentPkg.durationDays,
         });
-        const hotelUrl = buildBookingUrl({
+        const hotelUrl = buildKlookSearchUrl({
           destination: dest,
           hotel: currentPkg.hotel,
           travelers: currentPkg.travelers,
           month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
           durationDays: currentPkg.durationDays,
         });
-        const taxiUrl = buildTransferUrl();
-        const activitiesUrl = `https://klook.tpm.li/WzC9L2in/`;
+        const taxiUrl = buildTransferUrl({
+          destination: dest,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
+        const activitiesUrl = buildKlookActivitiesUrl({
+          destination: dest,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
         return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
