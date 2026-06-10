@@ -37,6 +37,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
+import { buildAviasalesSearchUrl, buildKlookSearchUrl, buildKlookActivitiesUrl, lookupOriginIata, buildTransferUrl } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -81,14 +82,14 @@ function openRouteInMaps(destination: string, place?: string) {
   setTimeout(() => finish(), 6500);
 }
 
-function bookingHotelUrl(destination: string) {
-  return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destination)}`;
+function bookingHotelUrl(_destination: string) {
+  return "https://klook.tpm.li/WzC9L2in/";
 }
 
-function gygActivityUrl(destination: string, query?: string) {
-  const q = query ? `${query} ${destination}` : destination;
-  return `https://www.getyourguide.de/s/?q=${encodeURIComponent(q)}`;
+function klookActivityUrl(_destination: string, _query?: string) {
+  return "https://klook.tpm.li/WzC9L2in/";
 }
+
 function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
   const weatherByDay = new Map<number, WeatherResponse["days"][number]>();
   weather?.days.forEach((d) => weatherByDay.set(d.day, d));
@@ -108,10 +109,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
     lines.push(d.description);
     const w = weatherByDay.get(d.day);
     if (w) {
-      const src =
-        w.weather.source === "seasonal"
-          ? "Saisonale Schätzung, keine exakte Vorhersage"
-          : w.weather.label;
+      const src = w.weather.source === "seasonal" ? "Saisonale Schätzung, keine exakte Vorhersage" : w.weather.label;
       lines.push(
         `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
       );
@@ -124,7 +122,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   lines.push("");
   lines.push("=== Buchungs-Links ===");
   lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
-  lines.push(`Aktivitäten: ${gygActivityUrl(pkg.destination)}`);
+  lines.push(`Aktivitäten: ${klookActivityUrl(pkg.destination)}`);
   lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
@@ -133,9 +131,8 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   return `mailto:?subject=${subject}&body=${body}`;
 }
 
-
-function transferUrl(destination: string) {
-  return `https://www.kiwitaxi.de/?to_search=${encodeURIComponent(destination)}`;
+function transferUrl(_destination: string) {
+  return buildTransferUrl();
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
@@ -181,13 +178,7 @@ type Mode =
       lastChangeRequest: string;
     };
 
-export function PackageDetail({
-  pkg,
-  onBack,
-}: {
-  pkg: TravelPackage;
-  onBack: () => void;
-}) {
+export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () => void }) {
   const [currentPkg, setCurrentPkg] = useState<TravelPackage>(pkg);
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
@@ -264,11 +255,9 @@ export function PackageDetail({
     <section className="mx-auto max-w-5xl px-4 pb-28 pt-4 sm:px-6 sm:py-10 sm:pb-10">
       {/* Back + tier */}
       <div className="mb-4 flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
-        >
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span><span className="sm:hidden">Zurück</span>
+        <button onClick={onBack} className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80">
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span>
+          <span className="sm:hidden">Zurück</span>
         </button>
         <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
           {tier.label}
@@ -278,12 +267,14 @@ export function PackageDetail({
       {/* Mobile sticky tab bar — app-like nav */}
       <div className="sticky top-[60px] z-10 -mx-4 mb-4 border-b border-border bg-background/95 px-2 backdrop-blur sm:hidden">
         <div className="flex items-center justify-around">
-          {([
-            { id: "overview", label: "Übersicht", Icon: LayoutGrid },
-            { id: "days", label: "Tage", Icon: CalendarDays },
-            { id: "book", label: "Buchen", Icon: ShoppingBag },
-            { id: "reviews", label: "Reviews", Icon: MessageCircle },
-          ] as const).map(({ id, label, Icon }) => {
+          {(
+            [
+              { id: "overview", label: "Übersicht", Icon: LayoutGrid },
+              { id: "days", label: "Tage", Icon: CalendarDays },
+              { id: "book", label: "Buchen", Icon: ShoppingBag },
+              { id: "reviews", label: "Reviews", Icon: MessageCircle },
+            ] as const
+          ).map(({ id, label, Icon }) => {
             const active = activeTab === id;
             return (
               <button
@@ -315,8 +306,10 @@ export function PackageDetail({
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 2 Personen</span>
-        <span>✈️ Ab Frankfurt (FRA)</span>
+        <span>👥 {currentPkg.travelers ?? 2} {(currentPkg.travelers ?? 2) === 1 ? "Person" : "Personen"}</span>
+        {currentPkg.origin && (
+          <span>✈️ Ab {currentPkg.origin}{lookupOriginIata(currentPkg.origin) ? ` (${lookupOriginIata(currentPkg.origin)})` : ""}</span>
+        )}
         <span className="ml-auto font-semibold text-foreground">
           Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
         </span>
@@ -355,11 +348,13 @@ export function PackageDetail({
         />
       </div>
 
-
-
-
       {/* Itinerary overview strip */}
-      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-6 rounded-2xl border border-border bg-card p-5 shadow-card",
+          activeTab !== "overview" && "max-sm:hidden",
+        )}
+      >
         <h2 className="text-base font-semibold text-foreground">Deine Reiseübersicht</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-7">
           {currentPkg.itinerary.map((d, i) => {
@@ -370,9 +365,7 @@ export function PackageDetail({
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="mt-2 text-xs font-semibold text-foreground">Tag {d.day}</div>
-                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
-                  {d.title}
-                </div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">{d.title}</div>
               </div>
             );
           })}
@@ -380,31 +373,77 @@ export function PackageDetail({
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
+      {(() => {
+        const dest = currentPkg.destination || "";
+        const q = encodeURIComponent(dest);
+        const flightUrl = buildAviasalesSearchUrl({
+          destination: dest,
+          origin: currentPkg.origin,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
+        const hotelUrl = buildKlookSearchUrl({
+          destination: dest,
+          hotel: currentPkg.hotel,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
+        const taxiUrl = buildTransferUrl({
+          destination: dest,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
+        const activitiesUrl = buildKlookActivitiesUrl({
+          destination: dest,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
+        return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
           title="Flüge"
           subtitle={currentPkg.flight}
-          ratingLabel="Google"
+          ratingLabel="Aviasales"
           rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
-          ctaLabel="Bei Skyscanner ansehen"
+          ctaLabel="Bei Aviasales ansehen"
           provider="flight"
-          url={currentPkg.bookingLinks?.flight}
+          url={flightUrl}
           packageId={currentPkg.id}
           ctaCls="bg-accent text-accent-foreground hover:bg-accent/90"
+        />
+        <ProviderRow
+          icon={Car}
+          title="Flughafen-Transfer"
+          subtitle="Privater Taxi-Transfer vom/zum Flughafen"
+          ratingLabel="Kiwitaxi"
+          rating={`${currentPkg.rating.toFixed(1)}/5`}
+          price={Math.round(currentPkg.price * 0.05)}
+          ctaLabel="Bei Kiwitaxi ansehen"
+          provider="taxi"
+          url={taxiUrl}
+          packageId={currentPkg.id}
+          ctaCls="bg-secondary text-secondary-foreground hover:bg-secondary/90"
         />
         <ProviderRow
           icon={Hotel}
           title="Hotel"
           subtitle={currentPkg.hotel}
-          ratingLabel="Booking.com"
+          ratingLabel="Klook"
           rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Booking.com ansehen"
+          ctaLabel="Bei Klook ansehen"
           provider="hotel"
-          url={currentPkg.bookingLinks?.hotel}
+          url={hotelUrl}
           packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
         />
@@ -417,19 +456,24 @@ export function PackageDetail({
           price={Math.round(currentPkg.price * 0.18)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
-          url="https://klook.tpm.li/WzC9L2in"
+          url={activitiesUrl}
           packageId={currentPkg.id}
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
       </div>
+        );
+      })()}
 
       {/* Total price strip */}
-      <div className={cn("mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-5 flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card",
+          activeTab !== "book" && "max-sm:hidden",
+        )}
+      >
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
-          <div className="text-2xl font-extrabold text-foreground">
-            € {currentPkg.price.toLocaleString("de-DE")}
-          </div>
+          <div className="text-2xl font-extrabold text-foreground">€ {currentPkg.price.toLocaleString("de-DE")}</div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -439,7 +483,12 @@ export function PackageDetail({
 
       {/* Plan-Check */}
       {showPlanCheck && (
-        <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "book" && "max-sm:hidden")}>
+        <div
+          className={cn(
+            "mt-6 rounded-2xl border border-border bg-card p-6 shadow-card",
+            activeTab !== "book" && "max-sm:hidden",
+          )}
+        >
           <h2 className="text-lg font-semibold text-foreground">
             Ist dieser Reiseplan für dich in Ordnung, oder möchtest du etwas ändern?
           </h2>
@@ -486,10 +535,7 @@ export function PackageDetail({
           )}
 
           {mode.kind === "composing" && (
-            <RefineComposer
-              loading={loading}
-              onSubmit={(text) => callRefine(text, false)}
-            />
+            <RefineComposer loading={loading} onSubmit={(text) => callRefine(text, false)} />
           )}
 
           {mode.kind === "confirming" && (
@@ -507,10 +553,16 @@ export function PackageDetail({
       )}
 
       {/* Itinerary detail with maps + booking help per day */}
-      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "days" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-6 rounded-2xl border border-border bg-card p-6 shadow-card",
+          activeTab !== "days" && "max-sm:hidden",
+        )}
+      >
         <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich vorbereitet.
+          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich
+          vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
           {currentPkg.itinerary.map((d) => (
@@ -555,7 +607,7 @@ export function PackageDetail({
                   <Hotel className="h-3 w-3" /> Hotel buchen
                 </a>
                 <a
-                  href={gygActivityUrl(currentPkg.destination, d.title)}
+                  href={klookActivityUrl(currentPkg.destination, d.title)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
@@ -576,9 +628,13 @@ export function PackageDetail({
         </ol>
       </div>
 
-
       {/* Activities list */}
-      <div className={cn("mt-5 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-5 rounded-2xl border border-border bg-card p-6 shadow-card",
+          activeTab !== "overview" && "max-sm:hidden",
+        )}
+      >
         <h2 className="text-lg font-semibold text-foreground">Aktivitäten inklusive</h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {currentPkg.activities.map((a) => (
@@ -590,14 +646,24 @@ export function PackageDetail({
       </div>
 
       {currentPkg.whyItFits && (
-        <div className={cn("mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6", activeTab !== "overview" && "max-sm:hidden")}>
+        <div
+          className={cn(
+            "mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-6",
+            activeTab !== "overview" && "max-sm:hidden",
+          )}
+        >
           <h2 className="text-lg font-semibold text-foreground">Warum dieses Paket zu dir passt</h2>
           <p className="mt-2 text-sm text-foreground/80">{currentPkg.whyItFits}</p>
         </div>
       )}
 
       {/* German Reviews Section */}
-      <div className={cn("mt-6 rounded-2xl border border-border bg-card p-6 shadow-card", activeTab !== "reviews" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-6 rounded-2xl border border-border bg-card p-6 shadow-card",
+          activeTab !== "reviews" && "max-sm:hidden",
+        )}
+      >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
@@ -639,14 +705,20 @@ export function PackageDetail({
       </div>
 
       {/* Trust strip */}
-      <div className={cn("mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3", activeTab !== "overview" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-8 grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:grid-cols-3",
+          activeTab !== "overview" && "max-sm:hidden",
+        )}
+      >
         <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
       <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
-        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit variieren.
+        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit
+        variieren.
       </p>
 
       {/* Mobile sticky bottom action bar — app-like CTA */}
@@ -661,18 +733,10 @@ export function PackageDetail({
           {currentPkg.bookingLinks?.hotel ? (
             <a
               href={currentPkg.bookingLinks.hotel}
-              onClick={(event) => {
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
                 void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
-                event.preventDefault();
-                try {
-                  if (window.top && window.top !== window) {
-                    window.top.location.href = currentPkg.bookingLinks!.hotel!;
-                    return;
-                  }
-                } catch {
-                  // ignore
-                }
-                window.location.href = currentPkg.bookingLinks!.hotel!;
               }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
             >
@@ -744,25 +808,10 @@ function ProviderRow({
         {url && (
           <a
             href={url}
-            target={isHotelProvider ? "_top" : "_blank"}
-            rel="noopener"
-            onClick={(event) => {
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
               void trackClick(packageId, provider, url);
-
-              if (isHotelProvider) {
-                event.preventDefault();
-
-                try {
-                  if (window.top && window.top !== window) {
-                    window.top.location.href = url;
-                    return;
-                  }
-                } catch {
-                  // ignore and fall back to same-window navigation
-                }
-
-                window.location.href = url;
-              }
             }}
             className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
           >
@@ -774,15 +823,7 @@ function ProviderRow({
   );
 }
 
-function TrustItem({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: typeof Star;
-  title: string;
-  body: string;
-}) {
+function TrustItem({ icon: Icon, title, body }: { icon: typeof Star; title: string; body: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -816,7 +857,10 @@ function ReviewCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-            {name.split(" ").map((n) => n[0]).join("")}
+            {name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
           </div>
           <div>
             <div className="text-sm font-semibold text-foreground">{name}</div>

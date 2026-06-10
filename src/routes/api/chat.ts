@@ -24,10 +24,19 @@ HOTELS:
 - <name> · <neighborhood> · <€/night> · <one-line vibe> · <star rating>
 (3 options: budget / mid / luxury)`;
 
-const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a day-by-day plan in GERMAN.
-Use the duration from the brief (default 5 days). For each day output:
-Tag N — <Thema>: Vormittag · Nachmittag · Abend (1 evocative line each).
-Return one line per day and include EVERY day up to the requested duration.`;
+const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a realistic day-by-day plan in GERMAN with REAL, NAMED places/attractions for the destination — no generic filler.
+
+RULES:
+- The <Thema> MUST be a real area, neighborhood, attraction, or theme tied to the destination (e.g. "Altstadt & Kathedrale", "Taj Mahal & Agra Fort", "Strand Es Trenc & Cap de Ses Salines"). Never write "Erlebnisse in <Stadt>" or generic placeholders.
+- Vormittag/Nachmittag/Abend each MUST mention concrete real place names, restaurants, viewpoints, beaches, museums, or activities that actually exist at the destination.
+- Group places by geographic proximity so each day is logistically feasible (no zig-zag across the country).
+- Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
+- Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
+
+FORMAT (EXACTLY one line per day, nothing else):
+Tag N — <Thema mit echtem Ort>: Vormittag: <konkrete Orte/Aktivitäten> · Nachmittag: <konkrete Orte/Aktivitäten> · Abend: <konkrete Orte/Aktivitäten>
+
+Include EVERY day from Tag 1 up to the requested duration.`;
 
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
@@ -46,7 +55,11 @@ function getPlanningSignals(text: string, history: string) {
   const hasDestOrType =
     /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
     /\b(in|nach|to)\s+[a-zäöüß][a-zäöüß.'’-]{2,}(?:\s+[a-zäöüß][a-zäöüß.'’-]{2,}){0,2}\b/i.test(all) ||
-    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined);
+    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined) ||
+    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
+    /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([a-zäöüß][a-zäöüß.'’-]{2,})/i.test(all) ||
+    // Any capitalized place-like token that isn't a known origin/month/keyword
+    /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
   const hasDuration =
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
   const hasTravelers =
@@ -57,9 +70,13 @@ function getPlanningSignals(text: string, history: string) {
   const hasOrigin =
     /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
     /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
+  // Require a concrete date (e.g. "10. Juni 2026", "10.06.2026", "10. Juni")
+  // OR an explicit "flexibel" statement. Plain month alone is no longer enough.
   const hasTimeframe =
-    /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mär|mar|apr|jun|jul|aug|sep|okt|nov|dez|january|february|march|may|june|july|october|december|frühling|fruehling|sommer|herbst|winter|ostern|weihnachten|silvester|flexibel|egal|nächst|naechst|kommend)\b/i.test(all) ||
-    /\bin\s+\d+\s?(tag|tage|woche|wochen|monat|monate|monaten)\b/i.test(all);
+    /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
+    /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
+    /\b\d{4}-\d{2}-\d{2}\b/.test(all) ||
+    /\bflexibel\b/i.test(all);
 
   return {
     hasBudget,
@@ -85,6 +102,148 @@ function getMissingFields(text: string, history: string): MissingField[] {
   return missing;
 }
 
+// Identify which field the assistant last asked about, based on the question text.
+function detectAskedField(assistantText: string): MissingField | null {
+  const t = assistantText.toLowerCase();
+  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) return "destination";
+  if (/budget/.test(t)) return "budget";
+  if (/wie lange|reisedauer|wie viele tage/.test(t)) return "duration";
+  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) return "travelers";
+  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) return "origin";
+  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) return "timeframe";
+  return null;
+}
+
+// Walk the dialog: when the assistant asked about a field and the user replied
+// next with non-empty text, mark that field as answered.
+function isAnswerValid(field: MissingField, value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  switch (field) {
+    case "timeframe":
+      return (
+        /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
+        /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(v) ||
+        /\b\d{4}-\d{2}-\d{2}\b/.test(v) ||
+        /\bflexibel\b/i.test(v)
+      );
+    default:
+      return true;
+  }
+}
+
+function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField> {
+  const answered = new Set<MissingField>();
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (let i = 0; i < uiMessages.length - 1; i += 1) {
+    const m = uiMessages[i];
+    if (m.role !== "assistant") continue;
+    const asked = detectAskedField(textOf(m));
+    if (!asked) continue;
+    for (let j = i + 1; j < uiMessages.length; j += 1) {
+      const next = uiMessages[j];
+      if (next.role === "user") {
+        if (isAnswerValid(asked, textOf(next))) answered.add(asked);
+        break;
+      }
+    }
+  }
+  return answered;
+}
+
+// Collect the literal user reply that followed each assistant question.
+// Latest answer wins if a field was asked multiple times.
+function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField, string>> {
+  const answers: Partial<Record<MissingField, string>> = {};
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (let i = 0; i < uiMessages.length - 1; i += 1) {
+    const m = uiMessages[i];
+    if (m.role !== "assistant") continue;
+    const asked = detectAskedField(textOf(m));
+    if (!asked) continue;
+    for (let j = i + 1; j < uiMessages.length; j += 1) {
+      const next = uiMessages[j];
+      if (next.role === "user") {
+        const t = textOf(next).trim();
+        if (t.length > 0) answers[asked] = t;
+        break;
+      }
+    }
+  }
+  return answers;
+}
+
+const WORD_NUM_BASIC: Record<string, number> = {
+  one: 1, ein: 1, eine: 1, einer: 1, eins: 1,
+  two: 2, zwei: 2,
+  three: 3, drei: 3,
+  four: 4, vier: 4,
+  five: 5, fünf: 5, fuenf: 5,
+  six: 6, sechs: 6,
+  seven: 7, sieben: 7,
+  eight: 8, acht: 8,
+  nine: 9, neun: 9,
+  ten: 10, zehn: 10,
+};
+
+function parseAnswerDurationDays(value: string): number | null {
+  const t = value.toLowerCase().trim();
+  // numeric with unit
+  const num = t.match(/(\d{1,3})\s*(tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|night|nights|day|days|woche|wochen|week|weeks|monat|monate|monaten|month|months)\b/);
+  if (num) {
+    const n = Number(num[1]);
+    const u = num[2];
+    if (u.startsWith("woche") || u.startsWith("week")) return n * 7;
+    if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
+    return n;
+  }
+  // word number + unit ("one month", "ein monat")
+  const word = t.match(/^(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|nacht|nächte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
+  if (word) {
+    const n = WORD_NUM_BASIC[word[1]] ?? 1;
+    const u = word[2];
+    if (u.startsWith("woche") || u.startsWith("week")) return n * 7;
+    if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
+    return n;
+  }
+  // bare number
+  const bare = t.match(/^(\d{1,3})$/);
+  if (bare) {
+    const n = Number(bare[1]);
+    if (n > 0 && n <= 365) return n;
+  }
+  return null;
+}
+
+function parseAnswerTravelers(value: string): number | null {
+  const t = value.toLowerCase().trim();
+  const bare = t.match(/^(\d{1,2})\b/);
+  if (bare) {
+    const n = Number(bare[1]);
+    if (n > 0 && n < 30) return n;
+  }
+  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
+    if (new RegExp(`\\b${word}\\b`).test(t)) return n;
+  }
+  if (/\b(allein|solo)\b/.test(t)) return 1;
+  if (/\b(paar|pärchen|paerchen|zu zweit)\b/.test(t)) return 2;
+  if (/\bfamilie\b/.test(t)) return 4;
+  return null;
+}
+
+function cleanPlace(value: string): string {
+  const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
+  // Take up to 3 words
+  const words = first.split(/\s+/).slice(0, 3);
+  return words
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+    .join(" ");
+}
+
 function formatMissingField(field: MissingField): string {
   switch (field) {
     case "destination":
@@ -98,7 +257,18 @@ function formatMissingField(field: MissingField): string {
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel“)";
+      return 'Wann möchtest du deine Reise starten? Bitte nenne ein konkretes Startdatum, z. B. 10. Juni 2026. Wenn du flexibel bist, kannst du auch „flexibel im Juni" schreiben.';
+  }
+}
+
+function shortFieldLabel(field: MissingField): string {
+  switch (field) {
+    case "destination": return "Reiseziel";
+    case "budget": return "Budget";
+    case "duration": return "Reisedauer";
+    case "travelers": return "Anzahl Personen";
+    case "origin": return "Abflughafen";
+    case "timeframe": return "Reisezeitraum";
   }
 }
 
@@ -108,18 +278,33 @@ function joinWithUnd(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
 }
 
-function buildConciergeReply(missing: MissingField[]): string {
+function buildConciergeReply(missing: MissingField[], userMessageCount: number): string {
   if (missing.length === 0) {
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  if (missing.length === 1) {
-    return `Super, fast alles da! Mir fehlt nur noch: ${formatMissingField(missing[0])}`;
+  // First user message with nothing parsed → warm welcome
+  if (userMessageCount <= 1 && missing.length >= 6) {
+    return [
+      "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
+      "",
+      "Du kannst mir z. B. einfach schreiben:",
+      '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
+      "",
+      `Lass uns starten: ${formatMissingField(missing[0])}`,
+    ].join("\n");
   }
 
-  return `Super, ich brauche noch kurz ${missing.length} Angaben: ${joinWithUnd(
-    missing.map(formatMissingField),
-  )}`;
+  // Acknowledge what's already there, then ask ONLY missing fields in one message.
+  const ack = "Super, danke dir! ✨ Ich hab schon das meiste — mir fehlt nur noch:";
+  const bullets = missing.map((f) => `- ${formatMissingField(f)}`).join("\n");
+  const labels = joinWithUnd(missing.map(shortFieldLabel));
+  const tail =
+    missing.length === 1
+      ? "\n\n_(Sag mir kurz das eine — danach lege ich direkt los! 🚀)_"
+      : `\n\n_(Schreib mir einfach ${labels} in einer Nachricht — dann starte ich sofort.)_`;
+
+  return `${ack}\n\n${bullets}${tail}`;
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
@@ -164,12 +349,18 @@ function extractRequestedDurationDays(history: string): number {
 }
 
 function parseItineraryDraft(text: string, expectedDays: number, destination: string) {
-  const parsed = text
+  // Strip markdown bold/italics & bullets, then match flexible separators
+  const normalized = text
+    .replace(/\*\*/g, "")
+    .replace(/^[\s>*-]+/gm, "")
+    .replace(/[–—−-]/g, "—");
+
+  const parsed = normalized
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const match = line.match(/^tag\s*(\d+)\s*[—-]\s*([^:]+):\s*(.+)$/i);
+      const match = line.match(/^tag\s*(\d+)\s*[—:]\s*([^:]+?)\s*:\s*(.+)$/i);
       if (!match) return null;
 
       const day = Number(match[1]);
@@ -206,6 +397,16 @@ function parseItineraryDraft(text: string, expectedDays: number, destination: st
   return completed;
 }
 
+const MONTH_RE = /^(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)$/i;
+
+function isDateLike(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (/^\d/.test(t)) return true; // starts with number
+  const firstWord = t.split(/\s+/)[0] ?? "";
+  return MONTH_RE.test(firstWord);
+}
+
 function cleanDestination(raw: string): string {
   // Stop at sentence/clause boundaries and strip filler words
   const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
@@ -226,15 +427,25 @@ function extractDestination(history: string): string {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (explicit?.[1]) return cleanDestination(explicit[1]);
+    if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
+
+    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
+    const afterDuration = line.match(/\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
+      const cand = cleanDestination(afterDuration[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (byPrep?.[1]) return cleanDestination(byPrep[1]);
+    if (byPrep?.[1] && !isDateLike(byPrep[1])) {
+      const cand = cleanDestination(byPrep[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
 
     const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl)/i.test(firstChunk)) {
+    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
       const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      return cleanDestination(cleaned);
+      if (cleaned && !isDateLike(cleaned)) return cleanDestination(cleaned);
     }
   }
 
@@ -284,6 +495,40 @@ function parseResearchData(text: string): ResearchData {
   }
 
   return { flights, hotels };
+}
+
+function extractOrigin(history: string): string | undefined {
+  const m = history.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+  if (!m) return undefined;
+  // take first 1-2 words before comma/punct
+  const cleaned = m[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 2).join(" ");
+  return cleaned || undefined;
+}
+
+const WORD_NUMS: Record<string, number> = {
+  allein: 1, solo: 1, "ein": 1, "eine": 1, "einer": 1, "eins": 1,
+  paar: 2, pärchen: 2, paerchen: 2, "zu zweit": 2, zwei: 2,
+  "zu dritt": 3, drei: 3,
+  "zu viert": 4, vier: 4, familie: 4,
+  fünf: 5, fuenf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10,
+};
+
+function extractTravelers(history: string): number | undefined {
+  const lower = history.toLowerCase();
+  const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
+  if (num) {
+    const n = Number(num[1]);
+    if (n > 0 && n < 30) return n;
+  }
+  for (const [word, n] of Object.entries(WORD_NUMS)) {
+    if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+  }
+  return undefined;
+}
+
+function extractTravelMonth(history: string): string | undefined {
+  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december)\b/i);
+  return m?.[1].toLowerCase();
 }
 
 function extractInterests(history: string): string[] {
@@ -448,21 +693,50 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
-        const missingFields = getMissingFields(lastUserText, userHistory);
+        const missingRaw = getMissingFields(lastUserText, userHistory);
+        const answered = getAnsweredFieldsFromDialog(uiMessages);
+        const missingFields = missingRaw.filter((f) => !answered.has(f));
 
         // Concierge mode
         if (missingFields.length > 0) {
-          return createTextStreamResponse(buildConciergeReply(missingFields), uiMessages);
+          const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
+          return createTextStreamResponse(buildConciergeReply(missingFields, userMessageCount), uiMessages);
         }
 
         // Multi-agent: research → itinerary → packager (structured)
         const brief = `${userHistory}\n\nLetzte Nachricht: ${lastUserText}`;
 
-        const requestedDurationDays = extractRequestedDurationDays(userHistory);
+        const dialog = getDialogAnswers(uiMessages);
 
-        const destination = extractDestination(userHistory);
-        const budget = extractBudgetAmount(userHistory);
+        const dialogDuration = dialog.duration ? parseAnswerDurationDays(dialog.duration) : null;
+        const requestedDurationDays = dialogDuration ?? extractRequestedDurationDays(userHistory);
+
+        const destination = dialog.destination
+          ? cleanPlace(dialog.destination)
+          : extractDestination(userHistory);
+        const budget = (() => {
+          if (dialog.budget) {
+            const bare = dialog.budget.replace(/[.,\s]/g, "").match(/(\d{3,6})/);
+            if (bare) {
+              const n = Number(bare[1]);
+              if (n >= 100) return n;
+            }
+            const v = extractBudgetAmount(dialog.budget);
+            if (v && v !== 1500) return v;
+          }
+          return extractBudgetAmount(userHistory);
+        })();
+
         const interests = extractInterests(userHistory);
+        const origin = dialog.origin
+          ? cleanPlace(dialog.origin)
+          : extractOrigin(userHistory);
+        const dialogTravelers = dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null;
+        const travelers = dialogTravelers ?? extractTravelers(userHistory);
+        const travelMonth = dialog.timeframe
+          ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory))
+          : extractTravelMonth(userHistory);
+
 
         let researchText = "";
         let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
@@ -542,6 +816,11 @@ export const Route = createFileRoute("/api/chat")({
 
         const packagesWithLinks = normalized.map((p, i) => ({
           ...p,
+          durationDays: requestedDurationDays,
+          origin,
+          travelers,
+          travelMonth,
+          travelStartDate: dialog.timeframe ?? undefined,
           bookingLinks: placeholderLinks(p.destination),
           ratings: ratingsPerPackage[i] ?? [],
         }));
