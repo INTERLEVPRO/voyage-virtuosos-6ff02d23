@@ -119,7 +119,7 @@ export function travelDatesFromMonth(month?: string, durationDays = 7): [string,
   const dep = new Date(year, m - 1, 15);
   const ret = new Date(dep);
   ret.setDate(ret.getDate() + Math.max(1, durationDays));
-  return [yymmdd(dep), yymmdd(ret)];
+  return [ddmmyy(dep), ddmmyy(ret)];
 }
 
 /** Aviasales (Travelpayouts) affiliate deeplink — tracked redirect. */
@@ -192,7 +192,7 @@ export function buildAviasalesSearchUrl(opts: {
   if (parsed) {
     const ret = new Date(parsed);
     ret.setDate(ret.getDate() + duration);
-    dates = [yymmdd(parsed), yymmdd(ret)];
+    dates = [ddmmyy(parsed), ddmmyy(ret)];
   } else {
     dates = travelDatesFromMonth(opts.month, duration);
   }
