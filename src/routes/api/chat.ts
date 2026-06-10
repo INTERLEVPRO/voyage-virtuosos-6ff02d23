@@ -237,7 +237,18 @@ function formatMissingField(field: MissingField): string {
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel“)";
+      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel")";
+  }
+}
+
+function shortFieldLabel(field: MissingField): string {
+  switch (field) {
+    case "destination": return "Reiseziel";
+    case "budget": return "Budget";
+    case "duration": return "Reisedauer";
+    case "travelers": return "Anzahl Personen";
+    case "origin": return "Abflughafen";
+    case "timeframe": return "Reisezeitraum";
   }
 }
 
@@ -252,30 +263,28 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  const nextQuestion = formatMissingField(missing[0]);
-
-  // First user message → warm welcome + example, then ask only the first missing detail
-  if (userMessageCount <= 1) {
+  // First user message with nothing parsed → warm welcome
+  if (userMessageCount <= 1 && missing.length >= 6) {
     return [
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
       "",
       "Du kannst mir z. B. einfach schreiben:",
-      "> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni“*",
+      "> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*",
       "",
-      "Keine Sorge, wenn dir noch Details fehlen — ich frage Schritt für Schritt nach. 😊",
-      "",
-      `Lass uns starten: ${nextQuestion}`,
+      `Lass uns starten: ${formatMissingField(missing[0])}`,
     ].join("\n");
   }
 
-  // Subsequent turns → ask just the next missing detail (step-by-step, friendly)
-  const remaining = missing.length - 1;
+  // Acknowledge what's already there, then ask ONLY missing fields in one message.
+  const ack = "Super, danke dir! ✨ Ich hab schon das meiste — mir fehlt nur noch:";
+  const bullets = missing.map((f) => `- ${formatMissingField(f)}`).join("\n");
+  const labels = joinWithUnd(missing.map(shortFieldLabel));
   const tail =
-    remaining > 0
-      ? `\n\n_(Danach brauche ich nur noch ${remaining} ${remaining === 1 ? "Angabe" : "Angaben"} — versprochen!)_`
-      : "\n\n_(Das ist meine letzte Frage — danach lege ich los! ✨)_";
+    missing.length === 1
+      ? "\n\n_(Sag mir kurz das eine — danach lege ich direkt los! 🚀)_"
+      : `\n\n_(Schreib mir einfach ${labels} in einer Nachricht — dann starte ich sofort.)_`;
 
-  return `Super, danke dir! ${nextQuestion}${tail}`;
+  return `${ack}\n\n${bullets}${tail}`;
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
