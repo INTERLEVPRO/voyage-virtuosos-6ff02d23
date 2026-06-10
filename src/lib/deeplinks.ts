@@ -187,24 +187,34 @@ export function buildAviasalesSearchUrl(opts: {
   const destIata = lookupDestIata(opts.destination);
   const duration = Math.max(1, opts.durationDays ?? 7);
 
-  let dates: [string, string] | null = null;
+  // ISO YYYY-MM-DD dates (Aviasales query-param format).
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  let depISO: string | null = null;
+  let retISO: string | null = null;
   const parsed = parseStartDate(opts.startDate);
   if (parsed) {
     const ret = new Date(parsed);
     ret.setDate(ret.getDate() + duration);
-    dates = [ddmmyy(parsed), ddmmyy(ret)];
+    depISO = iso(parsed);
+    retISO = iso(ret);
   } else {
-    dates = travelDatesFromMonth(opts.month, duration);
+    const isoDates = isoDatesFromMonth(opts.month, duration);
+    if (isoDates) [depISO, retISO] = isoDates;
   }
 
-  if (originIata && destIata && dates) {
-    // Aviasales search URL pattern: /search/{ORIG}{DEPYYMMDD}{DEST}{RETYYMMDD}{ADULTS}
-    return `https://www.aviasales.com/search/${originIata}${dates[0]}${destIata}${dates[1]}${adults}?marker=travelpayouts`;
-  }
-  if (originIata && destIata) {
-    return `https://www.aviasales.com/search/${originIata}0000${destIata}00001?marker=travelpayouts`;
-  }
-  return `https://www.aviasales.com/search?destination=${encodeURIComponent(opts.destination)}&adults=${adults}&marker=travelpayouts`;
+  // Aviasales home with query params auto-fills and (with with_request=true) auto-launches the search.
+  const params = new URLSearchParams({
+    marker: "travelpayouts",
+    locale: "en",
+    currency: "eur",
+    with_request: "true",
+  });
+  if (originIata) params.set("origin_iata", originIata);
+  if (destIata) params.set("destination_iata", destIata);
+  if (depISO) params.set("depart_date", depISO);
+  if (retISO) params.set("return_date", retISO);
+  params.set("adults", String(adults));
+  return `https://www.aviasales.com/?${params.toString()}`;
 }
 
 /** Travelpayouts API token (public affiliate marker). */
