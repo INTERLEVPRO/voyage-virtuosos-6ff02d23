@@ -113,24 +113,52 @@ function getMissingFields(text: string, history: string): MissingField[] {
   return missing;
 }
 
-// Identify which field the assistant last asked about, based on the question text.
-function detectAskedField(assistantText: string): MissingField | null {
+// Identify which fields the assistant asked about, based on the question text.
+function detectAskedFields(assistantText: string): MissingField[] {
   const t = assistantText.toLowerCase();
-  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) return "destination";
-  if (/budget/.test(t)) return "budget";
-  if (/wie lange|reisedauer|wie viele tage/.test(t)) return "duration";
-  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) return "travelers";
-  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) return "origin";
-  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) return "timeframe";
-  return null;
+  const fields: MissingField[] = [];
+  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) fields.push("destination");
+  if (/budget/.test(t)) fields.push("budget");
+  if (/wie lange|reisedauer|wie viele tage/.test(t)) fields.push("duration");
+  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) fields.push("travelers");
+  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) fields.push("origin");
+  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) fields.push("timeframe");
+  return Array.from(new Set(fields));
+}
+
+function extractFieldAnswer(field: MissingField, value: string): string | null {
+  const v = value.trim();
+  if (!v) return null;
+
+  const labeledMatchers: Record<MissingField, RegExp> = {
+    destination: /\b(?:ziel|reiseziel|destination)\s*:\s*([^\n,;]+)/i,
+    budget: /\bbudget\s*:\s*([^\n,;]+)/i,
+    duration: /\b(?:dauer|reisedauer|duration)\s*:\s*([^\n,;]+)/i,
+    travelers: /\b(?:personen|personenanzahl|reisende|travelers|travellers|guests|gäste|pax)\s*:\s*([^\n,;]+)/i,
+    origin: /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([^\n,;]+)/i,
+    timeframe: /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i,
+  };
+
+  const labeled = v.match(labeledMatchers[field])?.[1]?.trim();
+  return labeled || v;
 }
 
 // Walk the dialog: when the assistant asked about a field and the user replied
 // next with non-empty text, mark that field as answered.
 function isAnswerValid(field: MissingField, value: string): boolean {
-  const v = value.trim();
+  const v = extractFieldAnswer(field, value)?.trim() ?? "";
   if (!v) return false;
   switch (field) {
+    case "destination":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
+    case "budget":
+      return /\b\d{2,6}\b/.test(v) || /\b\d{2,5}\s?(€|eur|euro|usd|\$)\b/i.test(v);
+    case "duration":
+      return parseAnswerDurationDays(v) !== null;
+    case "travelers":
+      return parseAnswerTravelers(v) !== null;
+    case "origin":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
@@ -153,12 +181,15 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
   for (let i = 0; i < uiMessages.length - 1; i += 1) {
     const m = uiMessages[i];
     if (m.role !== "assistant") continue;
-    const asked = detectAskedField(textOf(m));
-    if (!asked) continue;
+    const asked = detectAskedFields(textOf(m));
+    if (asked.length === 0) continue;
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
-        if (isAnswerValid(asked, textOf(next))) answered.add(asked);
+        const reply = textOf(next);
+        for (const field of asked) {
+          if (isAnswerValid(field, reply)) answered.add(field);
+        }
         break;
       }
     }
@@ -176,13 +207,16 @@ function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField,
   for (let i = 0; i < uiMessages.length - 1; i += 1) {
     const m = uiMessages[i];
     if (m.role !== "assistant") continue;
-    const asked = detectAskedField(textOf(m));
-    if (!asked) continue;
+    const asked = detectAskedFields(textOf(m));
+    if (asked.length === 0) continue;
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
         const t = textOf(next).trim();
-        if (t.length > 0) answers[asked] = t;
+        for (const field of asked) {
+          const extracted = extractFieldAnswer(field, t)?.trim();
+          if (extracted && isAnswerValid(field, extracted)) answers[field] = extracted;
+        }
         break;
       }
     }
