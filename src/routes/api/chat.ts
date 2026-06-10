@@ -400,6 +400,13 @@ function extractDestination(history: string): string {
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
+    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
+    const afterDuration = line.match(/\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
+      const cand = cleanDestination(afterDuration[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
+
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
