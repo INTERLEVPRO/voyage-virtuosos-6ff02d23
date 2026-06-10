@@ -41,11 +41,34 @@ Include EVERY day from Tag 1 up to the requested duration.`;
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
+// Minimum realistic total trip budget in EUR. Anything below is treated as
+// missing/invalid and the concierge will ask the user to clarify.
+const MIN_BUDGET_EUR = 100;
+
 type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
 type ResearchData = {
   flights: string[];
   hotels: string[];
 };
+
+// Parse the largest realistic budget amount from free text. Returns null when
+// no value at or above MIN_BUDGET_EUR can be found.
+function parseBudgetValue(text: string): number | null {
+  const candidates: number[] = [];
+  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$)?/gi)) {
+    const n = Number(m[1].replace(/[.,]/g, ""));
+    if (!Number.isFinite(n)) continue;
+    if (n >= MIN_BUDGET_EUR && n <= 200000) candidates.push(n);
+  }
+  if (candidates.length === 0) return null;
+  // Prefer the last (most recent) realistic value
+  return candidates[candidates.length - 1];
+}
+
+// Did the user mention a budget at all (even an unrealistically low one)?
+function mentionedBudget(text: string): boolean {
+  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro|usd|\$)/i.test(text);
+}
 
 function getPlanningSignals(text: string, history: string) {
   const combined = `${history}\n${text}`.trim();
@@ -57,7 +80,8 @@ function getPlanningSignals(text: string, history: string) {
   const hasLabeledOrigin = /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*[^\n,;]{2,}/i.test(combined);
   const hasLabeledTimeframe = /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*[^\n]{2,}/i.test(combined);
 
-  const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all) || hasLabeledBudget;
+  // Only consider budget "present" if we can parse a realistic amount.
+  const hasBudget = parseBudgetValue(combined) !== null;
   const hasDestOrType =
     hasLabeledDestination ||
     /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
@@ -152,7 +176,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "destination":
       return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
     case "budget":
-      return /\b\d{2,6}\b/.test(v) || /\b\d{2,5}\s?(€|eur|euro|usd|\$)\b/i.test(v);
+      return parseBudgetValue(v) !== null;
     case "duration":
       return parseAnswerDurationDays(v) !== null;
     case "travelers":
@@ -499,22 +523,8 @@ function extractDestination(history: string): string {
   return "deinem Reiseziel";
 }
 
-function extractBudgetAmount(history: string): number {
-  // 1) Try "<amount> € / EUR / Euro"
-  const withCurrency = [...history.matchAll(/(\d{1,3}(?:[.,]\d{3})*|\d{2,6})\s*(€|eur|euro)/gi)];
-  const lastCur = withCurrency.at(-1);
-  if (lastCur) {
-    const n = Number(lastCur[1].replace(/[.,]/g, ""));
-    if (n >= 100) return n;
-  }
-  // 2) Try "budget ... <amount>" within ~30 chars
-  const budgetCtx = history.match(/budget[^\d]{0,30}(\d{1,3}(?:[.,]\d{3})*|\d{2,6})/i);
-  if (budgetCtx?.[1]) {
-    const n = Number(budgetCtx[1].replace(/[.,]/g, ""));
-    if (n >= 100) return n;
-  }
-  // 3) Fallback
-  return 1500;
+function extractBudgetAmount(history: string): number | null {
+  return parseBudgetValue(history);
 }
 
 function parseResearchData(text: string): ResearchData {
@@ -773,16 +783,23 @@ export const Route = createFileRoute("/api/chat")({
           : extractDestination(userHistory);
         const budget = (() => {
           if (dialog.budget) {
-            const bare = dialog.budget.replace(/[.,\s]/g, "").match(/(\d{3,6})/);
-            if (bare) {
-              const n = Number(bare[1]);
-              if (n >= 100) return n;
-            }
-            const v = extractBudgetAmount(dialog.budget);
-            if (v && v !== 1500) return v;
+            const v = parseBudgetValue(dialog.budget);
+            if (v !== null) return v;
           }
-          return extractBudgetAmount(userHistory);
+          return parseBudgetValue(userHistory);
         })();
+
+        // Safety net: if no realistic budget could be parsed (e.g. user typed
+        // "50 €" or omitted budget), DO NOT fall back to a hardcoded amount.
+        // Ask the user to clarify with a realistic minimum instead.
+        if (budget === null) {
+          const tooLow = mentionedBudget(userHistory) || (dialog.budget ? mentionedBudget(dialog.budget) : false);
+          const msg = tooLow
+            ? `Dein angegebenes Budget scheint sehr niedrig zu sein. Damit ich realistische Pakete (Flug + Hotel + Aktivitäten) zusammenstellen kann, brauche ich dein **ungefähres Gesamtbudget pro Person in Euro** — bitte mindestens **${MIN_BUDGET_EUR} €**. Wie viel möchtest du ungefähr ausgeben?`
+            : `Mir fehlt noch dein **ungefähres Gesamtbudget pro Person in Euro** (z. B. 800 €, 1.500 €, 3.000 €). Wie viel möchtest du ungefähr ausgeben?`;
+          return createTextStreamResponse(msg, uiMessages);
+        }
+
 
         const interests = extractInterests(userHistory);
         const origin = dialog.origin
