@@ -80,7 +80,8 @@ function getPlanningSignals(text: string, history: string) {
   const hasLabeledOrigin = /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*[^\n,;]{2,}/i.test(combined);
   const hasLabeledTimeframe = /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*[^\n]{2,}/i.test(combined);
 
-  const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all) || hasLabeledBudget;
+  // Only consider budget "present" if we can parse a realistic amount.
+  const hasBudget = parseBudgetValue(combined) !== null;
   const hasDestOrType =
     hasLabeledDestination ||
     /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
