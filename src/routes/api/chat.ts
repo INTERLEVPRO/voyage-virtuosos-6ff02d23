@@ -41,11 +41,34 @@ Include EVERY day from Tag 1 up to the requested duration.`;
 
 const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "premium"];
 
+// Minimum realistic total trip budget in EUR. Anything below is treated as
+// missing/invalid and the concierge will ask the user to clarify.
+const MIN_BUDGET_EUR = 100;
+
 type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
 type ResearchData = {
   flights: string[];
   hotels: string[];
 };
+
+// Parse the largest realistic budget amount from free text. Returns null when
+// no value at or above MIN_BUDGET_EUR can be found.
+function parseBudgetValue(text: string): number | null {
+  const candidates: number[] = [];
+  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$)?/gi)) {
+    const n = Number(m[1].replace(/[.,]/g, ""));
+    if (!Number.isFinite(n)) continue;
+    if (n >= MIN_BUDGET_EUR && n <= 200000) candidates.push(n);
+  }
+  if (candidates.length === 0) return null;
+  // Prefer the last (most recent) realistic value
+  return candidates[candidates.length - 1];
+}
+
+// Did the user mention a budget at all (even an unrealistically low one)?
+function mentionedBudget(text: string): boolean {
+  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro|usd|\$)/i.test(text);
+}
 
 function getPlanningSignals(text: string, history: string) {
   const combined = `${history}\n${text}`.trim();
