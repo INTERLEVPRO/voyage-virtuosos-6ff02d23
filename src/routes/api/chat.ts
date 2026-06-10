@@ -523,22 +523,8 @@ function extractDestination(history: string): string {
   return "deinem Reiseziel";
 }
 
-function extractBudgetAmount(history: string): number {
-  // 1) Try "<amount> € / EUR / Euro"
-  const withCurrency = [...history.matchAll(/(\d{1,3}(?:[.,]\d{3})*|\d{2,6})\s*(€|eur|euro)/gi)];
-  const lastCur = withCurrency.at(-1);
-  if (lastCur) {
-    const n = Number(lastCur[1].replace(/[.,]/g, ""));
-    if (n >= 100) return n;
-  }
-  // 2) Try "budget ... <amount>" within ~30 chars
-  const budgetCtx = history.match(/budget[^\d]{0,30}(\d{1,3}(?:[.,]\d{3})*|\d{2,6})/i);
-  if (budgetCtx?.[1]) {
-    const n = Number(budgetCtx[1].replace(/[.,]/g, ""));
-    if (n >= 100) return n;
-  }
-  // 3) Fallback
-  return 1500;
+function extractBudgetAmount(history: string): number | null {
+  return parseBudgetValue(history);
 }
 
 function parseResearchData(text: string): ResearchData {
