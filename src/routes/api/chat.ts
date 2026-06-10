@@ -237,7 +237,7 @@ function formatMissingField(field: MissingField): string {
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel")";
+      return '**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel")';
   }
 }
 
