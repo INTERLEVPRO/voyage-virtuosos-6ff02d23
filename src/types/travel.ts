@@ -46,6 +46,7 @@ export type TravelPackage = {
   origin?: string;
   travelers?: number;
   travelMonth?: string;
+  travelStartDate?: string;
 };
 
 export type PackagesPayload = {

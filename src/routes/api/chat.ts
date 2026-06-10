@@ -820,6 +820,7 @@ export const Route = createFileRoute("/api/chat")({
           origin,
           travelers,
           travelMonth,
+          travelStartDate: dialog.timeframe ?? undefined,
           bookingLinks: placeholderLinks(p.destination),
           ratings: ratingsPerPackage[i] ?? [],
         }));

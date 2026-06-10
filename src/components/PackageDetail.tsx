@@ -37,7 +37,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
-import { buildSkyscannerUrl, buildBookingUrl, lookupOriginIata, buildTransferUrl } from "@/lib/deeplinks";
+import { buildAviasalesSearchUrl, buildBookingUrl, lookupOriginIata, buildTransferUrl } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
@@ -376,11 +376,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {(() => {
         const dest = currentPkg.destination || "";
         const q = encodeURIComponent(dest);
-        const flightUrl = buildSkyscannerUrl({
+        const flightUrl = buildAviasalesSearchUrl({
           destination: dest,
           origin: currentPkg.origin,
           travelers: currentPkg.travelers,
           month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
           durationDays: currentPkg.durationDays,
         });
         const hotelUrl = buildBookingUrl({
