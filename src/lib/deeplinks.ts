@@ -216,38 +216,34 @@ export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
 /** KiwiTaxi affiliate deeplink (tracked redirect). */
 export const KIWI_TAXI_AFFILIATE_URL = "https://kiwitaxi.tpm.li/RgYDJiUT";
 
-/**
- * Hotel deeplink — uses the Klook affiliate redirect.
- * Klook's tpm.li shortlink doesn't forward query params, but we still build
- * a fully-parameterised Klook search URL as a fallback / for reference.
- */
-export function buildKlookHotelUrl(_opts: {
+/** Hotel deeplink — fully pre-filled Klook search URL with affiliate marker. */
+export function buildKlookHotelUrl(opts: {
   destination: string;
   hotel?: string;
   travelers?: number;
   month?: string;
+  startDate?: string;
   durationDays?: number;
 }): string {
-  // Always use the tracked affiliate shortlink to guarantee commission tracking.
-  // Parameterised search URLs strip the affiliate marker on some redirects.
-  return KLOOK_ACTIVITIES_AFFILIATE_URL;
+  return buildKlookSearchUrl(opts);
 }
 
-/** Direct Klook hotel search URL with pre-filled fields. */
+/** Direct Klook hotel search URL with pre-filled fields (incl. affiliate marker). */
 export function buildKlookSearchUrl(opts: {
   destination: string;
   hotel?: string;
   travelers?: number;
   month?: string;
+  startDate?: string;
   durationDays?: number;
 }): string {
   const params = new URLSearchParams({
     room_num: "1",
     adult_num: String(Math.max(1, opts.travelers ?? 2)),
     child_num: "0",
-    age: "",
+    aid: TRAVELPAYOUTS_TOKEN,
   });
-  const dates = isoDatesFromMonth(opts.month, opts.durationDays ?? 7);
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
@@ -257,15 +253,61 @@ export function buildKlookSearchUrl(opts: {
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
 
+/** Direct Klook activities search URL with pre-filled fields. */
+export function buildKlookActivitiesUrl(opts: {
+  destination: string;
+  startDate?: string;
+  month?: string;
+  durationDays?: number;
+}): string {
+  const params = new URLSearchParams({
+    aid: TRAVELPAYOUTS_TOKEN,
+    keyword: opts.destination,
+  });
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  if (dates) {
+    params.set("start_time", dates[0]);
+    params.set("end_time", dates[1]);
+  }
+  return `https://www.klook.com/search/result/?${params.toString()}`;
+}
+
 /** @deprecated kept for backwards compatibility — now routes through Klook. */
 export const buildBookingUrl = buildKlookHotelUrl;
 
-/**
- * Transfer deeplink — uses the KiwiTaxi affiliate redirect.
- */
-export function buildTransferUrl(_destination?: string): string {
-  // Always use the tracked affiliate shortlink to guarantee commission tracking.
+/** Transfer deeplink — pre-filled KiwiTaxi search URL when destination known. */
+export function buildTransferUrl(opts?: {
+  destination?: string;
+  travelers?: number;
+  startDate?: string;
+  month?: string;
+  durationDays?: number;
+}): string {
+  if (opts?.destination) {
+    const params = new URLSearchParams({
+      marker: TRAVELPAYOUTS_TOKEN,
+      to: opts.destination,
+      passengers: String(Math.max(1, opts.travelers ?? 2)),
+    });
+    const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+    if (dates) {
+      params.set("date", dates[0]);
+      params.set("return_date", dates[1]);
+    }
+    return `https://kiwitaxi.com/search?${params.toString()}`;
+  }
   return KIWI_TAXI_AFFILIATE_URL;
+}
+
+function isoDatesFromStartOrMonth(startDate?: string, month?: string, durationDays = 7): [string, string] | null {
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const parsed = parseStartDate(startDate);
+  if (parsed) {
+    const ret = new Date(parsed);
+    ret.setDate(ret.getDate() + Math.max(1, durationDays));
+    return [iso(parsed), iso(ret)];
+  }
+  return isoDatesFromMonth(month, durationDays);
 }
 
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
