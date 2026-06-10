@@ -767,7 +767,14 @@ export const Route = createFileRoute("/api/chat")({
         // Concierge mode
         if (missingFields.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
-          return createTextStreamResponse(buildConciergeReply(missingFields, userMessageCount), uiMessages);
+          let reply = buildConciergeReply(missingFields, userMessageCount);
+          // Special case: budget is missing but user already mentioned an
+          // unrealistically low amount (e.g. "50 €"). Prepend a clear nudge
+          // instead of silently repeating the generic budget question.
+          if (missingFields.includes("budget") && mentionedBudget(userHistory)) {
+            reply = `Hmm, dein angegebenes Budget scheint **zu niedrig** für eine echte Reise (Flug + Hotel + Aktivitäten). Bitte nenne mir dein **ungefähres Gesamtbudget pro Person in Euro** — mindestens **${MIN_BUDGET_EUR} €** (z. B. 800 €, 1.500 €, 3.000 €).\n\n${reply}`;
+          }
+          return createTextStreamResponse(reply, uiMessages);
         }
 
         // Multi-agent: research → itinerary → packager (structured)
