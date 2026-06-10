@@ -99,11 +99,11 @@ export function lookupDestIata(dest?: string): string | null {
   return DEST_IATA[first] ?? null;
 }
 
-function yymmdd(d: Date) {
+function ddmmyy(d: Date) {
   const yy = String(d.getFullYear()).slice(-2);
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
-  return `${yy}${mm}${dd}`;
+  return `${dd}${mm}${yy}`;
 }
 
 /** Returns [depYYMMDD, retYYMMDD] for a month name + duration in days. */
@@ -119,7 +119,7 @@ export function travelDatesFromMonth(month?: string, durationDays = 7): [string,
   const dep = new Date(year, m - 1, 15);
   const ret = new Date(dep);
   ret.setDate(ret.getDate() + Math.max(1, durationDays));
-  return [yymmdd(dep), yymmdd(ret)];
+  return [ddmmyy(dep), ddmmyy(ret)];
 }
 
 /** Aviasales (Travelpayouts) affiliate deeplink — tracked redirect. */
@@ -192,7 +192,7 @@ export function buildAviasalesSearchUrl(opts: {
   if (parsed) {
     const ret = new Date(parsed);
     ret.setDate(ret.getDate() + duration);
-    dates = [yymmdd(parsed), yymmdd(ret)];
+    dates = [ddmmyy(parsed), ddmmyy(ret)];
   } else {
     dates = travelDatesFromMonth(opts.month, duration);
   }
