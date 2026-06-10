@@ -70,9 +70,13 @@ function getPlanningSignals(text: string, history: string) {
   const hasOrigin =
     /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
     /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
+  // Require a concrete date (e.g. "10. Juni 2026", "10.06.2026", "10. Juni")
+  // OR an explicit "flexibel" statement. Plain month alone is no longer enough.
   const hasTimeframe =
-    /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mär|mar|apr|jun|jul|aug|sep|okt|nov|dez|january|february|march|may|june|july|october|december|frühling|fruehling|sommer|herbst|winter|ostern|weihnachten|silvester|flexibel|egal|nächst|naechst|kommend)\b/i.test(all) ||
-    /\bin\s+\d+\s?(tag|tage|woche|wochen|monat|monate|monaten)\b/i.test(all);
+    /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
+    /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
+    /\b\d{4}-\d{2}-\d{2}\b/.test(all) ||
+    /\bflexibel\b/i.test(all);
 
   return {
     hasBudget,
