@@ -286,21 +286,42 @@ export function buildKlookActivitiesUrl(opts: {
 export const buildBookingUrl = buildKlookHotelUrl;
 
 /**
- * Transfer deeplink — always the tracked KiwiTaxi affiliate redirect.
- * Kiwitaxi's /search endpoint requires internal place IDs from their autocomplete,
- * so free-text/IATA query params land on a "No results" page. The affiliate
- * shortlink opens the homepage with marker tracking intact, where the user can
- * pick airports from autocomplete.
+ * Transfer deeplink — opens the in-app Kiwitaxi White Label widget page
+ * (`/transfer`) with pickup/dropoff prefilled. The widget itself carries the
+ * Travelpayouts partner marker (pap=728432) for commission tracking, so the
+ * user can complete the booking + payment directly on Kiwitaxi.
+ *
+ * If we can't resolve any usable location hint, we fall back to the tracked
+ * tpm.li affiliate shortlink so commission is never lost.
  */
-export function buildTransferUrl(_opts?: {
+export function buildTransferUrl(opts?: {
   destination?: string;
+  origin?: string;
   travelers?: number;
   startDate?: string;
   month?: string;
   durationDays?: number;
 }): string {
-  return KIWI_TAXI_AFFILIATE_URL;
+  if (!opts) return KIWI_TAXI_AFFILIATE_URL;
+
+  // The widget accepts IATA codes or English/native place names for place_from/place_to.
+  const fromIata = lookupOriginIata(opts.origin);
+  const destIata = lookupDestIata(opts.destination);
+  const placeFrom = fromIata || opts.origin?.trim() || "";
+  // Prefer destination IATA (airport) since transfers usually start at the arrival airport.
+  const placeTo = destIata || opts.destination?.trim() || "";
+
+  if (!placeFrom && !placeTo) return KIWI_TAXI_AFFILIATE_URL;
+
+  const params = new URLSearchParams();
+  // For airport transfers: pickup = arrival airport (destination), dropoff = hotel/city area.
+  if (placeTo) params.set("from", placeTo);
+  if (opts.destination) params.set("to", opts.destination.trim());
+  if (opts.travelers) params.set("pax", String(opts.travelers));
+  if (opts.startDate) params.set("date", opts.startDate);
+  return `/transfer?${params.toString()}`;
 }
+
 
 function isoDatesFromStartOrMonth(startDate?: string, month?: string, durationDays = 7): [string, string] | null {
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
