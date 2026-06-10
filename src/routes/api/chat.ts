@@ -783,16 +783,23 @@ export const Route = createFileRoute("/api/chat")({
           : extractDestination(userHistory);
         const budget = (() => {
           if (dialog.budget) {
-            const bare = dialog.budget.replace(/[.,\s]/g, "").match(/(\d{3,6})/);
-            if (bare) {
-              const n = Number(bare[1]);
-              if (n >= 100) return n;
-            }
-            const v = extractBudgetAmount(dialog.budget);
-            if (v && v !== 1500) return v;
+            const v = parseBudgetValue(dialog.budget);
+            if (v !== null) return v;
           }
-          return extractBudgetAmount(userHistory);
+          return parseBudgetValue(userHistory);
         })();
+
+        // Safety net: if no realistic budget could be parsed (e.g. user typed
+        // "50 €" or omitted budget), DO NOT fall back to a hardcoded amount.
+        // Ask the user to clarify with a realistic minimum instead.
+        if (budget === null) {
+          const tooLow = mentionedBudget(userHistory) || (dialog.budget ? mentionedBudget(dialog.budget) : false);
+          const msg = tooLow
+            ? `Dein angegebenes Budget scheint sehr niedrig zu sein. Damit ich realistische Pakete (Flug + Hotel + Aktivitäten) zusammenstellen kann, brauche ich dein **ungefähres Gesamtbudget pro Person in Euro** — bitte mindestens **${MIN_BUDGET_EUR} €**. Wie viel möchtest du ungefähr ausgeben?`
+            : `Mir fehlt noch dein **ungefähres Gesamtbudget pro Person in Euro** (z. B. 800 €, 1.500 €, 3.000 €). Wie viel möchtest du ungefähr ausgeben?`;
+          return createTextStreamResponse(msg, uiMessages);
+        }
+
 
         const interests = extractInterests(userHistory);
         const origin = dialog.origin
