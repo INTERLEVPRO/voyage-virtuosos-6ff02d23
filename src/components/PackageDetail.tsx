@@ -376,11 +376,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {(() => {
         const dest = currentPkg.destination || "";
         const q = encodeURIComponent(dest);
-        const flightUrl = buildSkyscannerUrl({
+        const flightUrl = buildAviasalesSearchUrl({
           destination: dest,
           origin: currentPkg.origin,
           travelers: currentPkg.travelers,
           month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
           durationDays: currentPkg.durationDays,
         });
         const hotelUrl = buildBookingUrl({
