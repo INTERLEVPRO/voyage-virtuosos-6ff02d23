@@ -116,6 +116,22 @@ function detectAskedField(assistantText: string): MissingField | null {
 
 // Walk the dialog: when the assistant asked about a field and the user replied
 // next with non-empty text, mark that field as answered.
+function isAnswerValid(field: MissingField, value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  switch (field) {
+    case "timeframe":
+      return (
+        /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
+        /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(v) ||
+        /\b\d{4}-\d{2}-\d{2}\b/.test(v) ||
+        /\bflexibel\b/i.test(v)
+      );
+    default:
+      return true;
+  }
+}
+
 function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField> {
   const answered = new Set<MissingField>();
   const textOf = (m: UIMessage) =>
@@ -129,7 +145,7 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
-        if (textOf(next).trim().length > 0) answered.add(asked);
+        if (isAnswerValid(asked, textOf(next))) answered.add(asked);
         break;
       }
     }
