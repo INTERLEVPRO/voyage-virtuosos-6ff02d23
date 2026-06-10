@@ -303,6 +303,33 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         className="w-full border-t border-border bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pt-4"
       >
         <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-border bg-background px-2.5 py-2 shadow-soft transition-all focus-within:border-primary/60 focus-within:shadow-card sm:px-3 sm:py-2.5">
+          <label
+            htmlFor="composer-date"
+            title="Reisedatum einfügen (z. B. 10. Juni 2026)"
+            className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary sm:h-11 sm:w-11"
+          >
+            <CalendarDays className="h-5 w-5" />
+            <input
+              id="composer-date"
+              type="date"
+              min={todayISO()}
+              disabled={isLoading}
+              onChange={(e) => {
+                const iso = e.currentTarget.value;
+                if (!iso) return;
+                const formatted = formatGermanDate(iso);
+                if (!formatted) return;
+                setInput((prev) => {
+                  const sep = prev && !prev.endsWith(" ") ? " " : "";
+                  return `${prev}${sep}${formatted}`;
+                });
+                e.currentTarget.value = "";
+                requestAnimationFrame(() => inputRef.current?.focus());
+              }}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="Reisedatum wählen"
+            />
+          </label>
           <textarea
             ref={inputRef}
             value={input}
