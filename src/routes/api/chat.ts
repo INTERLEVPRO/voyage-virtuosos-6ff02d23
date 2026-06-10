@@ -50,9 +50,16 @@ type ResearchData = {
 function getPlanningSignals(text: string, history: string) {
   const combined = `${history}\n${text}`.trim();
   const all = combined.toLowerCase();
+  const hasLabeledDestination = /\b(?:ziel|reiseziel|destination)\s*:\s*[^\n,;]{2,}/i.test(combined);
+  const hasLabeledBudget = /\bbudget\s*:\s*\d{1,6}/i.test(combined);
+  const hasLabeledDuration = /\b(?:dauer|reisedauer|duration)\s*:\s*(?:\d{1,3}|one|two|three|four|five|six|seven|eight|nine|ten|ein|eine|zwei|drei|vier|fünf|fuenf|sechs|sieben|acht|neun|zehn)\s*(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|day|days|night|nights|week|weeks|woche|wochen|month|months|monat|monate)/i.test(combined);
+  const hasLabeledTravelers = /\b(?:personen|personenanzahl|reisende|travelers|travellers|guests|gäste|pax)\s*:\s*(?:\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|ein|eine|zwei|drei|vier|fünf|fuenf|sechs|sieben|acht|neun|zehn|solo|allein|paar|pärchen|paerchen|familie)/i.test(combined);
+  const hasLabeledOrigin = /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*[^\n,;]{2,}/i.test(combined);
+  const hasLabeledTimeframe = /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*[^\n]{2,}/i.test(combined);
 
-  const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all);
+  const hasBudget = /\b\d{2,5}\s?(€|eur|euro|usd|\$)/i.test(all) || /budget/i.test(all) || hasLabeledBudget;
   const hasDestOrType =
+    hasLabeledDestination ||
     /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
     /\b(in|nach|to)\s+[a-zäöüß][a-zäöüß.'’-]{2,}(?:\s+[a-zäöüß][a-zäöüß.'’-]{2,}){0,2}\b/i.test(all) ||
     /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined) ||
@@ -61,22 +68,26 @@ function getPlanningSignals(text: string, history: string) {
     // Any capitalized place-like token that isn't a known origin/month/keyword
     /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
   const hasDuration =
-    /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
+    hasLabeledDuration ||
+    /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen|day|days|night|nights|week|weeks|month|months|monat|monate)\b/.test(all);
   const hasTravelers =
+    hasLabeledTravelers ||
     /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder|pers\.?|pax|adult|adults)\b/.test(all) ||
-    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert|ein(e|er|s)?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\b/i.test(all) ||
+    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert|ein(e|er|s)?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|one|two|three|four|five|six|seven|eight|nine|ten)\b/i.test(all) ||
     /(^|[\s,;])([1-9]|1\d|20)\s*[,;]/.test(text) ||
     /^\s*([1-9]|1\d|20)\s*$/.test(text.trim());
   const hasOrigin =
+    hasLabeledOrigin ||
     /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
     /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
-  // Require a concrete date (e.g. "10. Juni 2026", "10.06.2026", "10. Juni")
-  // OR an explicit "flexibel" statement. Plain month alone is no longer enough.
   const hasTimeframe =
+    hasLabeledTimeframe ||
     /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
+    /\b\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/i.test(all) ||
     /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
     /\b\d{4}-\d{2}-\d{2}\b/.test(all) ||
-    /\bflexibel\b/i.test(all);
+    /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(all) ||
+    /\b(flexibel|egal)\b/i.test(all);
 
   return {
     hasBudget,
@@ -102,30 +113,60 @@ function getMissingFields(text: string, history: string): MissingField[] {
   return missing;
 }
 
-// Identify which field the assistant last asked about, based on the question text.
-function detectAskedField(assistantText: string): MissingField | null {
+// Identify which fields the assistant asked about, based on the question text.
+function detectAskedFields(assistantText: string): MissingField[] {
   const t = assistantText.toLowerCase();
-  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) return "destination";
-  if (/budget/.test(t)) return "budget";
-  if (/wie lange|reisedauer|wie viele tage/.test(t)) return "duration";
-  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) return "travelers";
-  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) return "origin";
-  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) return "timeframe";
-  return null;
+  const fields: MissingField[] = [];
+  if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) fields.push("destination");
+  if (/budget/.test(t)) fields.push("budget");
+  if (/wie lange|reisedauer|wie viele tage/.test(t)) fields.push("duration");
+  if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) fields.push("travelers");
+  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) fields.push("origin");
+  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) fields.push("timeframe");
+  return Array.from(new Set(fields));
+}
+
+function extractFieldAnswer(field: MissingField, value: string): string | null {
+  const v = value.trim();
+  if (!v) return null;
+
+  const labeledMatchers: Record<MissingField, RegExp> = {
+    destination: /\b(?:ziel|reiseziel|destination)\s*:\s*([^\n,;]+)/i,
+    budget: /\bbudget\s*:\s*([^\n,;]+)/i,
+    duration: /\b(?:dauer|reisedauer|duration)\s*:\s*([^\n,;]+)/i,
+    travelers: /\b(?:personen|personenanzahl|reisende|travelers|travellers|guests|gäste|pax)\s*:\s*([^\n,;]+)/i,
+    origin: /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([^\n,;]+)/i,
+    timeframe: /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i,
+  };
+
+  const labeled = v.match(labeledMatchers[field])?.[1]?.trim();
+  return labeled || v;
 }
 
 // Walk the dialog: when the assistant asked about a field and the user replied
 // next with non-empty text, mark that field as answered.
 function isAnswerValid(field: MissingField, value: string): boolean {
-  const v = value.trim();
+  const v = extractFieldAnswer(field, value)?.trim() ?? "";
   if (!v) return false;
   switch (field) {
+    case "destination":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
+    case "budget":
+      return /\b\d{2,6}\b/.test(v) || /\b\d{2,5}\s?(€|eur|euro|usd|\$)\b/i.test(v);
+    case "duration":
+      return parseAnswerDurationDays(v) !== null;
+    case "travelers":
+      return parseAnswerTravelers(v) !== null;
+    case "origin":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
+        /\b\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/i.test(v) ||
         /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(v) ||
         /\b\d{4}-\d{2}-\d{2}\b/.test(v) ||
-        /\bflexibel\b/i.test(v)
+        /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(v) ||
+        /\b(flexibel|egal)\b/i.test(v)
       );
     default:
       return true;
@@ -140,12 +181,15 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
   for (let i = 0; i < uiMessages.length - 1; i += 1) {
     const m = uiMessages[i];
     if (m.role !== "assistant") continue;
-    const asked = detectAskedField(textOf(m));
-    if (!asked) continue;
+    const asked = detectAskedFields(textOf(m));
+    if (asked.length === 0) continue;
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
-        if (isAnswerValid(asked, textOf(next))) answered.add(asked);
+        const reply = textOf(next);
+        for (const field of asked) {
+          if (isAnswerValid(field, reply)) answered.add(field);
+        }
         break;
       }
     }
@@ -163,13 +207,16 @@ function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField,
   for (let i = 0; i < uiMessages.length - 1; i += 1) {
     const m = uiMessages[i];
     if (m.role !== "assistant") continue;
-    const asked = detectAskedField(textOf(m));
-    if (!asked) continue;
+    const asked = detectAskedFields(textOf(m));
+    if (asked.length === 0) continue;
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
         const t = textOf(next).trim();
-        if (t.length > 0) answers[asked] = t;
+        for (const field of asked) {
+          const extracted = extractFieldAnswer(field, t)?.trim();
+          if (extracted && isAnswerValid(field, extracted)) answers[field] = extracted;
+        }
         break;
       }
     }
@@ -498,6 +545,11 @@ function parseResearchData(text: string): ResearchData {
 }
 
 function extractOrigin(history: string): string | undefined {
+  const labeled = history.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+  if (labeled?.[1]) {
+    const cleaned = labeled[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
+    return cleaned || undefined;
+  }
   const m = history.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
   if (!m) return undefined;
   // take first 1-2 words before comma/punct
@@ -527,7 +579,12 @@ function extractTravelers(history: string): number | undefined {
 }
 
 function extractTravelMonth(history: string): string | undefined {
-  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december)\b/i);
+  const labeled = history.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
+  if (labeled?.[1]) {
+    const m = labeled[1].match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul)\b/i);
+    if (m?.[1]) return m[1].toLowerCase();
+  }
+  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul)\b/i);
   return m?.[1].toLowerCase();
 }
 
