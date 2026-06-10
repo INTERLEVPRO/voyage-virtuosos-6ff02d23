@@ -55,7 +55,11 @@ function getPlanningSignals(text: string, history: string) {
   const hasDestOrType =
     /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
     /\b(in|nach|to)\s+[a-zäöüß][a-zäöüß.'’-]{2,}(?:\s+[a-zäöüß][a-zäöüß.'’-]{2,}){0,2}\b/i.test(all) ||
-    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined);
+    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined) ||
+    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
+    /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([a-zäöüß][a-zäöüß.'’-]{2,})/i.test(all) ||
+    // Any capitalized place-like token that isn't a known origin/month/keyword
+    /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
   const hasDuration =
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen)\b/.test(all);
   const hasTravelers =
@@ -233,7 +237,18 @@ function formatMissingField(field: MissingField): string {
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return "**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel“)";
+      return '**Wann ungefähr möchtest du reisen?** (Monat/Saison oder einfach „flexibel")';
+  }
+}
+
+function shortFieldLabel(field: MissingField): string {
+  switch (field) {
+    case "destination": return "Reiseziel";
+    case "budget": return "Budget";
+    case "duration": return "Reisedauer";
+    case "travelers": return "Anzahl Personen";
+    case "origin": return "Abflughafen";
+    case "timeframe": return "Reisezeitraum";
   }
 }
 
@@ -248,30 +263,28 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  const nextQuestion = formatMissingField(missing[0]);
-
-  // First user message → warm welcome + example, then ask only the first missing detail
-  if (userMessageCount <= 1) {
+  // First user message with nothing parsed → warm welcome
+  if (userMessageCount <= 1 && missing.length >= 6) {
     return [
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
       "",
       "Du kannst mir z. B. einfach schreiben:",
-      "> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni“*",
+      '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
       "",
-      "Keine Sorge, wenn dir noch Details fehlen — ich frage Schritt für Schritt nach. 😊",
-      "",
-      `Lass uns starten: ${nextQuestion}`,
+      `Lass uns starten: ${formatMissingField(missing[0])}`,
     ].join("\n");
   }
 
-  // Subsequent turns → ask just the next missing detail (step-by-step, friendly)
-  const remaining = missing.length - 1;
+  // Acknowledge what's already there, then ask ONLY missing fields in one message.
+  const ack = "Super, danke dir! ✨ Ich hab schon das meiste — mir fehlt nur noch:";
+  const bullets = missing.map((f) => `- ${formatMissingField(f)}`).join("\n");
+  const labels = joinWithUnd(missing.map(shortFieldLabel));
   const tail =
-    remaining > 0
-      ? `\n\n_(Danach brauche ich nur noch ${remaining} ${remaining === 1 ? "Angabe" : "Angaben"} — versprochen!)_`
-      : "\n\n_(Das ist meine letzte Frage — danach lege ich los! ✨)_";
+    missing.length === 1
+      ? "\n\n_(Sag mir kurz das eine — danach lege ich direkt los! 🚀)_"
+      : `\n\n_(Schreib mir einfach ${labels} in einer Nachricht — dann starte ich sofort.)_`;
 
-  return `Super, danke dir! ${nextQuestion}${tail}`;
+  return `${ack}\n\n${bullets}${tail}`;
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
@@ -395,6 +408,13 @@ function extractDestination(history: string): string {
     const line = lines[i];
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
+
+    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
+    const afterDuration = line.match(/\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
+      const cand = cleanDestination(afterDuration[1]);
+      if (cand && !isDateLike(cand)) return cand;
+    }
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
