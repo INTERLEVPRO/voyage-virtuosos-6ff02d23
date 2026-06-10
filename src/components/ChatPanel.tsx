@@ -12,9 +12,26 @@ import {
   Wallet,
   Map as MapIcon,
   Wand2,
+  CalendarDays,
 } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
+
+const MONTHS_DE = [
+  "Januar", "Februar", "März", "April", "Mai", "Juni",
+  "Juli", "August", "September", "Oktober", "November", "Dezember",
+];
+
+function formatGermanDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return `${d}. ${MONTHS_DE[m - 1]} ${y}`;
+}
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 const STARTER_PROMPTS: { emoji: string; title: string; subtitle: string; prompt: string }[] = [
   {
