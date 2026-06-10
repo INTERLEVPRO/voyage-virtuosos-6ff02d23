@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as ApiRefinePackageRouteImport } from './routes/api/refine-packag
 import { Route as ApiItineraryWeatherRouteImport } from './routes/api/itinerary-weather'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const TransferRoute = TransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
   '/api/refine-package': typeof ApiRefinePackageRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
     | '/api/refine-package'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
     | '/api/refine-package'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
     | '/api/refine-package'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  TransferRoute: typeof TransferRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiItineraryWeatherRoute: typeof ApiItineraryWeatherRoute
   ApiRefinePackageRoute: typeof ApiRefinePackageRoute
@@ -123,6 +136,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transfer': {
+      id: '/transfer'
+      path: '/transfer'
+      fullPath: '/transfer'
+      preLoaderRoute: typeof TransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  TransferRoute: TransferRoute,
   ApiChatRoute: ApiChatRoute,
   ApiItineraryWeatherRoute: ApiItineraryWeatherRoute,
   ApiRefinePackageRoute: ApiRefinePackageRoute,
