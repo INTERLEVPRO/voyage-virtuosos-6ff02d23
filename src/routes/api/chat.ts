@@ -110,7 +110,7 @@ function detectAskedField(assistantText: string): MissingField | null {
   if (/wie lange|reisedauer|wie viele tage/.test(t)) return "duration";
   if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) return "travelers";
   if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) return "origin";
-  if (/wann.*reisen|reisezeit|monat.*saison/.test(t)) return "timeframe";
+  if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) return "timeframe";
   return null;
 }
 
