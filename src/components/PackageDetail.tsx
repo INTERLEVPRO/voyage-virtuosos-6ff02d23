@@ -143,8 +143,15 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   return `mailto:?subject=${subject}&body=${body}`;
 }
 
-function transferUrl(_destination: string) {
-  return buildTransferUrl();
+function transferUrl(pkg: import("@/types/travel").TravelPackage) {
+  return buildTransferUrl({
+    destination: pkg.destination,
+    origin: pkg.origin,
+    travelers: pkg.travelers,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
+  });
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
