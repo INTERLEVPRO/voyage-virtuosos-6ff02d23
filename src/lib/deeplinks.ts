@@ -173,7 +173,18 @@ export function parseStartDate(input?: string): Date | null {
   return null;
 }
 
-/** Direct Aviasales search URL with pre-filled fields (IATA-based). */
+/**
+ * Direct Aviasales search URL with pre-filled fields.
+ *
+ * Aviasales' query-param format (origin_iata=…&destination_iata=…) does NOT
+ * reliably pre-fill the search widget — the homepage shows the user's geo
+ * default ("Colombo") and empty To/dates. The path-based "compact" search
+ * URL (`/search/{ORIG}{DDMM}{DEST}{DDMM}{ADULTS}`) is the canonical link
+ * that triggers an actual search and shows results immediately.
+ *
+ * If we don't have enough data (origin + destination IATA + dates) we fall
+ * back to the tracked affiliate shortlink so commission is never lost.
+ */
 export function buildAviasalesSearchUrl(opts: {
   destination: string;
   origin?: string;
@@ -182,39 +193,40 @@ export function buildAviasalesSearchUrl(opts: {
   startDate?: string;
   durationDays?: number;
 }): string {
-  const adults = Math.max(1, opts.travelers ?? 1);
+  const adults = Math.min(9, Math.max(1, opts.travelers ?? 1));
   const originIata = lookupOriginIata(opts.origin);
   const destIata = lookupDestIata(opts.destination);
   const duration = Math.max(1, opts.durationDays ?? 7);
 
-  // ISO YYYY-MM-DD dates (Aviasales query-param format).
-  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  let depISO: string | null = null;
-  let retISO: string | null = null;
-  const parsed = parseStartDate(opts.startDate);
-  if (parsed) {
-    const ret = new Date(parsed);
-    ret.setDate(ret.getDate() + duration);
-    depISO = iso(parsed);
-    retISO = iso(ret);
-  } else {
-    const isoDates = isoDatesFromMonth(opts.month, duration);
-    if (isoDates) [depISO, retISO] = isoDates;
+  let dep: Date | null = parseStartDate(opts.startDate);
+  if (!dep && opts.month) {
+    const m = MONTHS[opts.month.toLowerCase().trim()];
+    if (m) {
+      const now = new Date();
+      let year = now.getFullYear();
+      if (m < now.getMonth() + 1) year += 1;
+      dep = new Date(year, m - 1, 15);
+    }
   }
 
-  // Aviasales home with query params auto-fills and (with with_request=true) auto-launches the search.
-  const params = new URLSearchParams({
-    marker: "travelpayouts",
-    locale: "en",
-    currency: "eur",
-    with_request: "true",
-  });
-  if (originIata) params.set("origin_iata", originIata);
-  if (destIata) params.set("destination_iata", destIata);
-  if (depISO) params.set("depart_date", depISO);
-  if (retISO) params.set("return_date", retISO);
-  params.set("adults", String(adults));
-  return `https://www.aviasales.com/?${params.toString()}`;
+  // Path-based search format auto-runs the query and pre-fills the form.
+  if (originIata && destIata && dep) {
+    const ret = new Date(dep);
+    ret.setDate(ret.getDate() + duration);
+    const code = `${originIata}${ddmm(dep)}${destIata}${ddmm(ret)}${adults}`;
+    const params = new URLSearchParams({
+      marker: "travelpayouts",
+      currency: "eur",
+    });
+    return `https://www.aviasales.com/search/${code}?${params.toString()}`;
+  }
+
+  // Not enough data to deep-link — use tracked affiliate shortlink.
+  return AVIASALES_AFFILIATE_URL;
+}
+
+function ddmm(d: Date) {
+  return `${String(d.getDate()).padStart(2, "0")}${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Travelpayouts API token (public affiliate marker). */
@@ -238,6 +250,13 @@ export function buildKlookHotelUrl(opts: {
   return buildKlookSearchUrl(opts);
 }
 
+/** Sanity-check a destination string before sending it to Klook as a keyword. */
+function cleanDestination(input?: string): string {
+  const s = (input || "").trim().replace(/^[-–—\s]+|[-–—\s]+$/g, "");
+  if (s.length < 2) return "";
+  return s;
+}
+
 /** Direct Klook hotel search URL with pre-filled fields (incl. affiliate marker). */
 export function buildKlookSearchUrl(opts: {
   destination: string;
@@ -247,25 +266,23 @@ export function buildKlookSearchUrl(opts: {
   startDate?: string;
   durationDays?: number;
 }): string {
+  const keyword = cleanDestination(opts.destination);
+  // No usable destination → fall back to tracked affiliate link instead of
+  // sending the user to a broken/empty Klook search.
+  if (!keyword) return KLOOK_ACTIVITIES_AFFILIATE_URL;
+
   const params = new URLSearchParams({
     room_num: "1",
     adult_num: String(Math.max(1, opts.travelers ?? 2)),
     child_num: "0",
     aid: TRAVELPAYOUTS_TOKEN,
+    keyword,
   });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
   }
-  // Use the user's actual destination as the search keyword so Klook shows
-  // available hotels in that city for the chosen dates. We deliberately do
-  // NOT include the package's hotel name — Klook then matches the closest
-  // string and frequently lands on an unrelated property (e.g. searching
-  // "Hotel <city>" sends users to "Hotel Marina Playa de Palma"). Showing
-  // the destination search lets the user see real options for their trip.
-  const keyword = (opts.destination || "").trim();
-  if (keyword) params.set("keyword", keyword);
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
 
@@ -276,9 +293,11 @@ export function buildKlookActivitiesUrl(opts: {
   month?: string;
   durationDays?: number;
 }): string {
+  const keyword = cleanDestination(opts.destination);
+  if (!keyword) return KLOOK_ACTIVITIES_AFFILIATE_URL;
   const params = new URLSearchParams({
     aid: TRAVELPAYOUTS_TOKEN,
-    keyword: opts.destination,
+    keyword,
   });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
@@ -310,21 +329,24 @@ export function buildTransferUrl(opts?: {
 }): string {
   if (!opts) return KIWI_TAXI_AFFILIATE_URL;
 
+  const destClean = cleanDestination(opts.destination);
+  const originClean = cleanDestination(opts.origin);
   // The widget accepts IATA codes or English/native place names for place_from/place_to.
-  const fromIata = lookupOriginIata(opts.origin);
-  const destIata = lookupDestIata(opts.destination);
-  const placeFrom = fromIata || opts.origin?.trim() || "";
-  // Prefer destination IATA (airport) since transfers usually start at the arrival airport.
-  const placeTo = destIata || opts.destination?.trim() || "";
+  const fromIata = lookupOriginIata(originClean);
+  const destIata = lookupDestIata(destClean);
+  // Pickup = arrival airport (destination IATA preferred).
+  const placeFrom = destIata || destClean;
+  // Dropoff = city / hotel area (destination name).
+  const placeTo = destClean || originClean;
 
   if (!placeFrom && !placeTo) return KIWI_TAXI_AFFILIATE_URL;
 
   const params = new URLSearchParams();
-  // For airport transfers: pickup = arrival airport (destination), dropoff = hotel/city area.
-  if (placeTo) params.set("from", placeTo);
-  if (opts.destination) params.set("to", opts.destination.trim());
+  if (placeFrom) params.set("from", placeFrom);
+  if (placeTo) params.set("to", placeTo);
   if (opts.travelers) params.set("pax", String(opts.travelers));
   if (opts.startDate) params.set("date", opts.startDate);
+  // Pass first day of trip as fallback if no startDate.
   return `/transfer?${params.toString()}`;
 }
 
