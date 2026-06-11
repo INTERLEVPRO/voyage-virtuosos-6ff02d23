@@ -82,12 +82,24 @@ function openRouteInMaps(destination: string, place?: string) {
   setTimeout(() => finish(), 6500);
 }
 
-function bookingHotelUrl(_destination: string) {
-  return "https://klook.tpm.li/WzC9L2in/";
+function bookingHotelUrl(pkg: import("@/types/travel").TravelPackage) {
+  return buildKlookSearchUrl({
+    destination: pkg.destination,
+    hotel: pkg.hotel,
+    travelers: pkg.travelers,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
+  });
 }
 
-function klookActivityUrl(_destination: string, _query?: string) {
-  return "https://klook.tpm.li/WzC9L2in/";
+function klookActivityUrl(pkg: import("@/types/travel").TravelPackage) {
+  return buildKlookActivitiesUrl({
+    destination: pkg.destination,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
+  });
 }
 
 function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
