@@ -250,6 +250,13 @@ export function buildKlookHotelUrl(opts: {
   return buildKlookSearchUrl(opts);
 }
 
+/** Sanity-check a destination string before sending it to Klook as a keyword. */
+function cleanDestination(input?: string): string {
+  const s = (input || "").trim().replace(/^[-–—\s]+|[-–—\s]+$/g, "");
+  if (s.length < 2) return "";
+  return s;
+}
+
 /** Direct Klook hotel search URL with pre-filled fields (incl. affiliate marker). */
 export function buildKlookSearchUrl(opts: {
   destination: string;
@@ -259,25 +266,23 @@ export function buildKlookSearchUrl(opts: {
   startDate?: string;
   durationDays?: number;
 }): string {
+  const keyword = cleanDestination(opts.destination);
+  // No usable destination → fall back to tracked affiliate link instead of
+  // sending the user to a broken/empty Klook search.
+  if (!keyword) return KLOOK_ACTIVITIES_AFFILIATE_URL;
+
   const params = new URLSearchParams({
     room_num: "1",
     adult_num: String(Math.max(1, opts.travelers ?? 2)),
     child_num: "0",
     aid: TRAVELPAYOUTS_TOKEN,
+    keyword,
   });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
   }
-  // Use the user's actual destination as the search keyword so Klook shows
-  // available hotels in that city for the chosen dates. We deliberately do
-  // NOT include the package's hotel name — Klook then matches the closest
-  // string and frequently lands on an unrelated property (e.g. searching
-  // "Hotel <city>" sends users to "Hotel Marina Playa de Palma"). Showing
-  // the destination search lets the user see real options for their trip.
-  const keyword = (opts.destination || "").trim();
-  if (keyword) params.set("keyword", keyword);
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
 
@@ -288,9 +293,11 @@ export function buildKlookActivitiesUrl(opts: {
   month?: string;
   durationDays?: number;
 }): string {
+  const keyword = cleanDestination(opts.destination);
+  if (!keyword) return KLOOK_ACTIVITIES_AFFILIATE_URL;
   const params = new URLSearchParams({
     aid: TRAVELPAYOUTS_TOKEN,
-    keyword: opts.destination,
+    keyword,
   });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
