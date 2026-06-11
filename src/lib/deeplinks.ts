@@ -329,21 +329,24 @@ export function buildTransferUrl(opts?: {
 }): string {
   if (!opts) return KIWI_TAXI_AFFILIATE_URL;
 
+  const destClean = cleanDestination(opts.destination);
+  const originClean = cleanDestination(opts.origin);
   // The widget accepts IATA codes or English/native place names for place_from/place_to.
-  const fromIata = lookupOriginIata(opts.origin);
-  const destIata = lookupDestIata(opts.destination);
-  const placeFrom = fromIata || opts.origin?.trim() || "";
-  // Prefer destination IATA (airport) since transfers usually start at the arrival airport.
-  const placeTo = destIata || opts.destination?.trim() || "";
+  const fromIata = lookupOriginIata(originClean);
+  const destIata = lookupDestIata(destClean);
+  // Pickup = arrival airport (destination IATA preferred).
+  const placeFrom = destIata || destClean;
+  // Dropoff = city / hotel area (destination name).
+  const placeTo = destClean || originClean;
 
   if (!placeFrom && !placeTo) return KIWI_TAXI_AFFILIATE_URL;
 
   const params = new URLSearchParams();
-  // For airport transfers: pickup = arrival airport (destination), dropoff = hotel/city area.
-  if (placeTo) params.set("from", placeTo);
-  if (opts.destination) params.set("to", opts.destination.trim());
+  if (placeFrom) params.set("from", placeFrom);
+  if (placeTo) params.set("to", placeTo);
   if (opts.travelers) params.set("pax", String(opts.travelers));
   if (opts.startDate) params.set("date", opts.startDate);
+  // Pass first day of trip as fallback if no startDate.
   return `/transfer?${params.toString()}`;
 }
 
