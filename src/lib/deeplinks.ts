@@ -173,7 +173,18 @@ export function parseStartDate(input?: string): Date | null {
   return null;
 }
 
-/** Direct Aviasales search URL with pre-filled fields (IATA-based). */
+/**
+ * Direct Aviasales search URL with pre-filled fields.
+ *
+ * Aviasales' query-param format (origin_iata=…&destination_iata=…) does NOT
+ * reliably pre-fill the search widget — the homepage shows the user's geo
+ * default ("Colombo") and empty To/dates. The path-based "compact" search
+ * URL (`/search/{ORIG}{DDMM}{DEST}{DDMM}{ADULTS}`) is the canonical link
+ * that triggers an actual search and shows results immediately.
+ *
+ * If we don't have enough data (origin + destination IATA + dates) we fall
+ * back to the tracked affiliate shortlink so commission is never lost.
+ */
 export function buildAviasalesSearchUrl(opts: {
   destination: string;
   origin?: string;
@@ -182,39 +193,40 @@ export function buildAviasalesSearchUrl(opts: {
   startDate?: string;
   durationDays?: number;
 }): string {
-  const adults = Math.max(1, opts.travelers ?? 1);
+  const adults = Math.min(9, Math.max(1, opts.travelers ?? 1));
   const originIata = lookupOriginIata(opts.origin);
   const destIata = lookupDestIata(opts.destination);
   const duration = Math.max(1, opts.durationDays ?? 7);
 
-  // ISO YYYY-MM-DD dates (Aviasales query-param format).
-  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  let depISO: string | null = null;
-  let retISO: string | null = null;
-  const parsed = parseStartDate(opts.startDate);
-  if (parsed) {
-    const ret = new Date(parsed);
-    ret.setDate(ret.getDate() + duration);
-    depISO = iso(parsed);
-    retISO = iso(ret);
-  } else {
-    const isoDates = isoDatesFromMonth(opts.month, duration);
-    if (isoDates) [depISO, retISO] = isoDates;
+  let dep: Date | null = parseStartDate(opts.startDate);
+  if (!dep && opts.month) {
+    const m = MONTHS[opts.month.toLowerCase().trim()];
+    if (m) {
+      const now = new Date();
+      let year = now.getFullYear();
+      if (m < now.getMonth() + 1) year += 1;
+      dep = new Date(year, m - 1, 15);
+    }
   }
 
-  // Aviasales home with query params auto-fills and (with with_request=true) auto-launches the search.
-  const params = new URLSearchParams({
-    marker: "travelpayouts",
-    locale: "en",
-    currency: "eur",
-    with_request: "true",
-  });
-  if (originIata) params.set("origin_iata", originIata);
-  if (destIata) params.set("destination_iata", destIata);
-  if (depISO) params.set("depart_date", depISO);
-  if (retISO) params.set("return_date", retISO);
-  params.set("adults", String(adults));
-  return `https://www.aviasales.com/?${params.toString()}`;
+  // Path-based search format auto-runs the query and pre-fills the form.
+  if (originIata && destIata && dep) {
+    const ret = new Date(dep);
+    ret.setDate(ret.getDate() + duration);
+    const code = `${originIata}${ddmm(dep)}${destIata}${ddmm(ret)}${adults}`;
+    const params = new URLSearchParams({
+      marker: "travelpayouts",
+      currency: "eur",
+    });
+    return `https://www.aviasales.com/search/${code}?${params.toString()}`;
+  }
+
+  // Not enough data to deep-link — use tracked affiliate shortlink.
+  return AVIASALES_AFFILIATE_URL;
+}
+
+function ddmm(d: Date) {
+  return `${String(d.getDate()).padStart(2, "0")}${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Travelpayouts API token (public affiliate marker). */
