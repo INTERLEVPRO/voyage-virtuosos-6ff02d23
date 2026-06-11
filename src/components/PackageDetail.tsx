@@ -618,7 +618,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   generatedAt={weatherQuery.data?.generatedAt}
                 />
                 <a
-                  href={bookingHotelUrl(currentPkg.destination)}
+                  href={bookingHotelUrl(currentPkg)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
@@ -626,7 +626,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Hotel className="h-3 w-3" /> Hotel buchen
                 </a>
                 <a
-                  href={klookActivityUrl(currentPkg.destination, d.title)}
+                  href={klookActivityUrl(currentPkg)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
@@ -634,7 +634,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Ticket className="h-3 w-3" /> Aktivität buchen
                 </a>
                 <a
-                  href={transferUrl(currentPkg.destination)}
+                  href={transferUrl(currentPkg)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
