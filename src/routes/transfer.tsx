@@ -74,12 +74,43 @@ function TransferPage() {
 
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
+    // Normalize the date to ISO (YYYY-MM-DD) and pick a default pickup time so
+    // the booking form is filled as far as possible — only the final payment
+    // step should remain for the user.
+    const isoDate = (() => {
+      const raw = search.date?.trim();
+      if (!raw) return undefined;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+      const m = raw.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/);
+      if (m) {
+        const yr = Number(m[3]);
+        const year = yr < 100 ? 2000 + yr : yr;
+        return `${year}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+      }
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime())
+        ? undefined
+        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const pax = search.pax && search.pax > 0 ? Math.min(8, Math.max(1, Math.round(search.pax))) : undefined;
+
     (window as unknown as { kiwitaxiWLConfig: Record<string, unknown> }).kiwitaxiWLConfig = {
       language: "de",
       display_currency: "EUR",
       country: search.country || undefined,
       place_from: search.from || undefined,
       place_to: search.to || undefined,
+      // Pre-fill date / time / passengers (multiple field-name aliases for
+      // forward-compatibility with widget versions).
+      date_pickup: isoDate,
+      transfer_date: isoDate,
+      date: isoDate,
+      time_pickup: "12:00",
+      transfer_time: "12:00",
+      passengers: pax,
+      passengers_count: pax,
+      adults: pax,
+      pax,
       height: "720",
       transfers_limit: 20,
       hide_form_extras: false,
