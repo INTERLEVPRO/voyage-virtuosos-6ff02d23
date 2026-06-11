@@ -258,7 +258,13 @@ export function buildKlookSearchUrl(opts: {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
   }
-  const keyword = [opts.hotel, opts.destination].filter(Boolean).join(" ").trim();
+  // Use the user's actual destination as the search keyword so Klook shows
+  // available hotels in that city for the chosen dates. We deliberately do
+  // NOT include the package's hotel name — Klook then matches the closest
+  // string and frequently lands on an unrelated property (e.g. searching
+  // "Hotel <city>" sends users to "Hotel Marina Playa de Palma"). Showing
+  // the destination search lets the user see real options for their trip.
+  const keyword = (opts.destination || "").trim();
   if (keyword) params.set("keyword", keyword);
   return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
 }
