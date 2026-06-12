@@ -90,7 +90,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="mx-auto max-w-[480px] min-h-screen bg-background shadow-2xl relative overflow-x-hidden">
+        <div className="min-h-screen bg-background relative overflow-x-hidden">
           <Outlet />
         </div>
         <ClientOnly fallback={null}>

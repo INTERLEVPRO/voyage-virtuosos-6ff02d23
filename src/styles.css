@@ -39,12 +39,6 @@
   --color-brand-blue: var(--brand-blue);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
-  
-  --breakpoint-sm: 9999px;
-  --breakpoint-md: 9999px;
-  --breakpoint-lg: 9999px;
-  --breakpoint-xl: 9999px;
-  --breakpoint-2xl: 9999px;
 }
 
 :root {
