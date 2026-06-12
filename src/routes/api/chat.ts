@@ -816,7 +816,7 @@ export const Route = createFileRoute("/api/chat")({
 
         // Merge LLM with regex/dialog fallbacks for resilience.
         const regexMissing = getMissingFields(lastUserText, userHistory);
-        const answered = getAnsweredFieldsFromDialog(uiMessages);
+        void regexMissing;
 
         // STRICT: every one of the 6 required fields must have a real value
         // from LLM extraction, dialog answers, or regex parsing. Otherwise the
