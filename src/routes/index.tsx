@@ -231,17 +231,39 @@ function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a2e4a]/90 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-        <Link to="/" className="flex items-center">
-          <img src={logo} alt="Weltweiturlaub.de" className="h-10 w-auto" />
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4">
+        {/* Logo with white background pill so it's clearly visible on dark navy */}
+        <Link to="/" className="flex items-center shrink-0">
+          <div className="bg-white rounded-xl px-2 py-1 shadow-soft">
+            <img src={logo} alt="Weltweiturlaub.de" className="h-8 w-auto sm:h-10" />
+          </div>
         </Link>
-        <div className="flex items-center gap-3">
-          <Link to="/login" className="text-sm font-semibold text-white/80 hover:text-white flex items-center gap-1.5 transition">
+        <div className="flex items-center gap-2">
+          {/* Mobile: icon-only buttons */}
+          <Link
+            to="/login"
+            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+            title="Login"
+          >
+            <LogOut className="w-4 h-4 rotate-180" />
+          </Link>
+          <Link
+            to="/register"
+            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-[#0d9e4f] text-white hover:bg-[#0bb858] shadow-glow-green transition"
+            title="Register"
+          >
+            <UserIcon className="w-4 h-4" />
+          </Link>
+          {/* Desktop: full text buttons */}
+          <Link
+            to="/login"
+            className="hidden sm:flex text-sm font-semibold text-white/80 hover:text-white items-center gap-1.5 transition"
+          >
             <LogOut className="w-4 h-4 rotate-180" /> Login
           </Link>
           <Link
             to="/register"
-            className="text-sm font-semibold text-white bg-[#0d9e4f] hover:bg-[#0bb858] px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-glow-green transition-all hover:shadow-lg hover:-translate-y-0.5"
+            className="hidden sm:flex text-sm font-semibold text-white bg-[#0d9e4f] hover:bg-[#0bb858] px-5 py-2.5 rounded-full items-center gap-1.5 shadow-glow-green transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
             <UserIcon className="w-4 h-4" /> Register
           </Link>
