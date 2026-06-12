@@ -5,8 +5,8 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: (search.redirect as string) || "/",
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   component: LoginPage,
 });
@@ -28,7 +28,7 @@ function LoginPage() {
       return;
     }
     toast.success("Willkommen zurück!");
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/" });
   };
 
   const handleGoogle = async () => {
@@ -40,7 +40,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/" });
   };
 
   return (
