@@ -225,12 +225,12 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const progress = ((stageIdx + 1) / AGENT_STAGES.length) * 100;
 
   return (
-    <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[660px]">
+    <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-[#1a2e4a]/10 glass-card shadow-luxe sm:h-[660px]">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 bg-primary text-white px-4 py-3 sm:px-5 sm:py-4">
+      <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#1a2e4a] via-[#243b5c] to-[#1a2e4a] text-white px-4 py-3 sm:px-5 sm:py-4 shimmer">
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 shrink-0">
-            <div className="absolute inset-0 rounded-full bg-white/10 ring-1 ring-white/20" />
+            <div className="absolute inset-0 rounded-full bg-white/10 ring-1 ring-[#0d9e4f]/40" />
             <img
               src={assistantImg}
               alt=""
@@ -259,7 +259,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-secondary/20 via-background to-background px-3 py-5 sm:px-5 sm:py-6"
+        className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-[#e3f0ff]/50 via-[#f0f6fc] to-[#f0f6fc] px-3 py-5 sm:px-5 sm:py-6"
       >
         {messages.length === 0 && (
           <div className="space-y-5">
@@ -294,8 +294,8 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               <div
                 className={
                   isUser
-                    ? "max-w-[82%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground shadow-soft sm:max-w-[75%] sm:px-4 sm:py-3"
-                    : "max-w-[88%] rounded-2xl rounded-bl-md border border-border bg-card px-3.5 py-2.5 text-sm leading-relaxed text-foreground shadow-soft sm:max-w-[80%] sm:px-4 sm:py-3"
+                    ? "max-w-[82%] rounded-2xl rounded-br-md bg-gradient-to-br from-[#1a2e4a] to-[#243b5c] px-3.5 py-2.5 text-sm leading-relaxed text-white shadow-soft sm:max-w-[75%] sm:px-4 sm:py-3"
+                    : "max-w-[88%] rounded-2xl rounded-bl-md border border-[#1a2e4a]/8 glass-card px-3.5 py-2.5 text-sm leading-relaxed text-foreground shadow-soft sm:max-w-[80%] sm:px-4 sm:py-3"
                 }
               >
                 {isUser ? (
@@ -317,7 +317,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             </div>
             <div className="w-full max-w-[88%] overflow-hidden rounded-2xl rounded-bl-md border border-border bg-card shadow-soft sm:max-w-[80%]">
               <div className="flex items-center gap-3 px-3.5 py-3 sm:px-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0d9e4f]/10 text-[#0d9e4f]">
                   <StageIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -341,7 +341,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               </div>
               <div className="h-1 w-full bg-secondary/60">
                 <div
-                  className="h-full bg-primary transition-all duration-700 ease-out"
+                  className="h-full bg-gradient-to-r from-[#0d9e4f] to-[#2196f3] transition-all duration-700 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -364,7 +364,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         }}
         className="w-full border-t border-border bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pt-4"
       >
-        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-[#cbd5e1] bg-[#f8fafc] px-2.5 py-1.5 transition-all focus-within:border-primary/60 sm:px-3 sm:py-2">
+        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-[#1a2e4a]/12 bg-white/80 px-2.5 py-1.5 transition-all focus-within:border-[#0d9e4f]/50 focus-within:shadow-glow-green sm:px-3 sm:py-2">
           <label
             htmlFor="composer-date"
             title="Reisedatum einfügen (z. B. 10. Juni 2026)"
@@ -419,13 +419,13 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             type="submit"
             disabled={isLoading || !input.trim()}
             aria-label="Senden"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-white transition-all hover:bg-primary hover:text-white disabled:opacity-40 disabled:hover:bg-slate-200 sm:h-10 sm:w-10"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0d9e4f] text-white transition-all hover:bg-[#0bb858] hover:shadow-glow-green hover:-translate-y-0.5 disabled:opacity-40 disabled:hover:bg-gray-200 disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:bg-gray-200 disabled:text-gray-400 sm:h-10 sm:w-10"
           >
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-slate-500" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground sm:text-[11px]">
-          <ShieldCheck className="h-3 w-3 text-[#16a34a]" />
+          <ShieldCheck className="h-3 w-3 text-[#0d9e4f]" />
           Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>

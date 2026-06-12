@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Globe, Plane, MapPin } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { TravelPackage } from "@/types/travel";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(
+  {
   component: Index,
 });
 
@@ -50,40 +51,85 @@ function Index() {
       <SiteHeader />
 
       <main className="w-full max-w-full overflow-x-hidden">
-        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-4 pb-12 text-center sm:px-10 sm:pt-10 sm:pb-28">
-          <div className="mx-auto max-w-[1440px]">
-            <div className="mx-auto flex h-24 w-24 relative items-center justify-center rounded-full bg-white shadow-soft">
+        {/* ── Premium Hero Section with animated gradient + 3D effects ── */}
+        <section className="relative w-full max-w-full overflow-hidden hero-gradient-animated px-5 pt-8 pb-20 text-center sm:px-10 sm:pt-16 sm:pb-36">
+          {/* Floating orbs */}
+          <div className="orb w-[300px] h-[300px] bg-[#0d9e4f] top-[-50px] right-[-100px] sm:w-[500px] sm:h-[500px]" style={{ animationDelay: "0s" }} />
+          <div className="orb w-[200px] h-[200px] bg-[#2196f3] bottom-[20px] left-[-80px] sm:w-[400px] sm:h-[400px]" style={{ animationDelay: "-3s" }} />
+          <div className="orb w-[150px] h-[150px] bg-[#0d9e4f] top-[60%] right-[10%] sm:w-[250px] sm:h-[250px]" style={{ animationDelay: "-5s" }} />
+
+          {/* Particles */}
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="particle"
+              style={{
+                left: `${10 + Math.random() * 80}%`,
+                top: `${10 + Math.random() * 80}%`,
+                ["--dx" as string]: `${-30 + Math.random() * 60}px`,
+                ["--dy" as string]: `${-40 + Math.random() * 80}px`,
+                ["--dur" as string]: `${4 + Math.random() * 6}s`,
+                animationDelay: `${-Math.random() * 8}s`,
+              }}
+            />
+          ))}
+
+          <div className="relative z-10 mx-auto max-w-[1440px]">
+            {/* 3D Avatar with glow ring */}
+            <div className="fade-up mx-auto flex h-28 w-28 relative items-center justify-center rounded-full bg-white/10 glass glow-ring shadow-glow-green sm:h-32 sm:w-32">
               <img
                 src={assistantImg}
                 alt="KI-Reiseassistentin"
-                className="h-20 w-20 select-none object-contain"
+                className="h-24 w-24 select-none object-contain drop-shadow-lg sm:h-28 sm:w-28"
               />
-              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-[#16a34a] ring-2 ring-white" />
+              <span className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-[#0d9e4f] ring-3 ring-white/30 shadow-glow-green" />
             </div>
+
+            {/* Hero Title with gradient text */}
             <h1
-              className="mt-6 font-bold leading-tight text-primary"
-              style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)" }}
+              className="fade-up fade-up-delay-1 mt-8 font-bold leading-tight text-white drop-shadow-lg"
+              style={{ fontSize: "clamp(1.6rem, 5vw, 3rem)" }}
             >
-              Hi! Ich bin dein <span className="text-[#16a34a]">KI-Reiseassistent</span> <span aria-hidden>👋</span>
+              Hi! Ich bin dein{" "}
+              <span className="bg-gradient-to-r from-[#0d9e4f] to-[#07c963] bg-clip-text text-transparent">
+                KI-Reiseassistent
+              </span>{" "}
+              <span aria-hidden className="inline-block animate-bounce">👋</span>
             </h1>
             <p
-              className="mx-auto mt-3 max-w-md text-muted-foreground"
-              style={{ fontSize: "clamp(0.875rem, 1.6vw, 1rem)" }}
+              className="fade-up fade-up-delay-2 mx-auto mt-4 max-w-lg text-white/80"
+              style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)" }}
             >
               Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in
               einem Paket.
             </p>
 
-            <div className="mt-8 flex w-full max-w-full justify-center gap-6 pb-2 sm:gap-3 sm:overflow-visible sm:pb-0">
-              <FeatureChip icon={Sparkles} iconColor="text-yellow-500 bg-yellow-500/10" title="Einfach" body="Wenige Fragen" />
-              <FeatureChip icon={ShieldCheck} iconColor="text-pink-500 bg-pink-500/10" title="Persönlich" body="Für dich gemacht" />
-              <FeatureChip icon={Check} iconColor="text-yellow-500 bg-yellow-500/10" title="Top bewertet" body="Echte Bewertungen" />
+            {/* ── 3D Feature Icons ── */}
+            <div className="fade-up fade-up-delay-3 mt-10 flex w-full max-w-full justify-center gap-6 pb-2 sm:gap-4 sm:pb-0">
+              <FeatureChip icon={Sparkles} iconColor="text-yellow-300 bg-yellow-400/20" title="Einfach" body="Wenige Fragen — sofort Ergebnisse" />
+              <FeatureChip icon={ShieldCheck} iconColor="text-pink-300 bg-pink-400/20" title="Persönlich" body="Maßgeschneidert für dich" />
+              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Top bewertet" body="Echte Bewertungen & Ratings" />
             </div>
+
+            {/* ── Animated stats bar ── */}
+            <div className="fade-up fade-up-delay-4 mt-8 flex justify-center gap-6 sm:gap-10">
+              <StatPill icon={Globe} value="120+" label="Reiseziele" />
+              <StatPill icon={Plane} value="50K+" label="Pakete erstellt" />
+              <StatPill icon={MapPin} value="4.9★" label="Bewertung" />
+            </div>
+          </div>
+
+          {/* Wave divider */}
+          <div className="wave-divider">
+            <svg viewBox="0 0 1440 100" preserveAspectRatio="none" fill="var(--background)">
+              <path d="M0,40 C360,100 720,0 1080,60 C1260,90 1380,40 1440,50 L1440,100 L0,100 Z" />
+            </svg>
           </div>
         </section>
 
+        {/* ── Chat Panel ── */}
         <section className="relative -mt-8 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
-          <div className="mx-auto max-w-[1100px]">
+          <div className="mx-auto max-w-[1100px] fade-up fade-up-delay-4">
             <ChatPanel onPackagesReady={setPackages} />
           </div>
         </section>
@@ -94,6 +140,20 @@ function Index() {
   );
 }
 
+/* ── Stat pill for hero ── */
+function StatPill({ icon: Icon, value, label }: { icon: typeof Globe; value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 glass rounded-2xl px-4 py-3 sm:flex-row sm:gap-2.5 sm:px-5 sm:py-3">
+      <Icon className="h-4 w-4 text-[#0d9e4f]" />
+      <div className="text-center sm:text-left">
+        <div className="text-sm font-bold text-white sm:text-base">{value}</div>
+        <div className="text-[10px] text-white/60 sm:text-xs">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Feature Chip: icons on mobile, glass cards on desktop ── */
 function FeatureChip({
   icon: Icon,
   iconColor,
@@ -112,39 +172,37 @@ function FeatureChip({
       {/* ── Mobile: compact icon circle ── */}
       <button
         onClick={() => setOpen(!open)}
-        className={`flex sm:hidden flex-col items-center gap-1.5 transition-all duration-300 ${open ? "scale-105" : ""}`}
+        className={`flex sm:hidden flex-col items-center gap-2 transition-all duration-300 ${open ? "scale-105" : ""}`}
       >
         <div
-          className={`flex h-14 w-14 items-center justify-center rounded-full shadow-soft border border-border transition-all duration-300 ${
-            open ? "ring-2 ring-primary/40 scale-110" : ""
-          } ${iconColor || "bg-primary/10 text-primary"}`}
+          className={`flex h-16 w-16 items-center justify-center rounded-full glass shadow-lg transition-all duration-300 ${
+            open ? "ring-2 ring-[#0d9e4f]/60 scale-110 shadow-glow-green" : ""
+          }`}
         >
-          <Icon className="h-6 w-6" />
+          <Icon className={`h-7 w-7 ${iconColor?.split(" ")[0] || "text-white"}`} />
         </div>
-        <span className="text-[11px] font-semibold text-foreground">{title}</span>
+        <span className="text-[11px] font-semibold text-white/90">{title}</span>
       </button>
 
-      {/* ── Mobile: expanded detail card ── */}
+      {/* ── Mobile: expanded detail modal ── */}
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm sm:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md sm:hidden animate-in fade-in duration-200"
           onClick={() => setOpen(false)}
         >
           <div
-            className="mx-6 w-full max-w-xs rounded-3xl border border-border bg-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
+            className="mx-6 w-full max-w-xs rounded-3xl glass-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-3 text-center">
-              <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full ${iconColor || "bg-primary/10 text-primary"}`}
-              >
-                <Icon className="h-8 w-8" />
+              <div className={`flex h-18 w-18 items-center justify-center rounded-full ${iconColor || "bg-primary/10 text-primary"}`}>
+                <Icon className="h-9 w-9" />
               </div>
               <div className="text-lg font-bold text-foreground">{title}</div>
               <div className="text-sm text-muted-foreground leading-relaxed">{body}</div>
               <button
                 onClick={() => setOpen(false)}
-                className="mt-2 rounded-full bg-primary/10 px-5 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                className="mt-2 rounded-full bg-[#0d9e4f]/10 px-5 py-2 text-xs font-semibold text-[#0d9e4f] transition hover:bg-[#0d9e4f]/20"
               >
                 Schließen
               </button>
@@ -153,16 +211,14 @@ function FeatureChip({
         </div>
       )}
 
-      {/* ── Desktop: original card ── */}
-      <div className="hidden sm:flex w-full min-w-[160px] max-w-full shrink-0 items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:w-auto">
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconColor || "bg-primary/10 text-primary"}`}
-        >
-          <Icon className="h-4 w-4" />
+      {/* ── Desktop: glass card with 3D tilt ── */}
+      <div className="hidden sm:flex w-auto min-w-[200px] items-center gap-3 rounded-2xl glass px-5 py-4 card-3d shimmer">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconColor || "bg-white/10 text-white"}`}>
+          <Icon className="h-5 w-5" />
         </div>
         <div className="text-left">
-          <div className="text-sm font-semibold text-foreground">{title}</div>
-          <div className="text-xs text-muted-foreground">{body}</div>
+          <div className="text-sm font-semibold text-white">{title}</div>
+          <div className="text-xs text-white/60">{body}</div>
         </div>
       </div>
     </>
@@ -174,14 +230,21 @@ function SiteHeader() {
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a2e4a]/90 backdrop-blur-lg">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
         <Link to="/" className="flex items-center">
           <img src={logo} alt="Weltweiturlaub.de" className="h-10 w-auto" />
         </Link>
         <div className="flex items-center gap-3">
-          <Link to="/login" className="text-sm font-semibold text-primary hover:text-primary/80 flex items-center gap-1.5"><LogOut className="w-4 h-4 rotate-180" /> Login</Link>
-          <Link to="/register" className="text-sm font-semibold text-white bg-[#16a34a] hover:bg-green-700 px-4 py-2 rounded-full flex items-center gap-1.5"><UserIcon className="w-4 h-4" /> Register</Link>
+          <Link to="/login" className="text-sm font-semibold text-white/80 hover:text-white flex items-center gap-1.5 transition">
+            <LogOut className="w-4 h-4 rotate-180" /> Login
+          </Link>
+          <Link
+            to="/register"
+            className="text-sm font-semibold text-white bg-[#0d9e4f] hover:bg-[#0bb858] px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-glow-green transition-all hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <UserIcon className="w-4 h-4" /> Register
+          </Link>
         </div>
       </div>
     </header>
@@ -190,7 +253,12 @@ function SiteHeader() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
+    <footer className="border-t border-border bg-[#1a2e4a] py-8 text-center text-xs text-white/50">
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="h-px w-8 bg-[#0d9e4f]/30" />
+        <Globe className="h-4 w-4 text-[#0d9e4f]/60" />
+        <div className="h-px w-8 bg-[#0d9e4f]/30" />
+      </div>
       Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Agents
     </footer>
   );
