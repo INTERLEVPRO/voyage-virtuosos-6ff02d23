@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-/* ── Travel emoji set ── */
+/* ── Elegant & abstract travel/premium icons ── */
 const TRAVEL_ICONS = [
-  "✈️", "🌍", "🏝️", "🧳", "🗺️", "⛵", "🏔️", "🌴",
-  "🎒", "🚀", "🏖️", "🧭", "🌅", "🐚", "☀️", "🦩",
+  "✧", "✦", "✨", "✈", "☁", "☼", "⋆", "∘",
+  "🪩", "⭐", "💫", "💎", "✈️", "🤍", "🪶"
 ];
 
 interface FloatingIcon {
@@ -22,11 +22,11 @@ function generateIcons(count: number): FloatingIcon[] {
     id: i,
     emoji: TRAVEL_ICONS[Math.floor(Math.random() * TRAVEL_ICONS.length)],
     left: Math.random() * 100,
-    size: 1 + Math.random() * 1.8,
-    duration: 18 + Math.random() * 30,
-    delay: -(Math.random() * 40),            // negative = already mid-animation
-    opacity: 0.08 + Math.random() * 0.12,    // very subtle
-    drift: 30 + Math.random() * 60,
+    size: 0.5 + Math.random() * 0.8, // Much smaller sizes for subtlety
+    duration: 20 + Math.random() * 40, // Slower, more elegant animation
+    delay: -(Math.random() * 40),
+    opacity: 0.1 + Math.random() * 0.2, // Slightly more visible since they are smaller
+    drift: 20 + Math.random() * 40, // Less drastic horizontal drift
   }));
 }
 
@@ -51,9 +51,9 @@ export function FloatingIcons({ count = 22 }: { count?: number }) {
           style={{
             left: `${icon.left}%`,
             fontSize: `${icon.size}rem`,
-            opacity: icon.opacity,
             animationDuration: `${icon.duration}s`,
             animationDelay: `${icon.delay}s`,
+            ["--base-opacity" as string]: icon.opacity,
             ["--drift" as string]: `${icon.drift}px`,
           }}
         >

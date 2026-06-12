@@ -236,11 +236,11 @@
 .hero-gradient-animated {
   background: linear-gradient(
     -45deg,
-    #ffffff,
-    #f0f6fc,
-    #e6f7ef,
-    #ffffff,
-    #e3f2fd
+    #1a2e4a,
+    #1e3a5f,
+    #0d4a3a,
+    #1a2e4a,
+    #243b5c
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
@@ -417,24 +417,33 @@
   display: none !important;
 }
 
-/* ── Floating travel-icon animation ── */
+/* ── Floating elegant abstract icon animation ── */
 @keyframes floatUp {
   0% {
-    transform: translateY(110vh) translateX(0) rotate(0deg);
+    transform: translateY(110vh) translateX(0) rotate(-15deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: var(--base-opacity, 0.4);
   }
   50% {
-    transform: translateY(50vh) translateX(var(--drift, 40px)) rotate(180deg);
+    transform: translateY(50vh) translateX(var(--drift, 40px)) rotate(15deg);
+    opacity: calc(var(--base-opacity, 0.4) * 0.5); /* pulse/twinkle */
+  }
+  80% {
+    opacity: var(--base-opacity, 0.4);
   }
   100% {
-    transform: translateY(-10vh) translateX(0) rotate(360deg);
+    transform: translateY(-10vh) translateX(0) rotate(-15deg);
+    opacity: 0;
   }
 }
 
 .floating-icon {
   animation-name: floatUp;
-  animation-timing-function: linear;
+  animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 /* ── Particle dots for hero ── */
