@@ -417,33 +417,24 @@
   display: none !important;
 }
 
-/* ── Floating elegant abstract icon animation ── */
+/* ── Floating travel-icon animation ── */
 @keyframes floatUp {
   0% {
-    transform: translateY(110vh) translateX(0) rotate(-15deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: var(--base-opacity, 0.4);
+    transform: translateY(110vh) translateX(0) rotate(0deg);
   }
   50% {
-    transform: translateY(50vh) translateX(var(--drift, 40px)) rotate(15deg);
-    opacity: calc(var(--base-opacity, 0.4) * 0.5); /* pulse/twinkle */
-  }
-  80% {
-    opacity: var(--base-opacity, 0.4);
+    transform: translateY(50vh) translateX(var(--drift, 40px)) rotate(180deg);
   }
   100% {
-    transform: translateY(-10vh) translateX(0) rotate(-15deg);
-    opacity: 0;
+    transform: translateY(-10vh) translateX(0) rotate(360deg);
   }
 }
 
 .floating-icon {
   animation-name: floatUp;
-  animation-timing-function: ease-in-out;
+  animation-timing-function: linear;
   animation-iteration-count: infinite;
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 /* ── Particle dots for hero ── */
