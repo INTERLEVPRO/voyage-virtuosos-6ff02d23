@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { Plane, Map, Compass, Globe, Luggage, Sun, Umbrella, Camera, Palmtree, MapPin } from "lucide-react";
 
-/* ── Premium outline travel icons ── */
-const ICONS = [Plane, Map, Compass, Globe, Luggage, Sun, Umbrella, Camera, Palmtree, MapPin];
+/* ── Travel emoji set ── */
+const TRAVEL_ICONS = [
+  "✈️", "🌍", "🏝️", "🧳", "🗺️", "⛵", "🏔️", "🌴",
+  "🎒", "🚀", "🏖️", "🧭", "🌅", "🐚", "☀️", "🦩",
+];
 
 interface FloatingIcon {
   id: number;
-  IconComponent: React.ElementType;
+  emoji: string;
   left: number;       // % from left
-  size: number;       // px
+  size: number;       // rem
   duration: number;   // seconds
   delay: number;      // seconds
   opacity: number;
@@ -18,17 +20,17 @@ interface FloatingIcon {
 function generateIcons(count: number): FloatingIcon[] {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    IconComponent: ICONS[Math.floor(Math.random() * ICONS.length)],
+    emoji: TRAVEL_ICONS[Math.floor(Math.random() * TRAVEL_ICONS.length)],
     left: Math.random() * 100,
-    size: 24 + Math.random() * 40,
+    size: 1 + Math.random() * 1.8,
     duration: 18 + Math.random() * 30,
-    delay: -(Math.random() * 40),
-    opacity: 0.05 + Math.random() * 0.1,    // very subtle glass-like
+    delay: -(Math.random() * 40),            // negative = already mid-animation
+    opacity: 0.08 + Math.random() * 0.12,    // very subtle
     drift: 30 + Math.random() * 60,
   }));
 }
 
-export function FloatingIcons({ count = 20 }: { count?: number }) {
+export function FloatingIcons({ count = 22 }: { count?: number }) {
   const [icons, setIcons] = useState<FloatingIcon[]>([]);
 
   useEffect(() => {
@@ -43,19 +45,20 @@ export function FloatingIcons({ count = 20 }: { count?: number }) {
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
     >
       {icons.map((icon) => (
-        <div
+        <span
           key={icon.id}
-          className="floating-icon absolute block select-none text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+          className="floating-icon absolute block select-none"
           style={{
             left: `${icon.left}%`,
+            fontSize: `${icon.size}rem`,
             opacity: icon.opacity,
             animationDuration: `${icon.duration}s`,
             animationDelay: `${icon.delay}s`,
             ["--drift" as string]: `${icon.drift}px`,
           }}
         >
-          <icon.IconComponent size={icon.size} strokeWidth={1.5} />
-        </div>
+          {icon.emoji}
+        </span>
       ))}
     </div>
   );

@@ -75,14 +75,14 @@ function Index() {
           ))}
 
           <div className="relative z-10 mx-auto max-w-[1440px]">
-            {/* Original Avatar style */}
-            <div className="fade-up mx-auto flex h-24 w-24 relative items-center justify-center rounded-full bg-white shadow-soft sm:h-28 sm:w-28">
+            {/* 3D Avatar with glow ring */}
+            <div className="fade-up mx-auto flex h-28 w-28 relative items-center justify-center rounded-full bg-white/10 glass glow-ring shadow-glow-green sm:h-32 sm:w-32">
               <img
                 src={assistantImg}
                 alt="KI-Reiseassistentin"
-                className="h-20 w-20 select-none object-contain sm:h-24 sm:w-24"
+                className="h-24 w-24 select-none object-contain drop-shadow-lg sm:h-28 sm:w-28"
               />
-              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-[#16a34a] ring-2 ring-white sm:bottom-2 sm:right-2" />
+              <span className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-[#0d9e4f] ring-3 ring-white/30 shadow-glow-green" />
             </div>
 
             {/* Hero Title with gradient text */}
