@@ -837,12 +837,12 @@ export const Route = createFileRoute("/api/chat")({
           timeframe: !!(extracted.timeframe || dialogPreview.timeframe || extractTravelMonth(userHistory)),
         };
         const missingFields: MissingField[] = [];
-        if (!has.destination && !answered.has("destination")) missingFields.push("destination");
-        if (!has.budget && !answered.has("budget")) missingFields.push("budget");
-        if (!has.duration && !answered.has("duration")) missingFields.push("duration");
-        if (!has.travelers && !answered.has("travelers")) missingFields.push("travelers");
-        if (!has.origin && !answered.has("origin")) missingFields.push("origin");
-        if (!has.timeframe && !answered.has("timeframe")) missingFields.push("timeframe");
+        if (!has.destination) missingFields.push("destination");
+        if (!has.budget) missingFields.push("budget");
+        if (!has.duration) missingFields.push("duration");
+        if (!has.travelers) missingFields.push("travelers");
+        if (!has.origin) missingFields.push("origin");
+        if (!has.timeframe) missingFields.push("timeframe");
 
         // Concierge mode
         if (missingFields.length > 0) {
