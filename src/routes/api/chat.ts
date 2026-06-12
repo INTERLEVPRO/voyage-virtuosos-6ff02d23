@@ -816,15 +816,33 @@ export const Route = createFileRoute("/api/chat")({
 
         // Merge LLM with regex/dialog fallbacks for resilience.
         const regexMissing = getMissingFields(lastUserText, userHistory);
-        const answered = getAnsweredFieldsFromDialog(uiMessages);
+        
 
+        // STRICT: every one of the 6 required fields must have a real value
+        // from LLM extraction, dialog answers, or regex parsing. Otherwise the
+        // concierge keeps asking — no package creation until everything is set.
+        const dialogPreview = getDialogAnswers(uiMessages);
+        const has = {
+          destination: !!(extracted.destination || dialogPreview.destination || (!regexMissing.includes("destination"))),
+          budget: !!((extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR)
+            || (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
+            || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)),
+          duration: !!(extracted.durationDays
+            || (dialogPreview.duration && parseAnswerDurationDays(dialogPreview.duration))
+            || extractRequestedDurationDays(userHistory)),
+          travelers: !!(extracted.travelers
+            || (dialogPreview.travelers && parseAnswerTravelers(dialogPreview.travelers))
+            || extractTravelers(userHistory)),
+          origin: !!(extracted.originCity || dialogPreview.origin || extractOrigin(userHistory)),
+          timeframe: !!(extracted.timeframe || dialogPreview.timeframe || extractTravelMonth(userHistory)),
+        };
         const missingFields: MissingField[] = [];
-        if (!extracted.destination && regexMissing.includes("destination") && !answered.has("destination")) missingFields.push("destination");
-        if ((extracted.budgetEur ?? 0) < MIN_BUDGET_EUR && regexMissing.includes("budget") && !answered.has("budget")) missingFields.push("budget");
-        if (!extracted.durationDays && regexMissing.includes("duration") && !answered.has("duration")) missingFields.push("duration");
-        if (!extracted.travelers && regexMissing.includes("travelers") && !answered.has("travelers")) missingFields.push("travelers");
-        if (!extracted.originCity && regexMissing.includes("origin") && !answered.has("origin")) missingFields.push("origin");
-        if (!extracted.timeframe && regexMissing.includes("timeframe") && !answered.has("timeframe")) missingFields.push("timeframe");
+        if (!has.destination) missingFields.push("destination");
+        if (!has.budget) missingFields.push("budget");
+        if (!has.duration) missingFields.push("duration");
+        if (!has.travelers) missingFields.push("travelers");
+        if (!has.origin) missingFields.push("origin");
+        if (!has.timeframe) missingFields.push("timeframe");
 
         // Concierge mode
         if (missingFields.length > 0) {
