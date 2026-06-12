@@ -28,7 +28,7 @@ function LoginPage() {
       return;
     }
     toast.success("Willkommen zurück!");
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/" });
   };
 
   const handleGoogle = async () => {
@@ -40,7 +40,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/" });
   };
 
   return (
