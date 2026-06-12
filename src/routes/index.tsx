@@ -52,20 +52,19 @@ function Index() {
       <main className="w-full max-w-full overflow-x-hidden">
         <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-4 pb-12 text-center sm:px-10 sm:pt-10 sm:pb-28">
           <div className="mx-auto max-w-[1440px]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/70 shadow-soft ring-1 ring-primary/10 backdrop-blur-sm sm:h-28 sm:w-28">
+            <div className="mx-auto flex h-24 w-24 relative items-center justify-center rounded-full bg-white shadow-soft">
               <img
                 src={assistantImg}
                 alt="KI-Reiseassistentin"
-                width={160}
-                height={160}
-                className="h-14 w-14 select-none object-contain sm:h-20 sm:w-20"
+                className="h-20 w-20 select-none object-contain"
               />
+              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-[#16a34a] ring-2 ring-white" />
             </div>
             <h1
-              className="mt-4 font-semibold leading-tight text-foreground"
+              className="mt-6 font-bold leading-tight text-primary"
               style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)" }}
             >
-              Hi! Ich bin dein <span className="text-primary">KI-Reiseassistent</span> <span aria-hidden>👋</span>
+              Hi! Ich bin dein <span className="text-[#16a34a]">KI-Reiseassistent</span> <span aria-hidden>👋</span>
             </h1>
             <p
               className="mx-auto mt-3 max-w-md text-muted-foreground"
@@ -75,10 +74,10 @@ function Index() {
               einem Paket.
             </p>
 
-            <div className="mt-6 flex w-full max-w-full snap-x gap-3 overflow-x-auto pb-2 hide-scrollbar sm:justify-center sm:overflow-visible sm:pb-0">
-              <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
-              <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
-              <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
+            <div className="mt-8 flex w-full max-w-full snap-x gap-3 overflow-x-auto pb-2 hide-scrollbar sm:justify-center sm:overflow-visible sm:pb-0">
+              <FeatureChip icon={Sparkles} iconColor="text-yellow-500 bg-yellow-500/10" title="Einfach" body="Wenige Fragen" />
+              <FeatureChip icon={ShieldCheck} iconColor="text-pink-500 bg-pink-500/10" title="Persönlich" body="Für dich gemacht" />
+              <FeatureChip icon={Check} iconColor="text-yellow-500 bg-yellow-500/10" title="Top bewertet" body="Echte Bewertungen" />
             </div>
           </div>
         </section>
@@ -95,10 +94,10 @@ function Index() {
   );
 }
 
-function FeatureChip({ icon: Icon, title, body }: { icon: typeof Check; title: string; body: string }) {
+function FeatureChip({ icon: Icon, iconColor, title, body }: { icon: typeof Check; iconColor?: string; title: string; body: string }) {
   return (
     <div className="flex w-full min-w-[220px] snap-center max-w-full shrink-0 items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:min-w-[160px] sm:w-auto">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconColor || 'bg-primary/10 text-primary'}`}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="text-left">
@@ -117,47 +116,12 @@ function SiteHeader() {
     <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
         <Link to="/" className="flex items-center">
-          <img src={logo} alt="Weltweiturlaub.de — Reise planen in 2 Minuten" className="h-12 w-auto sm:h-12 md:h-14" />
+          <img src={logo} alt="Weltweiturlaub.de" className="h-10 w-auto" />
         </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Menü öffnen"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            {user ? (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                {initial}
-              </span>
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {user ? (
-              <>
-                <DropdownMenuLabel className="truncate">
-                  {user.user_metadata?.full_name || user.email}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <UserIcon className="mr-2 h-4 w-4" /> Mein Konto
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut()}>
-                  <LogOut className="mr-2 h-4 w-4" /> Abmelden
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link to="/login">Anmelden</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/register">Registrieren</Link>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-3">
+          <Link to="/login" className="text-sm font-semibold text-primary hover:text-primary/80 flex items-center gap-1.5"><LogOut className="w-4 h-4 rotate-180" /> Login</Link>
+          <Link to="/register" className="text-sm font-semibold text-white bg-[#16a34a] hover:bg-green-700 px-4 py-2 rounded-full flex items-center gap-1.5"><UserIcon className="w-4 h-4" /> Register</Link>
+        </div>
       </div>
     </header>
   );

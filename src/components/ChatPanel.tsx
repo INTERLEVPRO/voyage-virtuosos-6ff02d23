@@ -139,34 +139,33 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   return (
     <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[660px]">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-card to-secondary/40 px-4 py-3 sm:px-5 sm:py-4">
+      <div className="flex items-center justify-between gap-3 bg-primary text-white px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 shrink-0">
-            <div className="absolute inset-0 rounded-full bg-primary/10 ring-1 ring-primary/20" />
+            <div className="absolute inset-0 rounded-full bg-white/10 ring-1 ring-white/20" />
             <img
               src={assistantImg}
               alt=""
               aria-hidden
               className="absolute inset-0 m-auto h-8 w-8 object-contain"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
-            </span>
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-foreground sm:text-base">
-              KI-Reiseassistent
+            <div className="truncate text-sm font-semibold">
+              Reise-Assistent
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span>Online · antwortet sofort</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-white/70 sm:text-xs">
+              <span>Erzähl mir von deinem Traumurlaub</span>
             </div>
           </div>
         </div>
-        <span className="hidden items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground sm:inline-flex">
-          5 Agents · live
-        </span>
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+          </span>
+          Online
+        </div>
       </div>
 
       {/* Messages */}
@@ -302,7 +301,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         }}
         className="w-full border-t border-border bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pt-4"
       >
-        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-border bg-background px-2.5 py-2 shadow-soft transition-all focus-within:border-primary/60 focus-within:shadow-card sm:px-3 sm:py-2.5">
+        <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-[#cbd5e1] bg-[#f8fafc] px-2.5 py-1.5 transition-all focus-within:border-primary/60 sm:px-3 sm:py-2">
           <label
             htmlFor="composer-date"
             title="Reisedatum einfügen (z. B. 10. Juni 2026)"
@@ -348,8 +347,8 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               }
             }}
             rows={1}
-            placeholder="Schreib mir deinen Reisewunsch…"
-            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            placeholder="z.B. Mallorca, 7 Tage, 2 Personen, Budget 1.500€..."
+            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent italic px-2 py-2.5 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0"
             style={{ height: 44 }}
             disabled={isLoading}
           />
@@ -357,16 +356,13 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             type="submit"
             disabled={isLoading || !input.trim()}
             aria-label="Senden"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100 sm:h-11 sm:w-11"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-white transition-all hover:bg-primary hover:text-white disabled:opacity-40 disabled:hover:bg-slate-200 sm:h-10 sm:w-10"
           >
-            {isLoading ? <Loader2 className="h-6 w-6 sm:h-5 sm:w-5 animate-spin" /> : <Send className="h-6 w-6 sm:h-5 sm:w-5" />}
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-slate-500" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
-        <p className="mt-2 hidden text-center text-[11px] text-muted-foreground sm:block">
-          z. B. 7 Tage Mallorca, 2 Personen, 1.500 €, Juni, ab Frankfurt
-        </p>
-        <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground sm:text-[11px]">
-          <ShieldCheck className="h-3 w-3 text-primary" />
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground sm:text-[11px]">
+          <ShieldCheck className="h-3 w-3 text-[#16a34a]" />
           Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>

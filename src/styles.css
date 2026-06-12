@@ -60,8 +60,8 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 250);
 
-  /* Primary = brand green (CTA + headings accent) */
-  --primary: oklch(0.6 0.16 150);
+  /* Primary = brand dark blue */
+  --primary: oklch(0.3 0.1 260);
   --primary-foreground: oklch(0.99 0 0);
 
   --secondary: oklch(0.97 0.005 240);
@@ -89,8 +89,8 @@
   --tier-premium: oklch(0.5 0.2 305);
   --tier-premium-soft: oklch(0.95 0.04 305);
 
-  --brand-green: oklch(0.6 0.16 150);
-  --brand-blue: oklch(0.6 0.17 245);
+  --brand-green: oklch(0.65 0.18 150);
+  --brand-blue: oklch(0.3 0.1 260);
 
   --font-display: "Inter", system-ui, -apple-system, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -115,8 +115,8 @@
   --card-foreground: oklch(0.97 0.005 240);
   --popover: oklch(0.2 0.02 250);
   --popover-foreground: oklch(0.97 0.005 240);
-  --primary: oklch(0.65 0.17 150);
-  --primary-foreground: oklch(0.16 0.02 250);
+  --primary: oklch(0.4 0.1 260);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.24 0.02 250);
   --secondary-foreground: oklch(0.97 0.005 240);
   --muted: oklch(0.24 0.02 250);
