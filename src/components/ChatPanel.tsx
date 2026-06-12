@@ -82,6 +82,94 @@ function stripJsonBlock(text: string): string {
   return text.replace(JSON_BLOCK_RE, "").trim();
 }
 
+/* ── Schnellstart: icon circles on mobile, full cards on desktop ── */
+function StarterPrompts({ submit }: { submit: (text: string) => void }) {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <div className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Schnellstart
+      </div>
+
+      {/* ── Mobile: compact icon row ── */}
+      <div className="flex justify-center gap-5 sm:hidden">
+        {STARTER_PROMPTS.map((p, i) => (
+          <button
+            key={p.title}
+            onClick={() => setOpenIdx(i)}
+            className="flex flex-col items-center gap-1.5 transition-all duration-300"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-card border border-border shadow-soft transition-all duration-300 hover:scale-110 text-2xl">
+              {p.emoji}
+            </div>
+            <span className="text-[11px] font-semibold text-foreground">{p.title}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Mobile: detail modal ── */}
+      {openIdx !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm sm:hidden animate-in fade-in duration-200"
+          onClick={() => setOpenIdx(null)}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-3xl border border-border bg-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center gap-3 text-center">
+              <span className="text-5xl">{STARTER_PROMPTS[openIdx].emoji}</span>
+              <div className="text-lg font-bold text-foreground">{STARTER_PROMPTS[openIdx].title}</div>
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                {STARTER_PROMPTS[openIdx].subtitle}
+              </div>
+              <button
+                onClick={() => {
+                  submit(STARTER_PROMPTS[openIdx].prompt);
+                  setOpenIdx(null);
+                }}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90"
+              >
+                <Sparkles className="h-4 w-4" /> Paket erstellen
+              </button>
+              <button
+                onClick={() => setOpenIdx(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition"
+              >
+                Schließen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Desktop: original cards ── */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-2.5">
+        {STARTER_PROMPTS.map((p) => (
+          <button
+            key={p.title}
+            onClick={() => submit(p.prompt)}
+            className="group relative flex w-full flex-col items-start gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card"
+          >
+            <div className="absolute right-0 top-0 h-16 w-16 -translate-y-6 translate-x-6 rounded-full bg-primary/5 transition-transform group-hover:translate-x-4 group-hover:-translate-y-4" />
+            <span className="text-3xl leading-none" aria-hidden>
+              {p.emoji}
+            </span>
+            <span className="text-sm font-semibold text-foreground">{p.title}</span>
+            <span className="text-xs leading-tight text-muted-foreground">
+              {p.subtitle}
+            </span>
+            <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+              <Sparkles className="h-3 w-3" /> Paket erstellen
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: TravelPackage[]) => void }) {
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const { messages, sendMessage, status, error } = useChat({ transport });
@@ -184,32 +272,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               </p>
             </div>
 
-            <div className="space-y-2">
-              <div className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Schnellstart
-              </div>
-              <div className="flex w-full snap-x gap-2.5 overflow-x-auto pb-2 hide-scrollbar sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
-                {STARTER_PROMPTS.map((p) => (
-                  <button
-                    key={p.title}
-                    onClick={() => submit(p.prompt)}
-                    className="group relative flex min-w-[85%] shrink-0 snap-center w-full flex-col items-start gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3.5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card sm:min-w-0 sm:p-4"
-                  >
-                    <div className="absolute right-0 top-0 h-16 w-16 -translate-y-6 translate-x-6 rounded-full bg-primary/5 transition-transform group-hover:translate-x-4 group-hover:-translate-y-4" />
-                    <span className="text-2xl leading-none sm:text-3xl" aria-hidden>
-                      {p.emoji}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">{p.title}</span>
-                    <span className="text-[11px] leading-tight text-muted-foreground sm:text-xs">
-                      {p.subtitle}
-                    </span>
-                    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                      <Sparkles className="h-3 w-3" /> Paket erstellen
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <StarterPrompts submit={submit} />
           </div>
         )}
 
