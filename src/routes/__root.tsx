@@ -80,7 +80,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" translate="no">
       <head><HeadContent /></head>
-      <body className="notranslate">{children}<Scripts /></body>
+      <body className="notranslate bg-neutral-100 dark:bg-neutral-900">{children}<Scripts /></body>
     </html>
   );
 }
@@ -90,7 +90,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        <div className="mx-auto max-w-[480px] min-h-screen bg-background shadow-2xl relative overflow-x-hidden">
+          <Outlet />
+        </div>
         <ClientOnly fallback={null}>
           <Toaster position="top-center" richColors />
         </ClientOnly>
