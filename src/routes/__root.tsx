@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
+import { FloatingIcons } from "@/components/FloatingIcons";
 
 import appCss from "../styles.css?url";
 
@@ -91,6 +92,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen bg-background relative overflow-x-hidden">
+          <FloatingIcons />
           <Outlet />
         </div>
         <ClientOnly fallback={null}>

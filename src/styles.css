@@ -44,8 +44,8 @@
 :root {
   --radius: 0.875rem;
 
-  /* Clean travel-app palette: white surfaces, green CTA, blue accent */
-  --background: oklch(0.99 0.003 240);
+  /* Clean travel-app palette: warm off-white surfaces, green CTA, blue accent */
+  --background: oklch(0.98 0.008 80);
   --foreground: oklch(0.18 0.02 250);
 
   --card: oklch(1 0 0);
@@ -91,12 +91,12 @@
 
   --gradient-hero: linear-gradient(
     180deg,
-    oklch(0.95 0.04 220 / 0) 0%,
-    oklch(0.99 0.003 240 / 0.85) 70%,
-    oklch(0.99 0.003 240) 100%
+    oklch(0.96 0.02 85 / 0) 0%,
+    oklch(0.98 0.008 80 / 0.85) 70%,
+    oklch(0.98 0.008 80) 100%
   );
   --gradient-brand: linear-gradient(135deg, oklch(0.62 0.16 150), oklch(0.55 0.18 165));
-  --gradient-soft-sky: linear-gradient(180deg, oklch(0.97 0.03 220), oklch(0.99 0.005 240));
+  --gradient-soft-sky: linear-gradient(180deg, oklch(0.96 0.015 85), oklch(0.98 0.008 80));
   --shadow-luxe: 0 24px 60px -28px oklch(0.3 0.05 240 / 0.18);
   --shadow-soft: 0 4px 18px -8px oklch(0.3 0.05 240 / 0.12);
   --shadow-card: 0 1px 3px oklch(0.3 0.05 240 / 0.06), 0 8px 24px -12px oklch(0.3 0.05 240 / 0.1);
@@ -253,4 +253,24 @@
 #lovable-badge,
 #lovable-badge-cta {
   display: none !important;
+}
+
+/* ── Floating travel-icon animation ── */
+@keyframes floatUp {
+  0% {
+    transform: translateY(110vh) translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(50vh) translateX(var(--drift, 40px)) rotate(180deg);
+  }
+  100% {
+    transform: translateY(-10vh) translateX(0) rotate(360deg);
+  }
+}
+
+.floating-icon {
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
 }
