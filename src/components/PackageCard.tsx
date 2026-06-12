@@ -101,16 +101,19 @@ export function PackageCard({
           height={448}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        <span className={`absolute left-3 top-3 inline-flex rounded-md px-2.5 py-1 text-xs font-bold tracking-wider shadow-sm sm:hidden ${meta.badge}`}>
+          {meta.label}
+        </span>
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col gap-4 p-5 md:flex-row md:items-stretch">
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5 md:flex-row md:items-stretch">
         {/* Left: tier + price */}
         <div className="flex flex-1 flex-col">
-          <span className={`inline-flex w-fit rounded-md px-2.5 py-1 text-xs font-bold tracking-wider ${meta.badge}`}>
+          <span className={`hidden w-fit rounded-md px-2.5 py-1 text-xs font-bold tracking-wider sm:inline-flex ${meta.badge}`}>
             {meta.label}
           </span>
-          <h3 className="mt-3 text-lg font-bold text-foreground">{pkg.title}</h3>
+          <h3 className="mt-1 text-lg font-bold text-foreground sm:mt-3">{pkg.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{meta.tagline}</p>
 
           <div className="mt-4">

@@ -137,7 +137,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const progress = ((stageIdx + 1) / AGENT_STAGES.length) * 100;
 
   return (
-    <div className="flex h-[78vh] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[660px]">
+    <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card sm:h-[660px]">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-card to-secondary/40 px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center gap-3">
@@ -189,12 +189,12 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               <div className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Schnellstart
               </div>
-              <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <div className="flex w-full snap-x gap-2.5 overflow-x-auto pb-2 hide-scrollbar sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
                 {STARTER_PROMPTS.map((p) => (
                   <button
                     key={p.title}
                     onClick={() => submit(p.prompt)}
-                    className="group relative flex w-full flex-col items-start gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3.5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card sm:p-4"
+                    className="group relative flex min-w-[85%] shrink-0 snap-center w-full flex-col items-start gap-1.5 overflow-hidden rounded-2xl border border-border bg-card p-3.5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card sm:min-w-0 sm:p-4"
                   >
                     <div className="absolute right-0 top-0 h-16 w-16 -translate-y-6 translate-x-6 rounded-full bg-primary/5 transition-transform group-hover:translate-x-4 group-hover:-translate-y-4" />
                     <span className="text-2xl leading-none sm:text-3xl" aria-hidden>
@@ -306,9 +306,9 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
           <label
             htmlFor="composer-date"
             title="Reisedatum einfügen (z. B. 10. Juni 2026)"
-            className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary sm:h-11 sm:w-11"
+            className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary sm:h-11 sm:w-11"
           >
-            <CalendarDays className="h-5 w-5" />
+            <CalendarDays className="h-6 w-6 sm:h-5 sm:w-5" />
             <input
               id="composer-date"
               type="date"
@@ -357,9 +357,9 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             type="submit"
             disabled={isLoading || !input.trim()}
             aria-label="Senden"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100 sm:h-11 sm:w-11"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-all hover:scale-105 disabled:opacity-40 disabled:hover:scale-100 sm:h-11 sm:w-11"
           >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            {isLoading ? <Loader2 className="h-6 w-6 sm:h-5 sm:w-5 animate-spin" /> : <Send className="h-6 w-6 sm:h-5 sm:w-5" />}
           </button>
         </div>
         <p className="mt-2 hidden text-center text-[11px] text-muted-foreground sm:block">

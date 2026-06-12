@@ -50,7 +50,7 @@ function Index() {
       <SiteHeader />
 
       <main className="w-full max-w-full overflow-x-hidden">
-        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-6 pb-20 text-center sm:px-10 sm:pt-10 sm:pb-28">
+        <section className="relative w-full max-w-full overflow-hidden bg-gradient-soft-sky px-5 pt-4 pb-12 text-center sm:px-10 sm:pt-10 sm:pb-28">
           <div className="mx-auto max-w-[1440px]">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/70 shadow-soft ring-1 ring-primary/10 backdrop-blur-sm sm:h-28 sm:w-28">
               <img
@@ -75,7 +75,7 @@ function Index() {
               einem Paket.
             </p>
 
-            <div className="mt-6 grid w-full max-w-full grid-cols-1 gap-3 sm:flex sm:justify-center sm:gap-3">
+            <div className="mt-6 flex w-full max-w-full snap-x gap-3 overflow-x-auto pb-2 hide-scrollbar sm:justify-center sm:overflow-visible sm:pb-0">
               <FeatureChip icon={Check} title="Einfach" body="Wenige Fragen" />
               <FeatureChip icon={Sparkles} title="Persönlich" body="Für dich gemacht" />
               <FeatureChip icon={ShieldCheck} title="Top bewertet" body="Echte Bewertungen" />
@@ -83,7 +83,7 @@ function Index() {
           </div>
         </section>
 
-        <section className="relative -mt-16 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
+        <section className="relative -mt-8 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
           <div className="mx-auto max-w-[1100px]">
             <ChatPanel onPackagesReady={setPackages} />
           </div>
@@ -97,7 +97,7 @@ function Index() {
 
 function FeatureChip({ icon: Icon, title, body }: { icon: typeof Check; title: string; body: string }) {
   return (
-    <div className="flex w-full max-w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:min-w-[160px] sm:w-auto">
+    <div className="flex w-full min-w-[220px] snap-center max-w-full shrink-0 items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft sm:min-w-[160px] sm:w-auto">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Icon className="h-4 w-4" />
       </div>
