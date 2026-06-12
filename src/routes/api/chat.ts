@@ -4,8 +4,11 @@ import {
   generateText,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  Output,
   type UIMessage,
+  type LanguageModel,
 } from "ai";
+import { z } from "zod";
 import { createOpenAIProvider } from "@/lib/openai-provider";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
