@@ -128,7 +128,7 @@ function Index() {
         </section>
 
         {/* ── Chat Panel ── */}
-        <section className="relative -mt-8 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
+        <section className="relative -mt-16 z-10 w-full max-w-full px-5 pb-10 sm:-mt-20 sm:px-10">
           <div className="mx-auto max-w-[1100px] fade-up fade-up-delay-4">
             <ChatPanel onPackagesReady={setPackages} />
           </div>
