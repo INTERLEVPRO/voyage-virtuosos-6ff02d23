@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Sparkles,
@@ -731,27 +732,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
               € {currentPkg.price.toLocaleString("de-DE")}
             </div>
           </div>
-          {currentPkg.bookingLinks?.hotel ? (
-            <a
-              href={currentPkg.bookingLinks.hotel}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                void trackClick(currentPkg.id, "hotel", currentPkg.bookingLinks!.hotel!);
-              }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
-            >
-              <Hotel className="h-4 w-4" /> Hotel buchen
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setActiveTab("book")}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
-            >
-              <ShoppingBag className="h-4 w-4" /> Jetzt buchen
-            </button>
-          )}
+          <Link
+            to="/buchen"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+          >
+            <ShoppingBag className="h-4 w-4" /> Booking
+          </Link>
         </div>
       </div>
     </section>
