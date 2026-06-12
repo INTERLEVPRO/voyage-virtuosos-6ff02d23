@@ -230,45 +230,38 @@ function SiteHeader() {
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a2e4a]/90 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4">
-        {/* Logo with lofi white glow effect - no background box */}
+    <header className="sticky top-0 z-20 bg-white shadow-soft border-b border-[#1a2e4a]/8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3">
+        {/* Logo - original colours, visible on white header */}
         <Link to="/" className="flex items-center shrink-0">
-          <img
-            src={logo}
-            alt="Weltweiturlaub.de"
-            className="h-9 w-auto sm:h-11"
-            style={{
-              filter: "brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,0.7)) drop-shadow(0 0 14px rgba(255,255,255,0.3))"
-            }}
-          />
+          <img src={logo} alt="Weltweiturlaub.de" className="h-9 w-auto sm:h-11" />
         </Link>
         <div className="flex items-center gap-2">
-          {/* Mobile: icon-only buttons */}
+          {/* Mobile: icon-only */}
           <Link
             to="/login"
-            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-[#1a2e4a]/8 text-[#1a2e4a] hover:bg-[#1a2e4a]/15 transition"
             title="Login"
           >
             <LogOut className="w-4 h-4 rotate-180" />
           </Link>
           <Link
             to="/register"
-            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-[#0d9e4f] text-white hover:bg-[#0bb858] shadow-glow-green transition"
+            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-[#0d9e4f] text-white hover:bg-[#0bb858] transition shadow-sm"
             title="Register"
           >
             <UserIcon className="w-4 h-4" />
           </Link>
-          {/* Desktop: full text buttons */}
+          {/* Desktop: full text */}
           <Link
             to="/login"
-            className="hidden sm:flex text-sm font-semibold text-white/80 hover:text-white items-center gap-1.5 transition"
+            className="hidden sm:flex text-sm font-semibold text-[#1a2e4a]/80 hover:text-[#1a2e4a] items-center gap-1.5 transition"
           >
             <LogOut className="w-4 h-4 rotate-180" /> Login
           </Link>
           <Link
             to="/register"
-            className="hidden sm:flex text-sm font-semibold text-white bg-[#0d9e4f] hover:bg-[#0bb858] px-5 py-2.5 rounded-full items-center gap-1.5 shadow-glow-green transition-all hover:shadow-lg hover:-translate-y-0.5"
+            className="hidden sm:flex text-sm font-semibold text-white bg-[#0d9e4f] hover:bg-[#0bb858] px-5 py-2.5 rounded-full items-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
             <UserIcon className="w-4 h-4" /> Register
           </Link>
@@ -277,6 +270,7 @@ function SiteHeader() {
     </header>
   );
 }
+
 
 function Footer() {
   return (
