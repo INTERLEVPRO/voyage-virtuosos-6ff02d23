@@ -739,6 +739,53 @@ function placeholderLinks(destination: string) {
   };
 }
 
+const TRIP_FIELDS_SCHEMA = z.object({
+  destination: z.string().nullable().describe("Reiseziel: Stadt, Region oder Land (z. B. 'Sri Lanka', 'Mallorca', 'Lissabon'). null wenn unklar."),
+  budgetEur: z.number().nullable().describe("Gesamtbudget pro Person in EUR. Akzeptiere '1500 EUR', '1.500 €', '1500'. Null wenn fehlt oder < 100."),
+  durationDays: z.number().nullable().describe("Reisedauer in Tagen. '12 Tage'=12, '2 Wochen'=14, '1 Monat'=30. Null wenn fehlt."),
+  travelers: z.number().nullable().describe("Anzahl reisender Personen. 'Ich bin nur'/'allein'/'solo'/'1 Person'=1, 'Paar'/'zu zweit'=2, 'Familie'=4. Null wenn fehlt."),
+  originCity: z.string().nullable().describe("Abflugort/Stadt/Flughafen. 'aus Frankfurt'/'ab München'/'von Berlin'/'aus Sri Lanka' → Stadtname. Null wenn fehlt."),
+  timeframe: z.string().nullable().describe("Reisezeitraum: Monat ('Juni'), Saison ('Sommer'), Datum, 'flexibel'. Null wenn fehlt."),
+});
+
+type ExtractedTripFields = z.infer<typeof TRIP_FIELDS_SCHEMA>;
+
+async function extractTripFieldsLLM(
+  model: LanguageModel,
+  uiMessages: UIMessage[],
+): Promise<ExtractedTripFields> {
+  const transcript = uiMessages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => {
+      const t = m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+      return `${m.role === "user" ? "USER" : "ASSISTANT"}: ${t.trim()}`;
+    })
+    .filter((l) => l.length > 6)
+    .join("\n");
+
+  try {
+    const { experimental_output } = await generateText({
+      model,
+      experimental_output: Output.object({ schema: TRIP_FIELDS_SCHEMA }),
+      system: `Du extrahierst Reisedaten aus einem Chat zwischen einem Reiseberater und einem Nutzer.
+Berücksichtige den GESAMTEN Verlauf — Antworten können kurz und über mehrere Nachrichten verteilt sein (z. B. "Indien", "1500 EUR", "12 Tage", "Ich bin nur", "aus Sri Lanka").
+Verstehe natürliche Sprache, nicht nur strikte Formate. Wenn ein Feld nicht eindeutig genannt wurde, gib null zurück.
+Antworte ausschließlich gemäß Schema.`,
+      prompt: `Chatverlauf:\n${transcript}\n\nExtrahiere die Reisedaten.`,
+    });
+    return experimental_output;
+  } catch {
+    return {
+      destination: null,
+      budgetEur: null,
+      durationDays: null,
+      travelers: null,
+      originCity: null,
+      timeframe: null,
+    };
+  }
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -763,18 +810,27 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
-        const missingRaw = getMissingFields(lastUserText, userHistory);
+
+        // LLM-based extraction — robust to natural language across the dialog.
+        const extracted = await extractTripFieldsLLM(model, uiMessages);
+
+        // Merge LLM with regex/dialog fallbacks for resilience.
+        const regexMissing = getMissingFields(lastUserText, userHistory);
         const answered = getAnsweredFieldsFromDialog(uiMessages);
-        const missingFields = missingRaw.filter((f) => !answered.has(f));
+
+        const missingFields: MissingField[] = [];
+        if (!extracted.destination && regexMissing.includes("destination") && !answered.has("destination")) missingFields.push("destination");
+        if ((extracted.budgetEur ?? 0) < MIN_BUDGET_EUR && regexMissing.includes("budget") && !answered.has("budget")) missingFields.push("budget");
+        if (!extracted.durationDays && regexMissing.includes("duration") && !answered.has("duration")) missingFields.push("duration");
+        if (!extracted.travelers && regexMissing.includes("travelers") && !answered.has("travelers")) missingFields.push("travelers");
+        if (!extracted.originCity && regexMissing.includes("origin") && !answered.has("origin")) missingFields.push("origin");
+        if (!extracted.timeframe && regexMissing.includes("timeframe") && !answered.has("timeframe")) missingFields.push("timeframe");
 
         // Concierge mode
         if (missingFields.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           let reply = buildConciergeReply(missingFields, userMessageCount);
-          // Special case: budget is missing but user already mentioned an
-          // unrealistically low amount (e.g. "50 €"). Prepend a clear nudge
-          // instead of silently repeating the generic budget question.
-          if (missingFields.includes("budget") && mentionedBudget(userHistory)) {
+          if (missingFields.includes("budget") && (mentionedBudget(userHistory) || (extracted.budgetEur !== null && extracted.budgetEur < MIN_BUDGET_EUR))) {
             reply = `Hmm, dein angegebenes Budget scheint **zu niedrig** für eine echte Reise (Flug + Hotel + Aktivitäten). Bitte nenne mir dein **ungefähres Gesamtbudget pro Person in Euro** — mindestens **${MIN_BUDGET_EUR} €** (z. B. 800 €, 1.500 €, 3.000 €).\n\n${reply}`;
           }
           return createTextStreamResponse(reply, uiMessages);
@@ -785,23 +841,24 @@ export const Route = createFileRoute("/api/chat")({
 
         const dialog = getDialogAnswers(uiMessages);
 
-        const dialogDuration = dialog.duration ? parseAnswerDurationDays(dialog.duration) : null;
-        const requestedDurationDays = dialogDuration ?? extractRequestedDurationDays(userHistory);
+        const requestedDurationDays = extracted.durationDays
+          ?? (dialog.duration ? parseAnswerDurationDays(dialog.duration) : null)
+          ?? extractRequestedDurationDays(userHistory);
 
-        const destination = dialog.destination
-          ? cleanPlace(dialog.destination)
-          : extractDestination(userHistory);
-        const budget = (() => {
-          if (dialog.budget) {
-            const v = parseBudgetValue(dialog.budget);
-            if (v !== null) return v;
-          }
-          return parseBudgetValue(userHistory);
-        })();
+        const destination = extracted.destination
+          ? cleanPlace(extracted.destination)
+          : (dialog.destination ? cleanPlace(dialog.destination) : extractDestination(userHistory));
 
-        // Safety net: if no realistic budget could be parsed (e.g. user typed
-        // "50 €" or omitted budget), DO NOT fall back to a hardcoded amount.
-        // Ask the user to clarify with a realistic minimum instead.
+        const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
+          ? extracted.budgetEur
+          : (() => {
+              if (dialog.budget) {
+                const v = parseBudgetValue(dialog.budget);
+                if (v !== null) return v;
+              }
+              return parseBudgetValue(userHistory);
+            })();
+
         if (budget === null) {
           const tooLow = mentionedBudget(userHistory) || (dialog.budget ? mentionedBudget(dialog.budget) : false);
           const msg = tooLow
@@ -810,16 +867,18 @@ export const Route = createFileRoute("/api/chat")({
           return createTextStreamResponse(msg, uiMessages);
         }
 
-
         const interests = extractInterests(userHistory);
-        const origin = dialog.origin
-          ? cleanPlace(dialog.origin)
-          : extractOrigin(userHistory);
-        const dialogTravelers = dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null;
-        const travelers = dialogTravelers ?? extractTravelers(userHistory);
-        const travelMonth = dialog.timeframe
-          ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory))
-          : extractTravelMonth(userHistory);
+        const origin = extracted.originCity
+          ? cleanPlace(extracted.originCity)
+          : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
+        const travelers = extracted.travelers
+          ?? (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null)
+          ?? extractTravelers(userHistory);
+        const travelMonth = extracted.timeframe
+          ? (extractTravelMonth(extracted.timeframe) ?? extracted.timeframe.toLowerCase())
+          : (dialog.timeframe ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory)) : extractTravelMonth(userHistory));
+
+
 
 
         let researchText = "";
