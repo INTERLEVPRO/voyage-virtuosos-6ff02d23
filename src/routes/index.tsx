@@ -87,17 +87,17 @@ function Index() {
 
             {/* Hero Title with gradient text */}
             <h1
-              className="fade-up fade-up-delay-1 mt-8 font-bold leading-tight text-white drop-shadow-lg"
+              className="fade-up fade-up-delay-1 mt-8 font-bold leading-tight text-[#1a2e4a]"
               style={{ fontSize: "clamp(1.6rem, 5vw, 3rem)" }}
             >
               Hi! Ich bin dein{" "}
-              <span className="bg-gradient-to-r from-[#0d9e4f] to-[#07c963] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#0d9e4f] to-[#07c963] bg-clip-text text-transparent drop-shadow-sm">
                 KI-Reiseassistent
               </span>{" "}
               <span aria-hidden className="inline-block animate-bounce">👋</span>
             </h1>
             <p
-              className="fade-up fade-up-delay-2 mx-auto mt-4 max-w-lg text-white/80"
+              className="fade-up fade-up-delay-2 mx-auto mt-4 max-w-lg text-[#1a2e4a]/80"
               style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)" }}
             >
               Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in
@@ -106,9 +106,9 @@ function Index() {
 
             {/* ── 3D Feature Icons ── */}
             <div className="fade-up fade-up-delay-3 mt-10 flex w-full max-w-full justify-center gap-6 pb-2 sm:gap-4 sm:pb-0">
-              <FeatureChip icon={Sparkles} iconColor="text-yellow-300 bg-yellow-400/20" title="Einfach" body="Wenige Fragen — sofort Ergebnisse" />
-              <FeatureChip icon={ShieldCheck} iconColor="text-pink-300 bg-pink-400/20" title="Persönlich" body="Maßgeschneidert für dich" />
-              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Top bewertet" body="Echte Bewertungen & Ratings" />
+              <FeatureChip icon={Sparkles} iconColor="text-yellow-600 bg-yellow-400/20" title="Einfach" body="Wenige Fragen — sofort Ergebnisse" />
+              <FeatureChip icon={ShieldCheck} iconColor="text-pink-600 bg-pink-400/20" title="Persönlich" body="Maßgeschneidert für dich" />
+              <FeatureChip icon={Check} iconColor="text-emerald-600 bg-emerald-400/20" title="Top bewertet" body="Echte Bewertungen & Ratings" />
             </div>
 
             {/* ── Animated stats bar ── */}
@@ -143,11 +143,11 @@ function Index() {
 /* ── Stat pill for hero ── */
 function StatPill({ icon: Icon, value, label }: { icon: typeof Globe; value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 glass rounded-2xl px-4 py-3 sm:flex-row sm:gap-2.5 sm:px-5 sm:py-3">
+    <div className="flex flex-col items-center gap-1 glass-card shadow-soft rounded-2xl px-4 py-3 sm:flex-row sm:gap-2.5 sm:px-5 sm:py-3">
       <Icon className="h-4 w-4 text-[#0d9e4f]" />
       <div className="text-center sm:text-left">
-        <div className="text-sm font-bold text-white sm:text-base">{value}</div>
-        <div className="text-[10px] text-white/60 sm:text-xs">{label}</div>
+        <div className="text-sm font-bold text-[#1a2e4a] sm:text-base">{value}</div>
+        <div className="text-[10px] text-[#1a2e4a]/60 sm:text-xs">{label}</div>
       </div>
     </div>
   );
@@ -175,13 +175,13 @@ function FeatureChip({
         className={`flex sm:hidden flex-col items-center gap-2 transition-all duration-300 ${open ? "scale-105" : ""}`}
       >
         <div
-          className={`flex h-16 w-16 items-center justify-center rounded-full glass shadow-lg transition-all duration-300 ${
+          className={`flex h-16 w-16 items-center justify-center rounded-full glass-card shadow-soft transition-all duration-300 ${
             open ? "ring-2 ring-[#0d9e4f]/60 scale-110 shadow-glow-green" : ""
           }`}
         >
-          <Icon className={`h-7 w-7 ${iconColor?.split(" ")[0] || "text-white"}`} />
+          <Icon className={`h-7 w-7 ${iconColor?.split(" ")[0] || "text-[#1a2e4a]"}`} />
         </div>
-        <span className="text-[11px] font-semibold text-white/90">{title}</span>
+        <span className="text-[11px] font-semibold text-[#1a2e4a]/90">{title}</span>
       </button>
 
       {/* ── Mobile: expanded detail modal ── */}
@@ -212,13 +212,13 @@ function FeatureChip({
       )}
 
       {/* ── Desktop: glass card with 3D tilt ── */}
-      <div className="hidden sm:flex w-auto min-w-[200px] items-center gap-3 rounded-2xl glass px-5 py-4 card-3d shimmer">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconColor || "bg-white/10 text-white"}`}>
+      <div className="hidden sm:flex w-auto min-w-[200px] items-center gap-3 rounded-2xl glass-card shadow-soft px-5 py-4 card-3d shimmer">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconColor || "bg-[#1a2e4a]/5 text-[#1a2e4a]"}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="text-left">
-          <div className="text-sm font-semibold text-white">{title}</div>
-          <div className="text-xs text-white/60">{body}</div>
+          <div className="text-sm font-semibold text-[#1a2e4a]">{title}</div>
+          <div className="text-xs text-[#1a2e4a]/60">{body}</div>
         </div>
       </div>
     </>
@@ -253,7 +253,7 @@ function SiteHeader() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border bg-[#1a2e4a] py-8 text-center text-xs text-white/50">
+    <footer className="border-t border-border bg-[#1a2e4a] py-8 text-center text-xs text-white/50 relative z-10">
       <div className="flex items-center justify-center gap-2 mb-2">
         <div className="h-px w-8 bg-[#0d9e4f]/30" />
         <Globe className="h-4 w-4 text-[#0d9e4f]/60" />

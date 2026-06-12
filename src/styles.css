@@ -236,11 +236,11 @@
 .hero-gradient-animated {
   background: linear-gradient(
     -45deg,
-    #1a2e4a,
-    #1e3a5f,
-    #0d4a3a,
-    #1a2e4a,
-    #243b5c
+    #ffffff,
+    #f0f6fc,
+    #e6f7ef,
+    #ffffff,
+    #e3f2fd
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
