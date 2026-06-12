@@ -232,11 +232,16 @@ function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a2e4a]/90 backdrop-blur-lg">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4">
-        {/* Logo with white background pill so it's clearly visible on dark navy */}
+        {/* Logo with lofi white glow effect - no background box */}
         <Link to="/" className="flex items-center shrink-0">
-          <div className="bg-white rounded-xl px-2 py-1 shadow-soft">
-            <img src={logo} alt="Weltweiturlaub.de" className="h-8 w-auto sm:h-10" />
-          </div>
+          <img
+            src={logo}
+            alt="Weltweiturlaub.de"
+            className="h-9 w-auto sm:h-11"
+            style={{
+              filter: "brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,0.7)) drop-shadow(0 0 14px rgba(255,255,255,0.3))"
+            }}
+          />
         </Link>
         <div className="flex items-center gap-2">
           {/* Mobile: icon-only buttons */}
