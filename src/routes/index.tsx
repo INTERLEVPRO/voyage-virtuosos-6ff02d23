@@ -230,17 +230,17 @@ function SiteHeader() {
   const initial = (user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 bg-white shadow-soft border-b border-[#1a2e4a]/8">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3">
-        {/* Logo - original colours, visible on white header */}
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a2e4a]/95 backdrop-blur-lg">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-6 sm:py-3">
+        {/* Logo — bigger so it's clearly visible on dark navy */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={logo} alt="Weltweiturlaub.de" className="h-9 w-auto sm:h-11" />
+          <img src={logo} alt="Weltweiturlaub.de" className="h-12 w-auto sm:h-14" />
         </Link>
         <div className="flex items-center gap-2">
           {/* Mobile: icon-only */}
           <Link
             to="/login"
-            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-[#1a2e4a]/8 text-[#1a2e4a] hover:bg-[#1a2e4a]/15 transition"
+            className="flex sm:hidden h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
             title="Login"
           >
             <LogOut className="w-4 h-4 rotate-180" />
@@ -255,7 +255,7 @@ function SiteHeader() {
           {/* Desktop: full text */}
           <Link
             to="/login"
-            className="hidden sm:flex text-sm font-semibold text-[#1a2e4a]/80 hover:text-[#1a2e4a] items-center gap-1.5 transition"
+            className="hidden sm:flex text-sm font-semibold text-white/80 hover:text-white items-center gap-1.5 transition"
           >
             <LogOut className="w-4 h-4 rotate-180" /> Login
           </Link>
