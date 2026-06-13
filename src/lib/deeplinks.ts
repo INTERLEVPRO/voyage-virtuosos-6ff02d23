@@ -84,19 +84,41 @@ function slug(s: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function normalizeLookupKey(input?: string): string {
+  return (input || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function lookupIata(input: string | undefined, map: Record<string, string>): string | null {
+  const key = normalizeLookupKey(input);
+  if (!key) return null;
+  if (/^[a-z]{3}$/i.test(key)) return key.toUpperCase();
+  const normalizedMap = Object.fromEntries(
+    Object.entries(map).map(([alias, code]) => [normalizeLookupKey(alias), code]),
+  );
+  if (normalizedMap[key]) return normalizedMap[key];
+
+  const words = key.split(/\s+/).filter(Boolean);
+  for (let size = Math.min(3, words.length); size >= 1; size -= 1) {
+    for (let start = 0; start + size <= words.length; start += 1) {
+      const phrase = words.slice(start, start + size).join(" ");
+      if (normalizedMap[phrase]) return normalizedMap[phrase];
+    }
+  }
+
+  return null;
+}
+
 export function lookupOriginIata(city?: string): string | null {
-  if (!city) return null;
-  const key = city.toLowerCase().trim();
-  return ORIGIN_IATA[key] ?? null;
+  return lookupIata(city, ORIGIN_IATA);
 }
 
 export function lookupDestIata(dest?: string): string | null {
-  if (!dest) return null;
-  const key = dest.toLowerCase().trim();
-  if (DEST_IATA[key]) return DEST_IATA[key];
-  // try first word
-  const first = key.split(/[\s,]+/)[0];
-  return DEST_IATA[first] ?? null;
+  return lookupIata(dest, DEST_IATA);
 }
 
 function ddmmyy(d: Date) {
@@ -154,6 +176,19 @@ export function parseStartDate(input?: string): Date | null {
   if (m) {
     const yr = Number(m[3]);
     return new Date(yr < 100 ? 2000 + yr : yr, Number(m[2]) - 1, Number(m[1]));
+  }
+  // DD.MM or DD/MM, including ranges like "15.06 - 22.06".
+  m = s.match(/(\d{1,2})[.\/-](\d{1,2})(?![.\/-]\d)/);
+  if (m) {
+    const day = Number(m[1]);
+    const monthIdx = Number(m[2]);
+    if (monthIdx >= 1 && monthIdx <= 12 && day >= 1 && day <= 31) {
+      const now = new Date();
+      let year = now.getFullYear();
+      const candidate = new Date(year, monthIdx - 1, day);
+      if (candidate < now) year += 1;
+      return new Date(year, monthIdx - 1, day);
+    }
   }
   // "10. Juni 2026" or "10. Juni"
   m = s.match(/(\d{1,2})\.\s*([a-zäöüß]+)(?:\s+(\d{4}))?/i);

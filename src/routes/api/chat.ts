@@ -895,6 +895,7 @@ export const Route = createFileRoute("/api/chat")({
         const travelMonth = extracted.timeframe
           ? (extractTravelMonth(extracted.timeframe) ?? extracted.timeframe.toLowerCase())
           : (dialog.timeframe ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory)) : extractTravelMonth(userHistory));
+        const travelStartDate = extracted.timeframe ?? dialog.timeframe ?? undefined;
 
 
 
@@ -981,7 +982,7 @@ export const Route = createFileRoute("/api/chat")({
           origin,
           travelers,
           travelMonth,
-          travelStartDate: dialog.timeframe ?? undefined,
+          travelStartDate,
           bookingLinks: placeholderLinks(p.destination),
           ratings: ratingsPerPackage[i] ?? [],
         }));
