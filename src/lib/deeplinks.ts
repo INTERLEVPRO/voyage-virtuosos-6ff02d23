@@ -307,18 +307,20 @@ export function buildKlookSearchUrl(opts: {
   if (!keyword) return KLOOK_ACTIVITIES_AFFILIATE_URL;
 
   const params = new URLSearchParams({
+    aid: TRAVELPAYOUTS_TOKEN,
+    keyword: `${keyword} hotel`,
     room_num: "1",
     adult_num: String(Math.max(1, opts.travelers ?? 2)),
     child_num: "0",
-    aid: TRAVELPAYOUTS_TOKEN,
-    keyword,
   });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
+    params.set("start_time", dates[0]);
+    params.set("end_time", dates[1]);
   }
-  return `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
+  return `https://www.klook.com/search/result/?${params.toString()}`;
 }
 
 /** Direct Klook activities search URL with pre-filled fields. */
@@ -346,13 +348,9 @@ export function buildKlookActivitiesUrl(opts: {
 export const buildBookingUrl = buildKlookHotelUrl;
 
 /**
- * Transfer deeplink — opens the in-app Kiwitaxi White Label widget page
- * (`/transfer`) with pickup/dropoff prefilled. The widget itself carries the
- * Travelpayouts partner marker (pap=728432) for commission tracking, so the
- * user can complete the booking + payment directly on Kiwitaxi.
- *
- * If we can't resolve any usable location hint, we fall back to the tracked
- * tpm.li affiliate shortlink so commission is never lost.
+ * Transfer deeplink: use the tracked Kiwitaxi affiliate entry.
+ * The hosted white-label widget can render blank and Kiwitaxi's public search
+ * needs internal place IDs, so the CTA should use the stable external page.
  */
 export function buildTransferUrl(opts?: {
   destination?: string;
@@ -362,27 +360,8 @@ export function buildTransferUrl(opts?: {
   month?: string;
   durationDays?: number;
 }): string {
-  if (!opts) return KIWI_TAXI_AFFILIATE_URL;
-
-  const destClean = cleanDestination(opts.destination);
-  const originClean = cleanDestination(opts.origin);
-  // The widget accepts IATA codes or English/native place names for place_from/place_to.
-  const fromIata = lookupOriginIata(originClean);
-  const destIata = lookupDestIata(destClean);
-  // Pickup = arrival airport (destination IATA preferred).
-  const placeFrom = destIata || destClean;
-  // Dropoff = city / hotel area (destination name).
-  const placeTo = destClean || originClean;
-
-  if (!placeFrom && !placeTo) return KIWI_TAXI_AFFILIATE_URL;
-
-  const params = new URLSearchParams();
-  if (placeFrom) params.set("from", placeFrom);
-  if (placeTo) params.set("to", placeTo);
-  if (opts.travelers) params.set("pax", String(opts.travelers));
-  if (opts.startDate) params.set("date", opts.startDate);
-  // Pass first day of trip as fallback if no startDate.
-  return `/transfer?${params.toString()}`;
+  void opts;
+  return KIWI_TAXI_AFFILIATE_URL;
 }
 
 
