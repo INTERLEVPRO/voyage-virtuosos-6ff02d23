@@ -606,7 +606,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
-                  <Hotel className="h-3 w-3" /> Hotel buchen
+                  <Hotel className="h-5 w-5" /> Hotel buchen
                 </a>
                 <a
                   href={klookActivityUrl(currentPkg.destination, d.title)}
@@ -734,9 +734,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           </div>
           <Link
             to="/buchen"
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 sm:px-6 sm:py-4 text-sm font-semibold text-primary-foreground shadow-soft"
           >
-            <ShoppingBag className="h-4 w-4" /> Booking
+            <ShoppingBag className="h-5 w-5" /> Jetzt bucheng
           </Link>
         </div>
       </div>
