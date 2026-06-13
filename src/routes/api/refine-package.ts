@@ -4,7 +4,6 @@ import { generateText } from "ai";
 import { z } from "zod";
 import { createOpenAIProvider } from "@/lib/openai-provider";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PRICE_THRESHOLD = 30;
 
@@ -171,6 +170,7 @@ export const Route = createFileRoute("/api/refine-package")({
         let savedId: string | undefined = selectedPackage.id;
         if (isUuid(selectedPackage.id)) {
           try {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
             await supabaseAdmin
               .from("packages")
               .update({

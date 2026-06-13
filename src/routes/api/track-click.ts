@@ -1,7 +1,6 @@
 import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const schema = z.object({
   packageId: z.string().min(1).max(64).optional(),
@@ -25,6 +24,7 @@ export const Route = createFileRoute("/api/track-click")({
         const { packageId, provider, url } = parsed.data;
         // Only insert package_id if it looks like a uuid (DB-stored package).
         const isUuid = packageId && /^[0-9a-f-]{36}$/i.test(packageId);
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         await supabaseAdmin.from("affiliate_clicks").insert({
           package_id: isUuid ? packageId : null,
           provider,
