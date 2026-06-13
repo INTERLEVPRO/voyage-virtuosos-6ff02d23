@@ -39,7 +39,6 @@ import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
 import {
-  KIWI_TAXI_AFFILIATE_URL,
   buildAviasalesSearchUrl,
   buildKlookSearchUrl,
   buildKlookActivitiesUrl,
@@ -90,12 +89,24 @@ function openRouteInMaps(destination: string, place?: string) {
   setTimeout(() => finish(), 6500);
 }
 
-function bookingHotelUrl(_destination: string) {
-  return "https://klook.tpm.li/WzC9L2in/";
+function bookingHotelUrl(pkg: TravelPackage) {
+  return buildKlookSearchUrl({
+    destination: pkg.destination,
+    hotel: pkg.hotel,
+    travelers: pkg.travelers,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
+  });
 }
 
-function klookActivityUrl(_destination: string, _query?: string) {
-  return "https://klook.tpm.li/WzC9L2in/";
+function klookActivityUrl(pkg: TravelPackage, query?: string) {
+  return buildKlookActivitiesUrl({
+    destination: query ? `${query} ${pkg.destination}` : pkg.destination,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
+  });
 }
 
 function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: WeatherResponse) {
@@ -129,9 +140,9 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
   lines.push("=== Buchungs-Links ===");
-  lines.push(`Hotel: ${bookingHotelUrl(pkg.destination)}`);
-  lines.push(`Aktivitäten: ${klookActivityUrl(pkg.destination)}`);
-  lines.push(`Transfer: ${transferUrl(pkg.destination)}`);
+  lines.push(`Hotel: ${bookingHotelUrl(pkg)}`);
+  lines.push(`Aktivitäten: ${klookActivityUrl(pkg)}`);
+  lines.push(`Transfer: ${transferUrl(pkg)}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
   const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
@@ -139,8 +150,15 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   return `mailto:?subject=${subject}&body=${body}`;
 }
 
-function transferUrl(_destination: string) {
-  return buildTransferUrl();
+function transferUrl(pkg: TravelPackage) {
+  return buildTransferUrl({
+    destination: pkg.destination,
+    origin: pkg.origin,
+    travelers: pkg.travelers,
+    startDate: pkg.travelStartDate,
+    month: pkg.travelMonth,
+    durationDays: pkg.durationDays,
+  });
 }
 
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
@@ -383,7 +401,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Provider rows: Flight / Hotel / Activities */}
       {(() => {
         const dest = currentPkg.destination || "";
-        const q = encodeURIComponent(dest);
         const flightUrl = buildAviasalesSearchUrl({
           destination: dest,
           origin: currentPkg.origin,
@@ -400,7 +417,14 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           startDate: currentPkg.travelStartDate,
           durationDays: currentPkg.durationDays,
         });
-        const taxiUrl = KIWI_TAXI_AFFILIATE_URL;
+        const taxiUrl = buildTransferUrl({
+          destination: dest,
+          origin: currentPkg.origin,
+          travelers: currentPkg.travelers,
+          month: currentPkg.travelMonth,
+          startDate: currentPkg.travelStartDate,
+          durationDays: currentPkg.durationDays,
+        });
         const activitiesUrl = buildKlookActivitiesUrl({
           destination: dest,
           month: currentPkg.travelMonth,
@@ -601,7 +625,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   generatedAt={weatherQuery.data?.generatedAt}
                 />
                 <a
-                  href={bookingHotelUrl(currentPkg.destination)}
+                  href={bookingHotelUrl(currentPkg)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
@@ -609,7 +633,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Hotel className="h-5 w-5" /> Hotel buchen
                 </a>
                 <a
-                  href={klookActivityUrl(currentPkg.destination, d.title)}
+                  href={klookActivityUrl(currentPkg, d.title)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
@@ -617,7 +641,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Ticket className="h-3 w-3" /> Aktivität buchen
                 </a>
                 <a
-                  href={transferUrl(currentPkg.destination)}
+                  href={transferUrl(currentPkg)}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
