@@ -10,9 +10,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { createOpenAIProvider } from "@/lib/openai-provider";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
-import { fetchPackageRatings } from "@/lib/ratings.server";
 
 type ChatRequestBody = { messages?: unknown };
 
@@ -956,6 +954,11 @@ export const Route = createFileRoute("/api/chat")({
           type: TIER_ORDER[i],
           currency: p.currency ?? "EUR",
         }));
+
+        const [{ supabaseAdmin }, { fetchPackageRatings }] = await Promise.all([
+          import("@/integrations/supabase/client.server"),
+          import("@/lib/ratings.server"),
+        ]);
 
         // Persist trip request + packages
         let tripRequestId: string | undefined;
