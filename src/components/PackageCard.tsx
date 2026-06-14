@@ -4,6 +4,15 @@ import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 
+function destinationImage(destination: string, tier: "basic" | "medium" | "premium", fallback: string) {
+  const dest = (destination || "").trim();
+  if (!dest) return fallback;
+  const tierKeyword = tier === "basic" ? "city" : tier === "medium" ? "landmark" : "luxury hotel";
+  const query = encodeURIComponent(`${dest} ${tierKeyword}`);
+  // Unsplash Source: returns a relevant photo for the query, no API key required
+  return `https://source.unsplash.com/640x480/?${query}`;
+}
+
 const TIER_META: Record<
   TravelPackage["type"],
   {
