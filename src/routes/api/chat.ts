@@ -98,13 +98,12 @@ function getPlanningSignals(text: string, history: string) {
   const hasTravelers =
     hasLabeledTravelers ||
     /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder|pers\.?|pax|adult|adults)\b/.test(all) ||
-    /\b(allein|solo|paar|pärchen|familie|zu zweit|zu dritt|zu viert|ein(e|er|s)?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|one|two|three|four|five|six|seven|eight|nine|ten)\b/i.test(all) ||
-    /(^|[\s,;])([1-9]|1\d|20)\s*[,;]/.test(text) ||
-    /^\s*([1-9]|1\d|20)\s*$/.test(text.trim());
+    /\b(allein|solo|paar|pärchen|paerchen|familie|zu zweit|zu dritt|zu viert)\b/i.test(all);
   const hasOrigin =
     hasLabeledOrigin ||
     /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
-    /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all);
+    /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all) ||
+    /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm)\b/i.test(all);
   const hasTimeframe =
     hasLabeledTimeframe ||
     /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
@@ -112,6 +111,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
     /\b\d{4}-\d{2}-\d{2}\b/.test(all) ||
     /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(all) ||
+    /\b(nächst(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i.test(all) ||
     /\b(flexibel|egal)\b/i.test(all);
 
   return {
@@ -325,11 +325,11 @@ function formatMissingField(field: MissingField): string {
     case "duration":
       return "**Wie lange möchtest du reisen?**";
     case "travelers":
-      return "**Wie viele Personen reisen?**";
+      return "**Wie viele Personen reisen mit?**";
     case "origin":
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
-      return 'Wann möchtest du deine Reise starten? Bitte nenne ein konkretes Startdatum, z. B. 10. Juni 2026. Wenn du flexibel bist, kannst du auch „flexibel im Juni" schreiben.';
+      return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
   }
 }
 
@@ -355,28 +355,37 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  // First user message with nothing parsed → warm welcome
-  if (userMessageCount <= 1 && missing.length >= 6) {
+  const prompts = missing.map(formatMissingField);
+
+  if (missing.length === 1) {
+    return `Eine letzte Frage noch: ${prompts[0]}`;
+  }
+
+  // First user message with little parsed → warm welcome + bundled list
+  if (userMessageCount <= 1 && missing.length >= 5) {
     return [
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
       "",
       "Du kannst mir z. B. einfach schreiben:",
       '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
       "",
-      `Lass uns starten: ${formatMissingField(missing[0])}`,
+      "Damit ich direkt loslegen kann, brauche ich noch kurz:",
+      ...prompts.map((prompt) => `- ${prompt}`),
     ].join("\n");
   }
 
-  // Acknowledge what's already there, then ask ONLY missing fields in one message.
-  const ack = "Super, danke dir! ✨ Ich hab schon das meiste — mir fehlt nur noch:";
-  const bullets = missing.map((f) => `- ${formatMissingField(f)}`).join("\n");
-  const labels = joinWithUnd(missing.map(shortFieldLabel));
-  const tail =
-    missing.length === 1
-      ? "\n\n_(Sag mir kurz das eine — danach lege ich direkt los! 🚀)_"
-      : `\n\n_(Schreib mir einfach ${labels} in einer Nachricht — dann starte ich sofort.)_`;
+  if (missing.length === 2) {
+    return `Super, fast alles da! Mir fehlen nur noch ${prompts[0]} und ${prompts[1]}`;
+  }
 
-  return `${ack}\n\n${bullets}${tail}`;
+  const labels = joinWithUnd(missing.map(shortFieldLabel));
+  return [
+    "Super, fast alles da! Mir fehlen noch kurz:",
+    "",
+    ...prompts.map((prompt) => `- ${prompt}`),
+    "",
+    `Schick mir einfach ${labels} in einer Nachricht — dann starte ich direkt.`,
+  ].join("\n");
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
@@ -592,11 +601,15 @@ function extractTravelers(history: string): number | undefined {
 function extractTravelMonth(history: string): string | undefined {
   const labeled = history.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
   if (labeled?.[1]) {
-    const m = labeled[1].match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul)\b/i);
+    const m = labeled[1].match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
     if (m?.[1]) return m[1].toLowerCase();
+    const relative = labeled[1].match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
+    if (relative?.[1]) return relative[1].toLowerCase();
   }
-  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul)\b/i);
-  return m?.[1].toLowerCase();
+  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
+  if (m?.[1]) return m[1].toLowerCase();
+  const relative = history.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
+  return relative?.[1].toLowerCase();
 }
 
 function extractInterests(history: string): string[] {
@@ -812,27 +825,27 @@ export const Route = createFileRoute("/api/chat")({
         // LLM-based extraction — robust to natural language across the dialog.
         const extracted = await extractTripFieldsLLM(model, uiMessages);
 
-        // Merge LLM with regex/dialog fallbacks for resilience.
-        const regexMissing = getMissingFields(lastUserText, userHistory);
-        
-
-        // STRICT: every one of the 6 required fields must have a real value
-        // from LLM extraction, dialog answers, or regex parsing. Otherwise the
-        // concierge keeps asking — no package creation until everything is set.
+        // STRICT: planning starts only when all 6 required fields are explicitly
+        // present in the dialog history. We trust regex/history + direct answers
+        // for completeness, and use LLM extraction only to shape the final values.
+        const regexSignals = getPlanningSignals("", userHistory);
         const dialogPreview = getDialogAnswers(uiMessages);
         const has = {
-          destination: !!(extracted.destination || dialogPreview.destination || (!regexMissing.includes("destination"))),
-          budget: !!((extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR)
-            || (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
-            || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)),
-          duration: !!(extracted.durationDays
+          destination: !!(regexSignals.hasDestOrType || dialogPreview.destination),
+          budget: !!(
+            (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
+            || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
+          ),
+          duration: !!(
+            regexSignals.hasDuration
             || (dialogPreview.duration && parseAnswerDurationDays(dialogPreview.duration))
-            || extractRequestedDurationDays(userHistory)),
-          travelers: !!(extracted.travelers
+          ),
+          travelers: !!(
+            regexSignals.hasTravelers
             || (dialogPreview.travelers && parseAnswerTravelers(dialogPreview.travelers))
-            || extractTravelers(userHistory)),
-          origin: !!(extracted.originCity || dialogPreview.origin || extractOrigin(userHistory)),
-          timeframe: !!(extracted.timeframe || dialogPreview.timeframe || extractTravelMonth(userHistory)),
+          ),
+          origin: !!(regexSignals.hasOrigin || dialogPreview.origin),
+          timeframe: !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
         };
         const missingFields: MissingField[] = [];
         if (!has.destination) missingFields.push("destination");
