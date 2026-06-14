@@ -4,6 +4,15 @@ import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 
+function destinationImage(destination: string, tier: "basic" | "medium" | "premium", fallback: string) {
+  const dest = (destination || "").trim();
+  if (!dest) return fallback;
+  const tierKeyword = tier === "basic" ? "city" : tier === "medium" ? "landmark" : "luxury hotel";
+  const query = encodeURIComponent(`${dest} ${tierKeyword}`);
+  // Unsplash Source: returns a relevant photo for the query, no API key required
+  return `https://source.unsplash.com/640x480/?${query}`;
+}
+
 const TIER_META: Record<
   TravelPackage["type"],
   {
@@ -94,11 +103,15 @@ export function PackageCard({
       {/* Image */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
         <img
-          src={meta.image}
+          src={destinationImage(pkg.destination, pkg.type, meta.image)}
           alt={pkg.destination}
           loading="lazy"
           width={448}
           height={448}
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.src !== meta.image) img.src = meta.image;
+          }}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <span className={`absolute left-3 top-3 inline-flex rounded-md px-2.5 py-1 text-xs font-bold tracking-wider shadow-sm sm:hidden ${meta.badge}`}>
