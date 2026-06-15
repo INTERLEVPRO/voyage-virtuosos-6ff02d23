@@ -366,7 +366,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Hero image */}
       <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <img
-          src={`https://loremflickr.com/1280/520/${encodeURIComponent((currentPkg.destination || "travel").toLowerCase().replace(/\s+/g, ","))},${currentPkg.type === "basic" ? "city" : currentPkg.type === "medium" ? "landmark" : "luxury,hotel"}?lock=${currentPkg.type === "basic" ? 1 : currentPkg.type === "medium" ? 2 : 3}`}
+          src={`https://loremflickr.com/1280/520/${encodeURIComponent((currentPkg.destination || "travel").toLowerCase().replace(/\s+/g, ","))}?lock=${currentPkg.type === "basic" ? 1 : currentPkg.type === "medium" ? 2 : 3}`}
           alt={currentPkg.destination}
           width={1024}
           height={420}
