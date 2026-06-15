@@ -3,16 +3,7 @@ import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
-
-function destinationImage(destination: string, tier: "basic" | "medium" | "premium", fallback: string) {
-  const dest = (destination || "").trim();
-  if (!dest) return fallback;
-  // Use only the destination name as tags so every image is actually from that place.
-  // Different lock values give a distinct photo per tier.
-  const tags = encodeURIComponent(dest.toLowerCase().replace(/\s+/g, ","));
-  const lock = tier === "basic" ? 1 : tier === "medium" ? 2 : 3;
-  return `https://loremflickr.com/640/480/${tags}?lock=${lock}`;
-}
+import { PlaceImage, buildPackageImageQueries } from "./PlaceImage";
 
 const TIER_META: Record<
   TravelPackage["type"],
@@ -103,16 +94,18 @@ export function PackageCard({
 
       {/* Image */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
-        <img
-          src={destinationImage(pkg.destination, pkg.type, meta.image)}
+        <PlaceImage
+          fallbackSrc={meta.image}
+          queryCandidates={buildPackageImageQueries({
+            destination: pkg.destination,
+            hotel: pkg.hotel,
+            title: pkg.title,
+            activities: pkg.activities,
+            itineraryTitles: pkg.itinerary.map((day) => day.title),
+          })}
           alt={pkg.destination}
-          loading="lazy"
           width={448}
           height={448}
-          onError={(e) => {
-            const img = e.currentTarget;
-            if (img.src !== meta.image) img.src = meta.image;
-          }}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <span className={`absolute left-3 top-3 inline-flex rounded-md px-2.5 py-1 text-xs font-bold tracking-wider shadow-sm sm:hidden ${meta.badge}`}>
