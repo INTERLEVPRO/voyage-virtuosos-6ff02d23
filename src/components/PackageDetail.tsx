@@ -366,13 +366,18 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Hero image */}
       <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
         <img
-          src={tier.image}
+          src={`https://loremflickr.com/1280/520/${encodeURIComponent((currentPkg.destination || "travel").toLowerCase().replace(/\s+/g, ","))},${currentPkg.type === "basic" ? "city" : currentPkg.type === "medium" ? "landmark" : "luxury,hotel"}?lock=${currentPkg.type === "basic" ? 1 : currentPkg.type === "medium" ? 2 : 3}`}
           alt={currentPkg.destination}
           width={1024}
           height={420}
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.src !== tier.image) img.src = tier.image;
+          }}
           className="h-64 w-full object-cover md:h-80"
         />
       </div>
+
 
       {/* Itinerary overview strip */}
       <div
