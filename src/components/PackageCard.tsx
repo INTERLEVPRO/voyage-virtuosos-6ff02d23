@@ -7,10 +7,9 @@ import resortImg from "@/assets/dest-resort.jpg";
 function destinationImage(destination: string, tier: "basic" | "medium" | "premium", fallback: string) {
   const dest = (destination || "").trim();
   if (!dest) return fallback;
-  const tierKeyword = tier === "basic" ? "city" : tier === "medium" ? "landmark" : "luxury,hotel";
-  // LoremFlickr serves real Flickr photos by tag, no API key, distinct image per tag set
-  const tags = encodeURIComponent(`${dest},${tierKeyword}`.toLowerCase().replace(/\s+/g, ","));
-  // include tier as a deterministic "lock" so each tier gets a different photo for the same destination
+  // Use only the destination name as tags so every image is actually from that place.
+  // Different lock values give a distinct photo per tier.
+  const tags = encodeURIComponent(dest.toLowerCase().replace(/\s+/g, ","));
   const lock = tier === "basic" ? 1 : tier === "medium" ? 2 : 3;
   return `https://loremflickr.com/640/480/${tags}?lock=${lock}`;
 }
