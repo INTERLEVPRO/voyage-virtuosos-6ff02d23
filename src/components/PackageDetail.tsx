@@ -38,6 +38,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
+import { PlaceImage, buildPackageImageQueries } from "./PlaceImage";
 import {
   buildAviasalesSearchUrl,
   buildKlookSearchUrl,
@@ -365,15 +366,18 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
 
       {/* Hero image */}
       <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card", activeTab !== "overview" && "max-sm:hidden")}>
-        <img
-          src={`https://loremflickr.com/1280/520/${encodeURIComponent((currentPkg.destination || "travel").toLowerCase().replace(/\s+/g, ","))}?lock=${currentPkg.type === "basic" ? 1 : currentPkg.type === "medium" ? 2 : 3}`}
+        <PlaceImage
+          fallbackSrc={tier.image}
+          queryCandidates={buildPackageImageQueries({
+            destination: currentPkg.destination,
+            hotel: currentPkg.hotel,
+            title: currentPkg.title,
+            activities: currentPkg.activities,
+            itineraryTitles: currentPkg.itinerary.map((day) => day.title),
+          })}
           alt={currentPkg.destination}
           width={1024}
           height={420}
-          onError={(e) => {
-            const img = e.currentTarget;
-            if (img.src !== tier.image) img.src = tier.image;
-          }}
           className="h-64 w-full object-cover md:h-80"
         />
       </div>
