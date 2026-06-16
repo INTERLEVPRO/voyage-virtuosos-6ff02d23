@@ -3,7 +3,7 @@ import { Phone, Mail, Facebook, Instagram } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-black text-white py-12 px-6 sm:px-10 border-t border-white/10">
+    <footer className="bg-[#1a2e4a] text-white py-12 px-6 sm:px-10 border-t border-white/10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
         
         {/* Column 1 */}
