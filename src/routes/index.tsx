@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { TravelPackage } from "@/types/travel";
+import { Footer } from "@/components/Footer";
+
 
 export const Route = createFileRoute("/")(
   {
@@ -271,16 +273,3 @@ function SiteHeader() {
   );
 }
 
-
-function Footer() {
-  return (
-    <footer className="border-t border-border bg-[#1a2e4a] py-8 text-center text-xs text-white/50">
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <div className="h-px w-8 bg-[#0d9e4f]/30" />
-        <Globe className="h-4 w-4 text-[#0d9e4f]/60" />
-        <div className="h-px w-8 bg-[#0d9e4f]/30" />
-      </div>
-      Weltweiturlaub.de · Reise planen in 2 Minuten · Powered by Agents
-    </footer>
-  );
-}
