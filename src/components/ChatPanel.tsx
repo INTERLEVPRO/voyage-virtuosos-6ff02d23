@@ -372,33 +372,70 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         className="w-full border-t border-border bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pt-4"
       >
         <div className="relative mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-[#1a2e4a]/12 bg-white/80 px-2.5 py-1.5 transition-all focus-within:border-[#0d9e4f]/50 focus-within:shadow-glow-green sm:px-3 sm:py-2">
-          <label
-            htmlFor="composer-date"
-            title="Reisedatum einfügen (z. B. 10. Juni 2026)"
-            className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary sm:h-11 sm:w-11"
-          >
-            <CalendarDays className="h-6 w-6 sm:h-5 sm:w-5" />
-            <input
-              id="composer-date"
-              type="date"
-              min={todayISO()}
-              disabled={isLoading}
-              onChange={(e) => {
-                const iso = e.currentTarget.value;
-                if (!iso) return;
-                const formatted = formatGermanDate(iso);
-                if (!formatted) return;
-                setInput((prev) => {
-                  const sep = prev && !prev.endsWith(" ") ? " " : "";
-                  return `${prev}${sep}${formatted}`;
-                });
-                e.currentTarget.value = "";
-                requestAnimationFrame(() => inputRef.current?.focus());
-              }}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              aria-label="Reisedatum wählen"
-            />
-          </label>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                title="Reisezeitraum wählen (Start- und Enddatum)"
+                aria-label="Reisezeitraum wählen"
+                disabled={isLoading}
+                className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary disabled:opacity-50"
+              >
+                <CalendarDays className="h-6 w-6 sm:h-5 sm:w-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              side="top"
+              sideOffset={8}
+              className="w-[min(92vw,360px)] max-w-[92vw] p-0 overflow-hidden"
+            >
+              <div className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">
+                {dateRange?.from
+                  ? dateRange.to
+                    ? `${formatGermanDate(toISO(dateRange.from))} – ${formatGermanDate(toISO(dateRange.to))}`
+                    : `Start: ${formatGermanDate(toISO(dateRange.from))} · Enddatum wählen`
+                  : "Startdatum wählen"}
+              </div>
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={1}
+                disabled={{ before: new Date() }}
+                className="w-full [--cell-size:2.25rem]"
+              />
+              <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => setDateRange(undefined)}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Zurücksetzen
+                </button>
+                <button
+                  type="button"
+                  disabled={!dateRange?.from}
+                  onClick={() => {
+                    if (!dateRange?.from) return;
+                    const from = formatGermanDate(toISO(dateRange.from));
+                    const to = dateRange.to ? formatGermanDate(toISO(dateRange.to)) : "";
+                    const snippet = to ? `${from} bis ${to}` : from;
+                    setInput((prev) => {
+                      const sep = prev && !prev.endsWith(" ") ? " " : "";
+                      return `${prev}${sep}${snippet}`;
+                    });
+                    setDateOpen(false);
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  className="rounded-full bg-[#0d9e4f] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0bb858] disabled:opacity-40"
+                >
+                  Übernehmen
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <textarea
             ref={inputRef}
             value={input}
