@@ -127,6 +127,107 @@ export function buildPackageImageQueries({
   ].filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
 }
 
+export function buildPackageCollageQueries(pkg: {
+  destination: string;
+  hotel: string;
+  activities?: string[];
+  itinerary?: Array<{ title: string; description: string }>;
+}): string[][] {
+  const dest = normalizeQuery(pkg.destination);
+
+  // 1. Hotel name extraction (remove delimiters like ·, -, | and anything after them)
+  const rawHotel = pkg.hotel || "";
+  const hotelSegment = normalizeQuery(rawHotel.split(/[·\-|]/)[0]?.trim() || rawHotel);
+  const hotelQueries = [
+    `${hotelSegment} ${dest}`,
+    hotelSegment,
+    `${dest} hotel`,
+  ].filter(Boolean);
+
+  // 2. Attractions extraction from itinerary descriptions
+  const attractions: string[] = [];
+  const genericTerms = /Ankunft|Orientierung|Freizeit|Transfer|Rückreise|Heimreise|Abreise|Zuhause|Flug|Flughafen/i;
+
+  if (pkg.itinerary && Array.isArray(pkg.itinerary)) {
+    for (const day of pkg.itinerary) {
+      const parts = day.description.split(/[·\n-]/);
+      for (const part of parts) {
+        // Strip out "Vormittag:", "Nachmittag:", "Abend:", "Morgen:", etc.
+        const cleaned = part
+          .replace(/^(vormittag|nachmittag|abend|morgen|mittag|early morning|morning|afternoon|evening|night|tag\s*\d+)\s*:\s*/i, "")
+          .trim();
+        
+        if (cleaned.length > 3 && !genericTerms.test(cleaned)) {
+          // Take the first clause of the cleaned string (split by comma or semicolon)
+          const firstClause = cleaned.split(/[,;]/)[0]?.trim() || cleaned;
+          if (firstClause.length > 3 && !genericTerms.test(firstClause)) {
+            attractions.push(normalizeQuery(firstClause));
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback to activities if we didn't extract enough from itinerary descriptions
+  if (pkg.activities && Array.isArray(pkg.activities)) {
+    for (const act of pkg.activities) {
+      if (act && !genericTerms.test(act)) {
+        attractions.push(normalizeQuery(act));
+      }
+    }
+  }
+
+  // Deduplicate attractions
+  const uniqueAttractions = Array.from(new Set(attractions));
+
+  const queryGroups: string[][] = [];
+
+  // Group 1: Hotel
+  queryGroups.push(hotelQueries);
+
+  // Group 2: First attraction
+  if (uniqueAttractions[0]) {
+    queryGroups.push([
+      `${uniqueAttractions[0]} ${dest}`,
+      uniqueAttractions[0],
+      `${dest} landmark`,
+      dest,
+    ]);
+  } else {
+    queryGroups.push([`${dest} landmark`, `${dest} sightseeing`, dest]);
+  }
+
+  // Group 3: Second attraction
+  if (uniqueAttractions[1]) {
+    queryGroups.push([
+      `${uniqueAttractions[1]} ${dest}`,
+      uniqueAttractions[1],
+      `${dest} skyline`,
+      dest,
+    ]);
+  } else {
+    queryGroups.push([`${dest} skyline`, `${dest} tourism`, dest]);
+  }
+
+  // Group 4: Third attraction
+  if (uniqueAttractions[2]) {
+    queryGroups.push([
+      `${uniqueAttractions[2]} ${dest}`,
+      uniqueAttractions[2],
+      `${dest} beach`,
+      dest,
+    ]);
+  } else {
+    queryGroups.push([
+      `${dest} nature`,
+      `${dest} beach`,
+      dest,
+    ]);
+  }
+
+  return queryGroups;
+}
+
 export function PlaceImage({
   alt,
   className,

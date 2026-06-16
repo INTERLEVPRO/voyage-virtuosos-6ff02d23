@@ -3,7 +3,7 @@ import type { TravelPackage } from "@/types/travel";
 import beachImg from "@/assets/dest-beach.jpg";
 import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
-import { PlaceImage, buildPackageImageQueries } from "./PlaceImage";
+import { PlaceImage, buildPackageCollageQueries } from "./PlaceImage";
 
 const TIER_META: Record<
   TravelPackage["type"],
@@ -70,6 +70,7 @@ export function PackageCard({
   onSelect: () => void;
 }) {
   const meta = TIER_META[pkg.type];
+  const collageQueries = buildPackageCollageQueries(pkg);
 
   // Echte Ratings + Quell-Link sind Pflicht. Ohne Link wird nichts angezeigt.
   // Keine Limitierung auf 3 Quellen — alles vom Backend Gelieferte wird gerendert.
@@ -92,23 +93,42 @@ export function PackageCard({
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-0.5 hover:shadow-luxe sm:flex-row">
 
-      {/* Image */}
-      <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56">
+      {/* Image Collage */}
+      <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-auto sm:w-56 grid grid-cols-2 grid-rows-2 gap-0.5 bg-border group">
         <PlaceImage
           fallbackSrc={meta.image}
-          queryCandidates={buildPackageImageQueries({
-            destination: pkg.destination,
-            hotel: pkg.hotel,
-            title: pkg.title,
-            activities: pkg.activities,
-            itineraryTitles: pkg.itinerary.map((day) => day.title),
-          })}
-          alt={pkg.destination}
-          width={448}
-          height={448}
+          queryCandidates={collageQueries[0]}
+          alt={pkg.hotel || pkg.destination}
+          width={224}
+          height={224}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className={`absolute left-3 top-3 inline-flex rounded-md px-2.5 py-1 text-xs font-bold tracking-wider shadow-sm sm:hidden ${meta.badge}`}>
+        <PlaceImage
+          fallbackSrc={meta.image}
+          queryCandidates={collageQueries[1]}
+          alt="Activity 1"
+          width={224}
+          height={224}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <PlaceImage
+          fallbackSrc={meta.image}
+          queryCandidates={collageQueries[2]}
+          alt="Activity 2"
+          width={224}
+          height={224}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <PlaceImage
+          fallbackSrc={meta.image}
+          queryCandidates={collageQueries[3]}
+          alt="Activity 3"
+          width={224}
+          height={224}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        
+        <span className={`absolute left-3 top-3 inline-flex rounded-md px-2.5 py-1 text-xs font-bold tracking-wider shadow-sm sm:hidden z-10 ${meta.badge}`}>
           {meta.label}
         </span>
       </div>
