@@ -407,9 +407,12 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
                 selected={dateRange}
                 onSelect={setDateRange}
                 numberOfMonths={1}
-                disabled={{ before: new Date() }}
-                className="w-full [--cell-size:2.25rem]"
+                min={1}
+                disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+                defaultMonth={dateRange?.from ?? new Date()}
+                className="pointer-events-auto w-full [--cell-size:2.25rem]"
               />
+
               <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
                 <button
                   type="button"
