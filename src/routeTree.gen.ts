@@ -12,9 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as BuchenRouteImport } from './routes/buchen'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as ApiTrackClickRouteImport } from './routes/api/track-click'
 import { Route as ApiRefinePackageRouteImport } from './routes/api/refine-package'
 import { Route as ApiItineraryWeatherRouteImport } from './routes/api/itinerary-weather'
@@ -35,6 +35,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuchenRoute = BuchenRouteImport.update({
   id: '/buchen',
   path: '/buchen',
@@ -43,11 +48,6 @@ const BuchenRoute = BuchenRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImpressumRoute = ImpressumRouteImport.update({
-  id: '/impressum',
-  path: '/impressum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTrackClickRoute = ApiTrackClickRouteImport.update({
@@ -250,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
