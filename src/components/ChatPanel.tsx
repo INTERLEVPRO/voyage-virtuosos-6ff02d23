@@ -2,6 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import type { DateRange } from "react-day-picker";
 import {
   Send,
   Loader2,
@@ -14,8 +15,11 @@ import {
   Wand2,
   CalendarDays,
 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import assistantImg from "@/assets/assistant.png";
 import type { TravelPackage, PackagesPayload } from "@/types/travel";
+
 
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
