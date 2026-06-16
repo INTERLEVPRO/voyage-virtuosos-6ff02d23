@@ -179,6 +179,9 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [stageIdx, setStageIdx] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateOpen, setDateOpen] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handedOffRef = useRef<Set<string>>(new Set());
