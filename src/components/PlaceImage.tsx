@@ -15,6 +15,7 @@ type PageImageResponse = {
     pages?: Record<
       string,
       {
+        title?: string;
         thumbnail?: {
           source?: string;
         };
