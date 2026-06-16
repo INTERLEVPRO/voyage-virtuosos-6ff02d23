@@ -14,6 +14,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as BuchenRouteImport } from './routes/buchen'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as ApiTrackClickRouteImport } from './routes/api/track-click'
 import { Route as ApiRefinePackageRouteImport } from './routes/api/refine-package'
 import { Route as ApiItineraryWeatherRouteImport } from './routes/api/itinerary-weather'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTrackClickRoute = ApiTrackClickRouteImport.update({
   id: '/api/track-click',
   path: '/api/track-click',
@@ -68,6 +74,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/buchen': typeof BuchenRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/transfer': typeof TransferRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/buchen': typeof BuchenRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/transfer': typeof TransferRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/buchen': typeof BuchenRoute
+  '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/transfer': typeof TransferRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/buchen'
+    | '/impressum'
     | '/login'
     | '/register'
     | '/transfer'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/buchen'
+    | '/impressum'
     | '/login'
     | '/register'
     | '/transfer'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/buchen'
+    | '/impressum'
     | '/login'
     | '/register'
     | '/transfer'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuchenRoute: typeof BuchenRoute
+  ImpressumRoute: typeof ImpressumRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   TransferRoute: typeof TransferRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buchen': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuchenRoute: BuchenRoute,
+  ImpressumRoute: ImpressumRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   TransferRoute: TransferRoute,

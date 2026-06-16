@@ -40,15 +40,15 @@ export function Footer() {
           <h3 className="font-bold text-lg mb-4 uppercase">META NAVIGATION</h3>
           <ul className="space-y-4">
             <li><Link to="/" className="text-sm font-semibold text-white hover:text-gray-300 transition">Contact Now</Link></li>
-            <li><Link to="/" className="text-sm font-semibold text-white hover:text-gray-300 transition">Imprint</Link></li>
+            <li><Link to="/impressum" className="text-sm font-semibold text-white hover:text-gray-300 transition">Imprint</Link></li>
             <li><Link to="/" className="text-sm font-semibold text-white hover:text-gray-300 transition">Data protection</Link></li>
           </ul>
           
           <div className="flex gap-4 pt-4">
-            <a href="#" className="flex h-12 w-12 items-center justify-center bg-[#3b5998] hover:bg-[#2d4373] transition">
+            <a href="https://www.facebook.com/interlevoffice" target="_blank" rel="noopener noreferrer" className="flex h-12 w-12 items-center justify-center bg-[#3b5998] hover:bg-[#2d4373] transition">
               <Facebook className="h-7 w-7 text-white fill-current" />
             </a>
-            <a href="#" className="flex h-12 w-12 items-center justify-center bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-90 transition">
+            <a href="https://www.instagram.com/interlevoffice/" target="_blank" rel="noopener noreferrer" className="flex h-12 w-12 items-center justify-center bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-90 transition">
               <Instagram className="h-7 w-7 text-white" />
             </a>
           </div>
