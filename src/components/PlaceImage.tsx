@@ -119,6 +119,10 @@ export function buildPackageImageQueries({
     [firstStop, dest].filter(Boolean).join(" "),
     [secondStop, dest].filter(Boolean).join(" "),
     [packageTitle, dest].filter(Boolean).join(" "),
+    dest ? `${dest} landmark` : "",
+    dest ? `${dest} skyline` : "",
+    dest ? `${dest} old town` : "",
+    dest ? `${dest} tourism` : "",
     dest,
   ].filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
 }
