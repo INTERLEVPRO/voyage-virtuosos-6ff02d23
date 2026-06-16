@@ -39,7 +39,7 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
     list: "search",
     format: "json",
     origin: "*",
-    srlimit: "1",
+    srlimit: "5",
     srsearch: query,
   }).toString();
 
