@@ -15,6 +15,7 @@ type PageImageResponse = {
     pages?: Record<
       string,
       {
+        title?: string;
         thumbnail?: {
           source?: string;
         };
@@ -38,15 +39,15 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
     list: "search",
     format: "json",
     origin: "*",
-    srlimit: "1",
+    srlimit: "5",
     srsearch: query,
   }).toString();
 
   const searchRes = await fetch(searchUrl.toString());
   if (!searchRes.ok) return null;
   const searchData = (await searchRes.json()) as SearchResponse;
-  const title = searchData.query?.search?.[0]?.title;
-  if (!title) return null;
+  const titles = (searchData.query?.search ?? []).map((s) => s.title).filter(Boolean) as string[];
+  if (titles.length === 0) return null;
 
   const imageUrl = new URL("https://en.wikipedia.org/w/api.php");
   imageUrl.search = new URLSearchParams({
@@ -56,14 +57,38 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
     pithumbsize: String(width),
     format: "json",
     origin: "*",
-    titles: title,
+    titles: titles.join("|"),
   }).toString();
 
   const imageRes = await fetch(imageUrl.toString());
   if (!imageRes.ok) return null;
   const imageData = (await imageRes.json()) as PageImageResponse;
-  const page = Object.values(imageData.query?.pages ?? {})[0];
-  return page?.thumbnail?.source ?? null;
+  const pages = Object.values(imageData.query?.pages ?? {});
+  // Preserve search order
+  const orderedPages = titles
+    .map((t) => pages.find((p: any) => p?.title === t) ?? null)
+    .filter(Boolean) as Array<{ thumbnail?: { source?: string } }>;
+
+  const isBadImage = (url: string) => {
+    const u = url.toLowerCase();
+    return (
+      u.includes("flag") ||
+      u.includes("coat_of_arms") ||
+      u.includes("escudo") ||
+      u.includes("escut") ||
+      u.includes("wappen") ||
+      u.includes("blason") ||
+      u.includes("seal_of") ||
+      u.includes("logo") ||
+      u.includes(".svg")
+    );
+  };
+
+  for (const p of orderedPages) {
+    const src = p?.thumbnail?.source;
+    if (src && !isBadImage(src)) return src;
+  }
+  return null;
 }
 
 export function buildPackageImageQueries({
@@ -94,6 +119,10 @@ export function buildPackageImageQueries({
     [firstStop, dest].filter(Boolean).join(" "),
     [secondStop, dest].filter(Boolean).join(" "),
     [packageTitle, dest].filter(Boolean).join(" "),
+    dest ? `${dest} landmark` : "",
+    dest ? `${dest} skyline` : "",
+    dest ? `${dest} old town` : "",
+    dest ? `${dest} tourism` : "",
     dest,
   ].filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
 }
