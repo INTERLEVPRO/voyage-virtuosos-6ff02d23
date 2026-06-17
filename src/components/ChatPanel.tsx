@@ -183,6 +183,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
   const [stageIdx, setStageIdx] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
@@ -220,9 +221,16 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
     const pkgs = extractPackages(text);
     if (pkgs && onPackagesReady) {
       handedOffRef.current.add(last.id);
+      setIsSuccess(true);
       onPackagesReady(pkgs);
     }
   }, [messages, status, onPackagesReady]);
+
+  const lastUserMessage = useMemo(() => {
+    const m = [...messages].reverse().find(m => m.role === "user");
+    if (!m) return input;
+    return m.parts.map((p: any) => (p.type === "text" ? p.text : "")).join("");
+  }, [messages, input]);
 
   const submit = (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -322,44 +330,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
           );
         })}
 
-        {isLoading && (
-          <div className="flex items-end gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/15">
-              <img src={assistantImg} alt="" aria-hidden className="h-5 w-5 object-contain" />
-            </div>
-            <div className="w-full max-w-[88%] overflow-hidden rounded-2xl rounded-bl-md border border-border bg-card shadow-soft sm:max-w-[80%]">
-              <div className="flex items-center gap-3 px-3.5 py-3 sm:px-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0d9e4f]/10 text-[#0d9e4f]">
-                  <StageIcon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-semibold text-foreground">
-                      {AGENT_STAGES[stageIdx].label}
-                    </span>
-                    <span className="flex gap-0.5">
-                      <span className="h-1 w-1 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-                      <span className="h-1 w-1 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
-                      <span className="h-1 w-1 animate-bounce rounded-full bg-primary" />
-                    </span>
-                  </div>
-                  <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
-                    {AGENT_STAGES[stageIdx].sub}
-                  </p>
-                </div>
-                <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
-                  {stageIdx + 1}/{AGENT_STAGES.length}
-                </span>
-              </div>
-              <div className="h-1 w-full bg-secondary/60">
-                <div
-                  className="h-full bg-gradient-to-r from-[#0d9e4f] to-[#2196f3] transition-all duration-700 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {error && (
           <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -481,6 +452,45 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
           Deine Daten sind sicher und werden nicht weitergegeben.
         </p>
       </form>
+
+      {(isLoading || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
+    </div>
+  );
+}
+
+function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
+  const [text, setText] = useState("");
+  
+  const fullText = `KI-Agent analysiert deine Anfrage...\n\nParameter: "${userQuery}"\n\n- Suche nach den besten Flugverbindungen...\n- Vergleiche Top-Hotels und Unterkünfte...\n- Erstelle einen maßgeschneiderten Tag-für-Tag Reiseplan...\n- Optimiere das Budget...\n\nDein personalisiertes Reiseerlebnis wird generiert. Bitte warten...`;
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setText(fullText.slice(0, i));
+      i++;
+      if (i > fullText.length) clearInterval(interval);
+    }, 30);
+    return () => clearInterval(interval);
+  }, [fullText]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm px-6 animate-in fade-in duration-500">
+      <div className="w-full max-w-3xl">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
+            <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Planung läuft...
+          </h2>
+        </div>
+        <div className="min-h-[250px] w-full rounded-2xl border border-border bg-card p-6 shadow-luxe">
+          <p className="whitespace-pre-wrap font-mono text-sm sm:text-base text-foreground/80 leading-relaxed">
+            {text}
+            <span className="inline-block h-4 w-2 ml-1 animate-pulse bg-primary align-middle" />
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
