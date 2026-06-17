@@ -38,7 +38,7 @@ import townImg from "@/assets/dest-town.jpg";
 import resortImg from "@/assets/dest-resort.jpg";
 import { DayWeatherToggle, useItineraryWeather, type WeatherResponse } from "./DayWeatherPanel";
 import { cn } from "@/lib/utils";
-import { PlaceImage, buildPackageCollageQueries } from "./PlaceImage";
+import { PlaceImage, buildPackageCollageQueries, buildPackageCollageAltTexts } from "./PlaceImage";
 import {
   buildAviasalesSearchUrl,
   buildKlookSearchUrl,
@@ -214,6 +214,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
 
   const tier = TIER_BADGE[currentPkg.type];
   const collageQueries = buildPackageCollageQueries(currentPkg);
+  const collageAlts = buildPackageCollageAltTexts(currentPkg);
 
   const weatherQuery = useItineraryWeather(
     currentPkg.destination,
@@ -365,12 +366,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         </a>
       </div>
 
-      {/* Hero image collage */}
+      {/* Hero image collage — images are tied to itinerary places */}
       <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card grid grid-cols-2 grid-rows-2 sm:grid-cols-4 sm:grid-rows-1 gap-0.5", activeTab !== "overview" && "max-sm:hidden")}>
         <PlaceImage
           fallbackSrc={tier.image}
           queryCandidates={collageQueries[0]}
-          alt={currentPkg.hotel || currentPkg.destination}
+          alt={collageAlts[0]}
           width={400}
           height={420}
           className="h-32 sm:h-64 w-full object-cover md:h-80"
@@ -378,7 +379,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         <PlaceImage
           fallbackSrc={tier.image}
           queryCandidates={collageQueries[1]}
-          alt="Activity 1"
+          alt={collageAlts[1]}
           width={400}
           height={420}
           className="h-32 sm:h-64 w-full object-cover md:h-80"
@@ -386,7 +387,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         <PlaceImage
           fallbackSrc={tier.image}
           queryCandidates={collageQueries[2]}
-          alt="Activity 2"
+          alt={collageAlts[2]}
           width={400}
           height={420}
           className="h-32 sm:h-64 w-full object-cover md:h-80"
@@ -394,7 +395,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         <PlaceImage
           fallbackSrc={tier.image}
           queryCandidates={collageQueries[3]}
-          alt="Activity 3"
+          alt={collageAlts[3]}
           width={400}
           height={420}
           className="h-32 sm:h-64 w-full object-cover md:h-80"

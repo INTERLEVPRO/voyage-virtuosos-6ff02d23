@@ -127,6 +127,60 @@ export function buildPackageImageQueries({
   ].filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
 }
 
+/**
+ * Extract the primary place name from an itinerary day title.
+ * e.g. "Ankunft Colombo" → "Colombo"
+ *      "Sigiriya & Dambulla" → "Sigiriya"
+ *      "Nuwara Eliya" → "Nuwara Eliya"
+ */
+function extractPlaceFromTitle(title: string): string {
+  const genericPrefixes =
+    /^(tag\s*\d+\s*[-–]?\s*)?(ankunft|abreise|transfer|abflug|rückreise|heimreise|freizeit|orientierung|arrival|departure)\s*/i;
+  const cleaned = title.replace(genericPrefixes, "").trim();
+  // Take first part before "&", "/", ",", "–", "-" as the primary place
+  const primary = cleaned.split(/[&/,–-]/)[0]?.trim() || cleaned;
+  return normalizeQuery(primary);
+}
+
+/**
+ * Build alt text labels for each collage slot based on itinerary place names.
+ * Returns 4 strings: [slot0_alt, slot1_alt, slot2_alt, slot3_alt]
+ */
+export function buildPackageCollageAltTexts(pkg: {
+  destination: string;
+  hotel: string;
+  itinerary?: Array<{ title: string }>;
+}): string[] {
+  const dest = pkg.destination;
+  const places = extractItineraryPlaces(pkg.itinerary ?? []);
+
+  return [
+    pkg.hotel ? `${pkg.hotel} – ${dest}` : dest,
+    places[0] ? `${places[0]}, ${dest}` : dest,
+    places[1] ? `${places[1]}, ${dest}` : dest,
+    places[2] ? `${places[2]}, ${dest}` : dest,
+  ];
+}
+
+/**
+ * Extract unique, non-generic place names from itinerary day titles.
+ */
+function extractItineraryPlaces(itinerary: Array<{ title: string }>): string[] {
+  const genericTerms =
+    /^(ankunft|abreise|transfer|abflug|rückreise|heimreise|freizeit|orientierung|arrival|departure)$/i;
+  const seen = new Set<string>();
+  const places: string[] = [];
+
+  for (const day of itinerary) {
+    const place = extractPlaceFromTitle(day.title);
+    if (place.length > 1 && !genericTerms.test(place) && !seen.has(place.toLowerCase())) {
+      seen.add(place.toLowerCase());
+      places.push(place);
+    }
+  }
+  return places;
+}
+
 export function buildPackageCollageQueries(pkg: {
   destination: string;
   hotel: string;
@@ -135,7 +189,7 @@ export function buildPackageCollageQueries(pkg: {
 }): string[][] {
   const dest = normalizeQuery(pkg.destination);
 
-  // 1. Hotel name extraction (remove delimiters like ·, -, | and anything after them)
+  // 1. Hotel name — first segment before delimiters
   const rawHotel = pkg.hotel || "";
   const hotelSegment = normalizeQuery(rawHotel.split(/[·\-|]/)[0]?.trim() || rawHotel);
   const hotelQueries = [
@@ -144,86 +198,56 @@ export function buildPackageCollageQueries(pkg: {
     `${dest} hotel`,
   ].filter(Boolean);
 
-  // 2. Attractions extraction from itinerary descriptions
-  const attractions: string[] = [];
-  const genericTerms = /Ankunft|Orientierung|Freizeit|Transfer|Rückreise|Heimreise|Abreise|Zuhause|Flug|Flughafen/i;
+  // 2. Primary: use specific place names from itinerary day titles
+  //    e.g. "Sigiriya", "Kandy", "Ella", "Tangalle", "Galle"
+  const itineraryPlaces = extractItineraryPlaces(pkg.itinerary ?? []);
 
-  if (pkg.itinerary && Array.isArray(pkg.itinerary)) {
-    for (const day of pkg.itinerary) {
-      const parts = day.description.split(/[·\n-]/);
-      for (const part of parts) {
-        // Strip out "Vormittag:", "Nachmittag:", "Abend:", "Morgen:", etc.
-        const cleaned = part
-          .replace(/^(vormittag|nachmittag|abend|morgen|mittag|early morning|morning|afternoon|evening|night|tag\s*\d+)\s*:\s*/i, "")
-          .trim();
-        
-        if (cleaned.length > 3 && !genericTerms.test(cleaned)) {
-          // Take the first clause of the cleaned string (split by comma or semicolon)
-          const firstClause = cleaned.split(/[,;]/)[0]?.trim() || cleaned;
-          if (firstClause.length > 3 && !genericTerms.test(firstClause)) {
-            attractions.push(normalizeQuery(firstClause));
-          }
-        }
-      }
-    }
-  }
-
-  // Fallback to activities if we didn't extract enough from itinerary descriptions
-  if (pkg.activities && Array.isArray(pkg.activities)) {
+  // 3. Secondary fallback: non-generic activity keywords
+  const genericTerms =
+    /Ankunft|Orientierung|Freizeit|Transfer|Rückreise|Heimreise|Abreise|Zuhause|Flug|Flughafen/i;
+  const activityFallbacks: string[] = [];
+  if (pkg.activities) {
     for (const act of pkg.activities) {
       if (act && !genericTerms.test(act)) {
-        attractions.push(normalizeQuery(act));
+        activityFallbacks.push(normalizeQuery(act));
       }
     }
   }
 
-  // Deduplicate attractions
-  const uniqueAttractions = Array.from(new Set(attractions));
+  // Merge: prefer itinerary places, top up with activity keywords
+  const candidates = [
+    ...itineraryPlaces,
+    ...activityFallbacks.filter((a) => !itineraryPlaces.includes(a)),
+  ];
 
   const queryGroups: string[][] = [];
 
-  // Group 1: Hotel
+  // Slot 0 — Hotel image
   queryGroups.push(hotelQueries);
 
-  // Group 2: First attraction
-  if (uniqueAttractions[0]) {
-    queryGroups.push([
-      `${uniqueAttractions[0]} ${dest}`,
-      uniqueAttractions[0],
-      `${dest} landmark`,
-      dest,
-    ]);
-  } else {
-    queryGroups.push([`${dest} landmark`, `${dest} sightseeing`, dest]);
-  }
+  // Slot 1 — First named place
+  const p0 = candidates[0];
+  queryGroups.push(
+    p0
+      ? [`${p0} ${dest}`, p0, `${dest} landmark`, dest]
+      : [`${dest} landmark`, `${dest} sightseeing`, dest],
+  );
 
-  // Group 3: Second attraction
-  if (uniqueAttractions[1]) {
-    queryGroups.push([
-      `${uniqueAttractions[1]} ${dest}`,
-      uniqueAttractions[1],
-      `${dest} skyline`,
-      dest,
-    ]);
-  } else {
-    queryGroups.push([`${dest} skyline`, `${dest} tourism`, dest]);
-  }
+  // Slot 2 — Second named place
+  const p1 = candidates[1];
+  queryGroups.push(
+    p1
+      ? [`${p1} ${dest}`, p1, `${dest} skyline`, dest]
+      : [`${dest} skyline`, `${dest} tourism`, dest],
+  );
 
-  // Group 4: Third attraction
-  if (uniqueAttractions[2]) {
-    queryGroups.push([
-      `${uniqueAttractions[2]} ${dest}`,
-      uniqueAttractions[2],
-      `${dest} beach`,
-      dest,
-    ]);
-  } else {
-    queryGroups.push([
-      `${dest} nature`,
-      `${dest} beach`,
-      dest,
-    ]);
-  }
+  // Slot 3 — Third named place
+  const p2 = candidates[2];
+  queryGroups.push(
+    p2
+      ? [`${p2} ${dest}`, p2, `${dest} beach`, dest]
+      : [`${dest} nature`, `${dest} beach`, dest],
+  );
 
   return queryGroups;
 }
