@@ -63,7 +63,6 @@ function Impressum() {
 
             <div>
               <p className="font-semibold text-foreground">Kontakt</p>
-              <p>Telefon: +49 (0) 214 96 000 120</p>
               <p>E-Mail: contact@interlev.com</p>
             </div>
 

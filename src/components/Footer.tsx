@@ -4,7 +4,7 @@ import { Phone, Mail, Facebook, Instagram } from "lucide-react";
 export function Footer() {
   return (
     <footer className="bg-[#1a2e4a] text-white py-12 px-6 sm:px-10 border-t border-white/10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
         
         {/* Column 1 */}
         <div className="space-y-6">
@@ -54,36 +54,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Column 3 */}
-        <div className="space-y-6">
-          <h3 className="font-bold text-lg mb-4">Where to find us</h3>
-          <div className="space-y-4">
-            <div className="w-full h-[150px] bg-gray-800 relative overflow-hidden rounded">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2516.326887556094!2d6.9840337!3d51.0454378!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47bf2b1a8d9a2ba7%3A0xc621b1b4bc669f!2sAdolf-Kaschny-Stra%C3%9Fe%2019%2C%2051373%20Leverkusen%2C%20Germany!5e0!3m2!1sen!2sus!4v1716301234567!5m2!1sen!2sus" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen={false} 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              />
-            </div>
-            <div className="w-full h-[150px] bg-gray-800 relative overflow-hidden rounded">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2516.7118182218765!2d7.0270144!3d51.0381666!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47bf298fc20623e1%3A0x6fbbf562e8484a95!2sHemmelrather%20Weg%20201%2C%2051377%20Leverkusen%2C%20Germany!5e0!3m2!1sen!2sus!4v1716301234568!5m2!1sen!2sus" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen={false} 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              />
-            </div>
-          </div>
-        </div>
 
       </div>
     </footer>
