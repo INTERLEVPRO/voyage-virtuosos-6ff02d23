@@ -222,6 +222,38 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
   );
   const weatherByDay = new Map((weatherQuery.data?.days ?? []).map((d) => [d.day, d]));
 
+  const dest = currentPkg.destination || "";
+  const flightUrl = buildAviasalesSearchUrl({
+    destination: dest,
+    origin: currentPkg.origin,
+    travelers: currentPkg.travelers,
+    month: currentPkg.travelMonth,
+    startDate: currentPkg.travelStartDate,
+    durationDays: currentPkg.durationDays,
+  });
+  const hotelUrl = buildKlookSearchUrl({
+    destination: dest,
+    hotel: currentPkg.hotel,
+    travelers: currentPkg.travelers,
+    month: currentPkg.travelMonth,
+    startDate: currentPkg.travelStartDate,
+    durationDays: currentPkg.durationDays,
+  });
+  const taxiUrl = buildTransferUrl({
+    destination: dest,
+    origin: currentPkg.origin,
+    travelers: currentPkg.travelers,
+    month: currentPkg.travelMonth,
+    startDate: currentPkg.travelStartDate,
+    durationDays: currentPkg.durationDays,
+  });
+  const activitiesUrl = buildKlookActivitiesUrl({
+    destination: dest,
+    month: currentPkg.travelMonth,
+    startDate: currentPkg.travelStartDate,
+    durationDays: currentPkg.durationDays,
+  });
+
   async function callRefine(changeRequest: string, userConfirmedBudget: boolean) {
     setLoading(true);
     setNotice(null);
@@ -428,39 +460,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
-      {(() => {
-        const dest = currentPkg.destination || "";
-        const flightUrl = buildAviasalesSearchUrl({
-          destination: dest,
-          origin: currentPkg.origin,
-          travelers: currentPkg.travelers,
-          month: currentPkg.travelMonth,
-          startDate: currentPkg.travelStartDate,
-          durationDays: currentPkg.durationDays,
-        });
-        const hotelUrl = buildKlookSearchUrl({
-          destination: dest,
-          hotel: currentPkg.hotel,
-          travelers: currentPkg.travelers,
-          month: currentPkg.travelMonth,
-          startDate: currentPkg.travelStartDate,
-          durationDays: currentPkg.durationDays,
-        });
-        const taxiUrl = buildTransferUrl({
-          destination: dest,
-          origin: currentPkg.origin,
-          travelers: currentPkg.travelers,
-          month: currentPkg.travelMonth,
-          startDate: currentPkg.travelStartDate,
-          durationDays: currentPkg.durationDays,
-        });
-        const activitiesUrl = buildKlookActivitiesUrl({
-          destination: dest,
-          month: currentPkg.travelMonth,
-          startDate: currentPkg.travelStartDate,
-          durationDays: currentPkg.durationDays,
-        });
-        return (
       <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
@@ -516,8 +515,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
       </div>
-        );
-      })()}
 
       {/* Total price strip */}
       <div
@@ -790,12 +787,18 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
               € {currentPkg.price.toLocaleString("de-DE")}
             </div>
           </div>
-          <Link
-            to="/buchen"
+          <button
+            type="button"
+            onClick={() => {
+              window.open(flightUrl, "_blank");
+              window.open(hotelUrl, "_blank");
+              window.open(taxiUrl, "_blank");
+              window.open(activitiesUrl, "_blank");
+            }}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 sm:px-6 sm:py-4 text-sm font-semibold text-primary-foreground shadow-soft"
           >
-            <ShoppingBag className="h-5 w-5" /> Jetzt bucheng
-          </Link>
+            <ShoppingBag className="h-5 w-5" /> Jetzt buchen
+          </button>
         </div>
       </div>
     </section>
