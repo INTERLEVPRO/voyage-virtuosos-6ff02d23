@@ -739,6 +739,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             date="vor 2 Wochen"
             text={`"Wir waren anfangs skeptisch, aber das ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} hat uns wirklich positiv überrascht! Das Zimmer war sehr sauber und das Personal extrem freundlich. Die Lage war perfekt als Ausgangspunkt für unsere Ausflüge. Das Frühstücksbuffet hätte etwas abwechslungsreicher sein können, aber insgesamt ein tolles Erlebnis!"`}
             source="Booking.com"
+            linkUrl={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(currentPkg.hotel)}`}
           />
           <ReviewCard
             name="Sabine & Peter"
@@ -747,6 +748,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             date="vor 1 Monat"
             text={`"Die Organisation hat super geklappt. Der Transfer in ${currentPkg.destination} stand pünktlich bereit. Besonders schön fanden wir die Tour zu '${currentPkg.activities[0] || 'den Sehenswürdigkeiten'}'. Ein kleiner Minuspunkt war die Flugzeit auf dem Rückflug, aber dafür kann der Veranstalter ja nichts. Gerne wieder!"`}
             source="Google"
+            linkUrl={`https://www.google.com/search?q=${encodeURIComponent(currentPkg.destination + ' reviews')}`}
           />
           <ReviewCard
             name="Thomas B."
@@ -755,6 +757,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             date="vor 3 Wochen"
             text={`"Richtig gutes Preis-Leistungs-Verhältnis. Wir hatten erst überlegt, alles einzeln zu buchen, aber das Paket hat uns viel Stress erspart. ${currentPkg.activities[1] ?? currentPkg.activities[0]} war das absolute Highlight der Reise! Ein Tipp: Nehmt euch auf jeden Fall bequeme Schuhe mit. Alles in allem top!"`}
             source={currentPkg.activities.length > 2 ? "GetYourGuide" : "Google"}
+            linkUrl={currentPkg.activities.length > 2 
+              ? `https://www.getyourguide.com/s?q=${encodeURIComponent(currentPkg.destination)}` 
+              : `https://www.google.com/search?q=${encodeURIComponent((currentPkg.activities[1] ?? currentPkg.activities[0] ?? currentPkg.destination) + ' reviews')}`}
           />
         </div>
       </div>
@@ -884,6 +889,7 @@ function ReviewCard({
   date,
   text,
   source,
+  linkUrl,
 }: {
   name: string;
   location: string;
@@ -891,6 +897,7 @@ function ReviewCard({
   date: string;
   text: string;
   source: string;
+  linkUrl?: string;
 }) {
   return (
     <div className="flex flex-col rounded-xl border border-border bg-secondary/30 p-4">
@@ -916,9 +923,16 @@ function ReviewCard({
         {text}
       </p>
       <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <MessageSquare className="h-3 w-3" /> {source}
-        </span>
+        {linkUrl ? (
+          <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+            <MessageSquare className="h-3 w-3" /> {source}
+            <ExternalLink className="h-3 w-3 ml-0.5" />
+          </a>
+        ) : (
+          <span className="inline-flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" /> {source}
+          </span>
+        )}
         <span>{date}</span>
       </div>
     </div>
