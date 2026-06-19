@@ -737,7 +737,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             location="München"
             rating={currentPkg.rating}
             date="vor 2 Wochen"
-            text={`Das Hotel ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} war hervorragend. Der Service und die Lage haben unsere Erwartungen übertroffen. Absolut empfehlenswert für deutsche Urlauber!`}
+            text={`"Wir waren anfangs skeptisch, aber das ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} hat uns wirklich positiv überrascht! Das Zimmer war sehr sauber und das Personal extrem freundlich. Die Lage war perfekt als Ausgangspunkt für unsere Ausflüge. Das Frühstücksbuffet hätte etwas abwechslungsreicher sein können, aber insgesamt ein tolles Erlebnis!"`}
             source="Booking.com"
           />
           <ReviewCard
@@ -745,7 +745,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             location="Hamburg"
             rating={Math.min(5, currentPkg.rating + 0.2)}
             date="vor 1 Monat"
-            text={`Wir haben ${currentPkg.duration} in ${currentPkg.destination} verbracht. Die Aktivitäten waren super organisiert und der Flug war pünktlich. Ein perfekter Urlaub — wir kommen wieder!`}
+            text={`"Die Organisation hat super geklappt. Der Transfer in ${currentPkg.destination} stand pünktlich bereit. Besonders schön fanden wir die Tour zu '${currentPkg.activities[0] || 'den Sehenswürdigkeiten'}'. Ein kleiner Minuspunkt war die Flugzeit auf dem Rückflug, aber dafür kann der Veranstalter ja nichts. Gerne wieder!"`}
             source="Google"
           />
           <ReviewCard
@@ -753,7 +753,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             location="Berlin"
             rating={Math.max(4, currentPkg.rating - 0.1)}
             date="vor 3 Wochen"
-            text={`Preis-Leistung stimmt. Das Paket war gut durchdacht und die deutsche Reiseleitung vor Ort war sehr hilfsbereit. Besonders ${currentPkg.activities[1] ?? currentPkg.activities[0]} hat uns begeistert.`}
+            text={`"Richtig gutes Preis-Leistungs-Verhältnis. Wir hatten erst überlegt, alles einzeln zu buchen, aber das Paket hat uns viel Stress erspart. ${currentPkg.activities[1] ?? currentPkg.activities[0]} war das absolute Highlight der Reise! Ein Tipp: Nehmt euch auf jeden Fall bequeme Schuhe mit. Alles in allem top!"`}
             source={currentPkg.activities.length > 2 ? "GetYourGuide" : "Google"}
           />
         </div>
