@@ -382,10 +382,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           href={mapsRouteUrl(currentPkg.destination)}
           target="_blank"
           rel="noopener"
-          onClick={(e) => {
-            e.preventDefault();
-            openRouteInMaps(currentPkg.destination);
-          }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
         >
           <MapPin className="h-4 w-4" /> Route auf Google Maps
@@ -630,10 +626,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   href={mapsRouteUrl(currentPkg.destination, d.title)}
                   target="_blank"
                   rel="noopener"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openRouteInMaps(currentPkg.destination, d.title);
-                  }}
                   className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
                   title="Route auf Google Maps anzeigen"
                 >
