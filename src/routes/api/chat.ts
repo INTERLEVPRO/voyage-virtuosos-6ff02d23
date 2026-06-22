@@ -147,15 +147,18 @@ function getPlanningSignals(text: string, history: string) {
 
   // Only consider budget "present" if we can parse a realistic amount.
   const hasBudget = parseBudgetValue(combined) !== null;
-  const hasDestOrType =
+  // Strict: only a real place / labeled destination counts.
+  const hasDestination =
     hasLabeledDestination ||
-    /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|reise|urlaub|trip|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all) ||
-    /\b(in|nach|to)\s+[a-zäöüß][a-zäöüß.'’-]{2,}(?:\s+[a-zäöüß][a-zäöüß.'’-]{2,}){0,2}\b/i.test(all) ||
-    /(?:^|\n)\s*(?!budget\b|abflug\b|ab\b|von\b|\d)([a-zäöüß][a-zäöüß.'’-]*)(?:\s+[a-zäöüß][a-zäöüß.'’-]*){0,3}\s*,/i.test(combined) ||
-    // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
-    /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([a-zäöüß][a-zäöüß.'’-]{2,})/i.test(all) ||
-    // Any capitalized place-like token that isn't a known origin/month/keyword
-    /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
+    /\b(nach|in|to)\s+[A-ZÄÖÜ][a-zäöüß.'’-]{2,}/.test(combined) ||
+    /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-ZÄÖÜ][a-zäöüß.'’-]{2,})/.test(combined) ||
+    /(?:^|\n)\s*(?!Budget|Abflug|Hi|Hallo|Hey|Ok|Okay|Ja|Nein|Danke)[A-ZÄÖÜ][a-zäöüß.'’-]{2,}\s*,/.test(combined) ||
+    /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Hey|Danke|Bitte|Ok|Okay|Städtetrip|Staedtetrip|Citytrip|Kurztrip|Roadtrip|Strandurlaub|Wellnessurlaub|Familienurlaub|Reise|Urlaub|Trip|Kreuzfahrt|Safari|Ski)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
+
+  // Loose: destination OR generic vacation type (used for other heuristics).
+  const hasDestOrType =
+    hasDestination ||
+    /\b(städtetrip|staedtetrip|citytrip|kurztrip|roadtrip|rundreise|honeymoon|flitterwochen|strandurlaub|wellnessurlaub|familienurlaub|strand|berge|stadt|city|insel|island|safari|kreuzfahrt|wander|ski|kunstreise|kulinarik|wellness)\b/i.test(all);
   const hasDuration =
     hasLabeledDuration ||
     parseDateRangeDays(combined) !== null ||
@@ -182,6 +185,7 @@ function getPlanningSignals(text: string, history: string) {
 
   return {
     hasBudget,
+    hasDestination,
     hasDestOrType,
     hasDuration,
     hasTravelers,
@@ -891,7 +895,7 @@ export const Route = createFileRoute("/api/chat")({
         const regexSignals = getPlanningSignals("", userHistory);
         const dialogPreview = getDialogAnswers(uiMessages);
         const has = {
-          destination: !!(regexSignals.hasDestOrType || dialogPreview.destination),
+          destination: !!(regexSignals.hasDestination || dialogPreview.destination),
           budget: !!(
             (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
             || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
