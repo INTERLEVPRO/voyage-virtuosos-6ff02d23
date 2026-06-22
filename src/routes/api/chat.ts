@@ -185,6 +185,7 @@ function getPlanningSignals(text: string, history: string) {
 
   return {
     hasBudget,
+    hasDestination,
     hasDestOrType,
     hasDuration,
     hasTravelers,
