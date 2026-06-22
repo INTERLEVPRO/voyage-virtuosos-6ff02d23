@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Globe, Plane, MapPin } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
@@ -26,6 +26,13 @@ export const Route = createFileRoute("/")(
 
 function Index() {
   const [packages, setPackages] = useState<TravelPackage[]>([]);
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+  }, []);
   const [selected, setSelected] = useState<TravelPackage | null>(null);
 
   if (selected) {
