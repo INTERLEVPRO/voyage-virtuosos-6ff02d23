@@ -67,13 +67,7 @@ function Index() {
     window.addEventListener("pageshow", handlePageShow);
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // 6. Handle bfcache restore (mobile Chrome/Safari tab revisit) — useEffect does not re-run
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        window.scrollTo(0, 0);
-      }
-    };
-    window.addEventListener("pageshow", handlePageShow);
+    // duplicate handler removed
 
     return () => {
       clearTimeout(t1);
