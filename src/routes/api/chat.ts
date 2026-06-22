@@ -1,4 +1,3 @@
-import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   generateText,
