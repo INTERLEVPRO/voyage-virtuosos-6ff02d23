@@ -196,6 +196,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showGeneratingLoader, setShowGeneratingLoader] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
@@ -206,7 +207,16 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
   const isLoading = status === "submitted" || status === "streaming";
 
-
+  // Full-screen narrative loader only when package generation is actually
+  // running (slow request) — NOT for short Q&A turns.
+  useEffect(() => {
+    if (!isLoading) {
+      setShowGeneratingLoader(false);
+      return;
+    }
+    const t = setTimeout(() => setShowGeneratingLoader(true), 2500);
+    return () => clearTimeout(t);
+  }, [isLoading]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
