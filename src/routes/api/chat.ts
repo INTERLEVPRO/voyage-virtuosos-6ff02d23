@@ -487,8 +487,10 @@ function parseDurationDays(value: string): number | null {
 }
 
 function extractRequestedDurationDays(history: string): number {
-  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const range = parseDateRangeDays(history);
+  if (range) return range;
 
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const days = parseDurationDays(lines[i]);
     if (days) return days;
