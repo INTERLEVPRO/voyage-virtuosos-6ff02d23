@@ -425,11 +425,7 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
 
   const prompts = missing.map(formatMissingField);
 
-  if (missing.length === 1) {
-    return `Eine letzte Frage noch: ${prompts[0]}`;
-  }
-
-  // First user message with little parsed → warm welcome + bundled list
+  // First user message with little parsed → warm welcome + bundled list (only once at start)
   if (userMessageCount <= 1 && missing.length >= 5) {
     return [
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
@@ -442,18 +438,12 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     ].join("\n");
   }
 
-  if (missing.length === 2) {
-    return `Super, fast alles da! Mir fehlen nur noch ${prompts[0]} und ${prompts[1]}`;
+  // Otherwise: ask ONE question at a time
+  if (missing.length === 1) {
+    return `Eine letzte Frage noch: ${prompts[0]}`;
   }
 
-  const labels = joinWithUnd(missing.map(shortFieldLabel));
-  return [
-    "Super, fast alles da! Mir fehlen noch kurz:",
-    "",
-    ...prompts.map((prompt) => `- ${prompt}`),
-    "",
-    `Schick mir einfach ${labels} in einer Nachricht — dann starte ich direkt.`,
-  ].join("\n");
+  return prompts[0];
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
