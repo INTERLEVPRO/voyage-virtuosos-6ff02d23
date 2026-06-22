@@ -28,10 +28,40 @@ function Index() {
   const [packages, setPackages] = useState<TravelPackage[]>([]);
 
   useEffect(() => {
+    // 1. Force manual scroll restoration
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
+
+    // 2. Scroll to top immediately
     window.scrollTo(0, 0);
+
+    // 3. Scroll to top repeatedly for a brief moment to override delayed browser restorations
+    const t1 = setTimeout(() => window.scrollTo(0, 0), 10);
+    const t2 = setTimeout(() => window.scrollTo(0, 0), 50);
+    const t3 = setTimeout(() => window.scrollTo(0, 0), 100);
+
+    // 4. Force top on unload so next time the browser cache starts at top
+    const handleUnload = () => {
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    
+    // 5. Also handle visibility change for returning to backgrounded tabs
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        window.scrollTo(0, 0);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener("beforeunload", handleUnload);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
   const [selected, setSelected] = useState<TravelPackage | null>(null);
 
