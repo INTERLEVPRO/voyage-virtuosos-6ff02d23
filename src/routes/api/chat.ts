@@ -895,7 +895,7 @@ export const Route = createFileRoute("/api/chat")({
         const regexSignals = getPlanningSignals("", userHistory);
         const dialogPreview = getDialogAnswers(uiMessages);
         const has = {
-          destination: !!(regexSignals.hasDestOrType || dialogPreview.destination),
+          destination: !!(regexSignals.hasDestination || dialogPreview.destination),
           budget: !!(
             (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
             || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
