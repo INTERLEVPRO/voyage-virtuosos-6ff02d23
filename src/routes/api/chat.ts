@@ -329,6 +329,8 @@ const WORD_NUM_BASIC: Record<string, number> = {
 };
 
 function parseAnswerDurationDays(value: string): number | null {
+  const range = parseDateRangeDays(value);
+  if (range !== null) return range;
   const t = value.toLowerCase().trim();
   // numeric with unit
   const num = t.match(/(\d{1,3})\s*(tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|night|nights|day|days|woche|wochen|week|weeks|monat|monate|monaten|month|months)\b/);
