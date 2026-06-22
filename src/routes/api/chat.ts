@@ -158,6 +158,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
   const hasDuration =
     hasLabeledDuration ||
+    parseDateRangeDays(combined) !== null ||
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen|day|days|night|nights|week|weeks|month|months|monat|monate)\b/.test(all);
   const hasTravelers =
     hasLabeledTravelers ||
@@ -170,6 +171,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm)\b/i.test(all);
   const hasTimeframe =
     hasLabeledTimeframe ||
+    parseDateRangeDays(combined) !== null ||
     /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
     /\b\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/i.test(all) ||
     /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
