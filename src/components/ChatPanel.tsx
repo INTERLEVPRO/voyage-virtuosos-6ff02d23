@@ -466,7 +466,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         </p>
       </form>
 
-      {(isLoading || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
+      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
     </div>
   );
 }
