@@ -67,14 +67,11 @@ function Index() {
     window.addEventListener("pageshow", handlePageShow);
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // duplicate handler removed
-
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("pageshow", handlePageShow);
     };
   }, []);
   const [selected, setSelected] = useState<TravelPackage | null>(null);

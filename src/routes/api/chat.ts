@@ -53,21 +53,86 @@ type ResearchData = {
 
 // Parse the largest realistic budget amount from free text. Returns null when
 // no value at or above MIN_BUDGET_EUR can be found.
+// IMPORTANT: bare numbers (no currency, no thousands separator) that look like
+// a year (1900–2099) are ignored — they're almost certainly travel dates.
 function parseBudgetValue(text: string): number | null {
   const candidates: number[] = [];
   for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$)?/gi)) {
-    const n = Number(m[1].replace(/[.,]/g, ""));
+    const raw = m[1];
+    const currency = m[2];
+    const n = Number(raw.replace(/[.,]/g, ""));
     if (!Number.isFinite(n)) continue;
-    if (n >= MIN_BUDGET_EUR && n <= 200000) candidates.push(n);
+    if (n < MIN_BUDGET_EUR || n > 200000) continue;
+    if (!currency && !/[.,]/.test(raw) && n >= 1900 && n <= 2099) continue;
+    candidates.push(n);
   }
   if (candidates.length === 0) return null;
-  // Prefer the last (most recent) realistic value
   return candidates[candidates.length - 1];
 }
 
 // Did the user mention a budget at all (even an unrealistically low one)?
 function mentionedBudget(text: string): boolean {
   return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro|usd|\$)/i.test(text);
+}
+
+const MONTH_TO_NUM: Record<string, number> = {
+  januar: 1, jan: 1, january: 1,
+  februar: 2, feb: 2, february: 2,
+  märz: 3, maerz: 3, mar: 3, march: 3,
+  april: 4, apr: 4,
+  mai: 5, may: 5,
+  juni: 6, jun: 6, june: 6,
+  juli: 7, jul: 7, july: 7,
+  august: 8, aug: 8,
+  september: 9, sep: 9, sept: 9,
+  oktober: 10, okt: 10, oct: 10, october: 10,
+  november: 11, nov: 11,
+  dezember: 12, dez: 12, dec: 12, december: 12,
+};
+
+// Detect a date range like "18. Juli 2026 – 23. Juli 2026" or
+// "18.07.2026 - 23.07.2026" or "2026-07-18 to 2026-07-23".
+// Returns the duration in days when both endpoints parse.
+function parseDateRangeDays(text: string): number | null {
+  const verbose = text.match(
+    /(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
+  );
+  if (verbose) {
+    const m1 = MONTH_TO_NUM[verbose[2].toLowerCase()];
+    const m2 = MONTH_TO_NUM[verbose[5].toLowerCase()];
+    const y1 = Number(verbose[3] ?? verbose[6] ?? new Date().getFullYear());
+    const y2 = Number(verbose[6] ?? verbose[3] ?? y1);
+    if (m1 && m2) {
+      const d1 = new Date(y1, m1 - 1, Number(verbose[1]));
+      const d2 = new Date(y2, m2 - 1, Number(verbose[4]));
+      const diff = Math.round((d2.getTime() - d1.getTime()) / 86400000) + 1;
+      if (diff > 0 && diff <= 365) return diff;
+    }
+  }
+
+  const numeric = text.match(
+    /(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{4}-\d{2}-\d{2})\s*(?:–|—|-|bis|to|until)\s*(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{4}-\d{2}-\d{2})/i,
+  );
+  if (numeric) {
+    const parseOne = (s: string): Date | null => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s);
+      const p = s.split(/[.\/-]/).map(Number);
+      if (p.length === 3) {
+        const [a, b, c] = p;
+        const yyyy = c < 100 ? 2000 + c : c;
+        return new Date(yyyy, b - 1, a);
+      }
+      return null;
+    };
+    const d1 = parseOne(numeric[1]);
+    const d2 = parseOne(numeric[2]);
+    if (d1 && d2 && !isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+      const diff = Math.round((d2.getTime() - d1.getTime()) / 86400000) + 1;
+      if (diff > 0 && diff <= 365) return diff;
+    }
+  }
+
+  return null;
 }
 
 function getPlanningSignals(text: string, history: string) {
@@ -93,6 +158,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(?!Budget|Abflug|Abflughafen|Frankfurt|München|Muenchen|Berlin|Hamburg|Köln|Koeln|Stuttgart|Düsseldorf|Duesseldorf|Wien|Zürich|Zuerich|Basel|Genf|Hannover|Nürnberg|Nuernberg|Leipzig|Dresden|Bremen|Dortmund|Januar|Februar|März|Maerz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|Tag|Tage|Tagen|Nacht|Nächte|Naechte|Woche|Wochen|Person|Personen|Erwachsene|Reisende|Gäste|Gaeste|Strand|Wellness|Kultur|Kunst|Natur|Familie|Honeymoon|Flitterwochen|Stadt|Insel|Berge|Rundreise|Direkt|Hotel|Flug|Frühling|Fruehling|Sommer|Herbst|Winter|Ostern|Weihnachten|Silvester|Ja|Nein|Hi|Hallo|Danke|Bitte|Ok|Okay)[A-ZÄÖÜ][a-zäöüß]{2,}\b/.test(combined);
   const hasDuration =
     hasLabeledDuration ||
+    parseDateRangeDays(combined) !== null ||
     /\b\d+\s?(tag|tage|tagen|nacht|nächte|nächten|woche|wochen|day|days|night|nights|week|weeks|month|months|monat|monate)\b/.test(all);
   const hasTravelers =
     hasLabeledTravelers ||
@@ -105,6 +171,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm)\b/i.test(all);
   const hasTimeframe =
     hasLabeledTimeframe ||
+    parseDateRangeDays(combined) !== null ||
     /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(all) ||
     /\b\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/i.test(all) ||
     /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/.test(all) ||
@@ -262,6 +329,8 @@ const WORD_NUM_BASIC: Record<string, number> = {
 };
 
 function parseAnswerDurationDays(value: string): number | null {
+  const range = parseDateRangeDays(value);
+  if (range !== null) return range;
   const t = value.toLowerCase().trim();
   // numeric with unit
   const num = t.match(/(\d{1,3})\s*(tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|night|nights|day|days|woche|wochen|week|weeks|monat|monate|monaten|month|months)\b/);
@@ -356,11 +425,7 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
 
   const prompts = missing.map(formatMissingField);
 
-  if (missing.length === 1) {
-    return `Eine letzte Frage noch: ${prompts[0]}`;
-  }
-
-  // First user message with little parsed → warm welcome + bundled list
+  // First user message with little parsed → warm welcome + bundled list (only once at start)
   if (userMessageCount <= 1 && missing.length >= 5) {
     return [
       "Hi! 👋 Schön, dass du da bist — ich helfe dir, deinen perfekten Urlaub zu planen.",
@@ -373,18 +438,12 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     ].join("\n");
   }
 
-  if (missing.length === 2) {
-    return `Super, fast alles da! Mir fehlen nur noch ${prompts[0]} und ${prompts[1]}`;
+  // Otherwise: ask ONE question at a time
+  if (missing.length === 1) {
+    return `Eine letzte Frage noch: ${prompts[0]}`;
   }
 
-  const labels = joinWithUnd(missing.map(shortFieldLabel));
-  return [
-    "Super, fast alles da! Mir fehlen noch kurz:",
-    "",
-    ...prompts.map((prompt) => `- ${prompt}`),
-    "",
-    `Schick mir einfach ${labels} in einer Nachricht — dann starte ich direkt.`,
-  ].join("\n");
+  return prompts[0];
 }
 
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
@@ -418,8 +477,10 @@ function parseDurationDays(value: string): number | null {
 }
 
 function extractRequestedDurationDays(history: string): number {
-  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const range = parseDateRangeDays(history);
+  if (range) return range;
 
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const days = parseDurationDays(lines[i]);
     if (days) return days;
