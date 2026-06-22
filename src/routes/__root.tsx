@@ -74,22 +74,43 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         type: "text/javascript",
         children: `
-          if ('scrollRestoration' in history) {
-            history.scrollRestoration = 'manual';
-          }
-          window.scrollTo(0, 0);
-          
-          window.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-              setTimeout(function() { window.scrollTo(0, 0); }, 10);
+          (function() {
+            // Disable browser scroll restoration completely
+            if ('scrollRestoration' in history) {
+              history.scrollRestoration = 'manual';
             }
-          });
-          window.addEventListener('pageshow', function() {
-            setTimeout(function() { window.scrollTo(0, 0); }, 10);
-          });
-          window.addEventListener('focus', function() {
-            setTimeout(function() { window.scrollTo(0, 0); }, 10);
-          });
+
+            function forceTop() {
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+            }
+
+            // Force top immediately on script run
+            forceTop();
+
+            // bfcache restore (mobile Chrome tab revisit) - event.persisted = true
+            window.addEventListener('pageshow', function(e) {
+              forceTop();
+              if (e.persisted) {
+                // Page is restored from bfcache - mobile Chrome tab revisit
+                forceTop();
+                setTimeout(forceTop, 0);
+                setTimeout(forceTop, 50);
+                setTimeout(forceTop, 150);
+                setTimeout(forceTop, 300);
+              }
+            });
+
+            // Tab becomes visible again
+            document.addEventListener('visibilitychange', function() {
+              if (document.visibilityState === 'visible') {
+                forceTop();
+                setTimeout(forceTop, 50);
+                setTimeout(forceTop, 150);
+              }
+            });
+          })();
         `,
       },
       {

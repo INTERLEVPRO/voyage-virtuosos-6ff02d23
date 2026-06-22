@@ -28,31 +28,43 @@ function Index() {
   const [packages, setPackages] = useState<TravelPackage[]>([]);
 
   useEffect(() => {
-    // 1. Force manual scroll restoration
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
-    // 2. Scroll to top immediately
-    window.scrollTo(0, 0);
-
-    // 3. Scroll to top repeatedly for a brief moment to override delayed browser restorations
-    const t1 = setTimeout(() => window.scrollTo(0, 0), 10);
-    const t2 = setTimeout(() => window.scrollTo(0, 0), 50);
-    const t3 = setTimeout(() => window.scrollTo(0, 0), 100);
-
-    // 4. Force top on unload so next time the browser cache starts at top
-    const handleUnload = () => {
+    const forceTop = () => {
       window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     };
-    window.addEventListener("beforeunload", handleUnload);
-    
-    // 5. Also handle visibility change for returning to backgrounded tabs
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        window.scrollTo(0, 0);
+
+    // Immediately force top
+    forceTop();
+    const t1 = setTimeout(forceTop, 50);
+    const t2 = setTimeout(forceTop, 150);
+
+    // bfcache restore: mobile Chrome tab revisit (e.persisted = true)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      forceTop();
+      if (e.persisted) {
+        forceTop();
+        setTimeout(forceTop, 0);
+        setTimeout(forceTop, 50);
+        setTimeout(forceTop, 150);
+        setTimeout(forceTop, 300);
       }
     };
+
+    // Tab becomes active again
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        forceTop();
+        setTimeout(forceTop, 50);
+        setTimeout(forceTop, 150);
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
     document.addEventListener("visibilitychange", handleVisibility);
 
     // 6. Handle bfcache restore (mobile Chrome/Safari tab revisit) — useEffect does not re-run
@@ -66,8 +78,7 @@ function Index() {
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
-      clearTimeout(t3);
-      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pageshow", handlePageShow);
     };
