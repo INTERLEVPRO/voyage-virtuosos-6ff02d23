@@ -72,6 +72,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        type: "text/javascript",
+        children: `
+          if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+          }
+          window.scrollTo(0, 0);
+          
+          window.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+              setTimeout(function() { window.scrollTo(0, 0); }, 10);
+            }
+          });
+          window.addEventListener('pageshow', function() {
+            setTimeout(function() { window.scrollTo(0, 0); }, 10);
+          });
+          window.addEventListener('focus', function() {
+            setTimeout(function() { window.scrollTo(0, 0); }, 10);
+          });
+        `,
+      },
+      {
         src: "https://www.googletagmanager.com/gtag/js?id=G-BYSENCWW5P",
         async: true,
       },
