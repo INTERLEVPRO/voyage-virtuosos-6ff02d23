@@ -661,10 +661,19 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
   const [charIdx, setCharIdx] = useState(0);
   const scrollBoxRef = useRef<HTMLDivElement>(null);
 
-  const guide = useMemo(
-    () => detectDestination(userQuery) || buildGenericGuide(userQuery),
-    [userQuery],
-  );
+  // Keep narrative short: just the intro section + a closing line.
+  const sections = useMemo(() => {
+    const base = detectDestination(userQuery) || buildGenericGuide(userQuery);
+    return {
+      emoji: base.emoji,
+      title: base.title,
+      sections: [
+        base.sections[0],
+        `\n\nIch stelle jetzt dein perfektes ${base.title}-Paket zusammen…`,
+      ],
+    };
+  }, [userQuery]);
+  const guide = sections;
 
   useEffect(() => {
     setText("");
