@@ -167,11 +167,17 @@ function getPlanningSignals(text: string, history: string) {
     hasLabeledTravelers ||
     /\b\d+\s?(person|personen|erwachsene|reisende|gäste|leute|kind|kinder|pers\.?|pax|adult|adults)\b/.test(all) ||
     /\b(allein|solo|paar|pärchen|paerchen|familie|zu zweit|zu dritt|zu viert)\b/i.test(all);
+  // Strict: avoid matching timeframe phrases like "ab Juni" / "von Mai bis Juni".
+  // Only count origin when an explicit origin keyword (abflug/abflughafen/flughafen/start in)
+  // is present, OR "ab|von" is followed by a known German/AT/CH city, OR a 3-letter airport code is mentioned.
+  const MONTHS_RE = /(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|morgen|heute|jetzt|bald|nächst|kommend|monat|woche|wochen|tag|tagen|jahr|jahre)/i;
+  const KNOWN_ORIGIN_CITIES = /(münchen|muenchen|berlin|hamburg|frankfurt|köln|koeln|stuttgart|düsseldorf|duesseldorf|wien|zürich|zuerich|basel|genf|geneva|hannover|nürnberg|nuernberg|leipzig|dresden|bremen|dortmund|salzburg|innsbruck|graz|linz|bern)/i;
   const hasOrigin =
     hasLabeledOrigin ||
-    /\b(ab|von|abflug|abflughafen|start(en)?\s+in|flughafen)\s+[a-zäöüß]{3,}/i.test(all) ||
-    /\b(ab|von|abflug)\s+(münchen|berlin|hamburg|frankfurt|köln|stuttgart|düsseldorf|wien|zürich|basel|genf|hannover|nürnberg|leipzig|dresden|bremen|dortmund)\b/i.test(all) ||
-    /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm)\b/i.test(all);
+    new RegExp(`\\b(abflug|abflughafen|abflugort|flughafen|start(?:en)?\\s+in)\\s+[a-zäöüß]{3,}`, "i").test(all) ||
+    new RegExp(`\\b(ab|von)\\s+${KNOWN_ORIGIN_CITIES.source}\\b`, "i").test(all) ||
+    /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm|txl|sxf)\b/i.test(all);
+  void MONTHS_RE;
   const hasTimeframe =
     hasLabeledTimeframe ||
     parseDateRangeDays(combined) !== null ||
