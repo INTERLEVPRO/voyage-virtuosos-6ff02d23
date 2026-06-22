@@ -196,6 +196,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showGeneratingLoader, setShowGeneratingLoader] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [dateOpen, setDateOpen] = useState(false);
@@ -206,7 +207,16 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
   const isLoading = status === "submitted" || status === "streaming";
 
-
+  // Full-screen narrative loader only when package generation is actually
+  // running (slow request) — NOT for short Q&A turns.
+  useEffect(() => {
+    if (!isLoading) {
+      setShowGeneratingLoader(false);
+      return;
+    }
+    const t = setTimeout(() => setShowGeneratingLoader(true), 2500);
+    return () => clearTimeout(t);
+  }, [isLoading]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -456,7 +466,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         </p>
       </form>
 
-      {(isLoading || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
+      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
     </div>
   );
 }
@@ -651,10 +661,19 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
   const [charIdx, setCharIdx] = useState(0);
   const scrollBoxRef = useRef<HTMLDivElement>(null);
 
-  const guide = useMemo(
-    () => detectDestination(userQuery) || buildGenericGuide(userQuery),
-    [userQuery],
-  );
+  // Keep narrative short: just the intro section + a closing line.
+  const sections = useMemo(() => {
+    const base = detectDestination(userQuery) || buildGenericGuide(userQuery);
+    return {
+      emoji: base.emoji,
+      title: base.title,
+      sections: [
+        base.sections[0],
+        `\n\nIch stelle jetzt dein perfektes ${base.title}-Paket zusammen…`,
+      ],
+    };
+  }, [userQuery]);
+  const guide = sections;
 
   useEffect(() => {
     setText("");
