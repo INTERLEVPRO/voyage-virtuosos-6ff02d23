@@ -83,6 +83,29 @@ function stripJsonBlock(text: string): string {
 /* ── Schnellstart: icon circles on mobile, full cards on desktop ── */
 function StarterPrompts({ submit }: { submit: (text: string) => void }) {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const scrollYRef = useRef(0);
+
+  const handleOpen = (e: React.MouseEvent, i: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    scrollYRef.current = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = "100%";
+    setOpenIdx(i);
+  };
+
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    requestAnimationFrame(() => window.scrollTo(0, scrollYRef.current));
+    setOpenIdx(null);
+  };
 
   return (
     <div className="space-y-2">
@@ -95,7 +118,7 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
         {STARTER_PROMPTS.map((p, i) => (
           <button
             key={p.title}
-            onClick={() => setOpenIdx(i)}
+            onClick={(e) => handleOpen(e, i)}
             className="flex flex-col items-center gap-1.5 transition-all duration-300"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-card border border-border shadow-soft transition-all duration-300 hover:scale-110 text-2xl">
@@ -110,7 +133,7 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
       {openIdx !== null && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm sm:hidden animate-in fade-in duration-200"
-          onClick={() => setOpenIdx(null)}
+          onClick={handleClose}
         >
           <div
             className="mx-6 w-full max-w-xs rounded-3xl border border-border bg-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
@@ -123,16 +146,16 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
                 {STARTER_PROMPTS[openIdx].subtitle}
               </div>
               <button
-                onClick={() => {
+                onClick={(e) => {
                   submit(STARTER_PROMPTS[openIdx].prompt);
-                  setOpenIdx(null);
+                  handleClose(e);
                 }}
                 className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90"
               >
                 <Sparkles className="h-4 w-4" /> Paket erstellen
               </button>
               <button
-                onClick={() => setOpenIdx(null)}
+                onClick={handleClose}
                 className="text-xs text-muted-foreground hover:text-foreground transition"
               >
                 Schließen

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Check, Sparkles, ShieldCheck, LogOut, User as UserIcon, Globe, Plane, MapPin } from "lucide-react";
 import assistantImg from "@/assets/assistant.png";
 import logo from "@/assets/logo.png";
@@ -168,12 +168,35 @@ function FeatureChip({
   body: string;
 }) {
   const [open, setOpen] = useState(false);
+  const scrollYRef = useRef(0);
+
+  const handleOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    scrollYRef.current = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = "100%";
+    setOpen(true);
+  };
+
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    requestAnimationFrame(() => window.scrollTo(0, scrollYRef.current));
+    setOpen(false);
+  };
 
   return (
     <>
       {/* ── Mobile: compact icon circle ── */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleOpen}
         className={`flex sm:hidden flex-col items-center gap-2 transition-all duration-300 ${open ? "scale-105" : ""}`}
       >
         <div
@@ -190,7 +213,7 @@ function FeatureChip({
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md sm:hidden animate-in fade-in duration-200"
-          onClick={() => setOpen(false)}
+          onClick={handleClose}
         >
           <div
             className="mx-6 w-full max-w-xs rounded-3xl glass-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
@@ -203,7 +226,7 @@ function FeatureChip({
               <div className="text-lg font-bold text-foreground">{title}</div>
               <div className="text-sm text-muted-foreground leading-relaxed">{body}</div>
               <button
-                onClick={() => setOpen(false)}
+                onClick={handleClose}
                 className="mt-2 rounded-full bg-[#0d9e4f]/10 px-5 py-2 text-xs font-semibold text-[#0d9e4f] transition hover:bg-[#0d9e4f]/20"
               >
                 Schließen
