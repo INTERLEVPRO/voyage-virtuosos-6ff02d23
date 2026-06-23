@@ -59,7 +59,7 @@ type ResearchData = {
 // a year (1900–2099) are ignored — they're almost certainly travel dates.
 function parseBudgetValue(text: string): number | null {
   const candidates: number[] = [];
-  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$)?/gi)) {
+  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euro?|euros?)?/gi)) {
     const raw = m[1];
     const currency = m[2];
     const n = Number(raw.replace(/[.,]/g, ""));
@@ -74,7 +74,7 @@ function parseBudgetValue(text: string): number | null {
 
 // Did the user mention a budget at all (even an unrealistically low one)?
 function mentionedBudget(text: string): boolean {
-  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro|usd|\$)/i.test(text);
+  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
 }
 
 const MONTH_TO_NUM: Record<string, number> = {
