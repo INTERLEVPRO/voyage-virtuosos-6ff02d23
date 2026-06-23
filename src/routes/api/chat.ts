@@ -1233,9 +1233,9 @@ export const Route = createFileRoute("/api/chat")({
         const interests = llmInterests.length > 0
           ? llmInterests
           : (dialog.interests ? [dialog.interests] : extractInterests(userHistory));
-        const origin = extracted.originCity
-          ? cleanPlace(extracted.originCity)
-          : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
+        const origin = dialog.origin
+          ? cleanPlace(dialog.origin)
+          : (extracted.originCity ? cleanPlace(extracted.originCity) : extractOrigin(userHistory));
         const travelers = extracted.travelers
           ?? (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null)
           ?? extractTravelers(userHistory);
