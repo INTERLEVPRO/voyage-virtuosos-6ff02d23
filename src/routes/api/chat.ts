@@ -323,6 +323,22 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
   return answered;
 }
 
+function getAnsweredFieldsFromUserMessages(uiMessages: UIMessage[]): Set<MissingField> {
+  const answered = new Set<MissingField>();
+  const fields: MissingField[] = ["destination", "budget", "duration", "travelers", "origin", "timeframe", "interests"];
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (const m of uiMessages) {
+    if (m.role !== "user") continue;
+    const reply = textOf(m);
+    for (const field of fields) {
+      if (isAnswerValid(field, reply)) answered.add(field);
+    }
+  }
+  return answered;
+}
+
 // Collect the literal user reply that followed each assistant question.
 // Latest answer wins if a field was asked multiple times.
 function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField, string>> {
