@@ -409,12 +409,30 @@ function parseAnswerTravelers(value: string): number | null {
 }
 
 function cleanPlace(value: string): string {
+  const routed = extractRouteDestination(value);
+  if (routed) return routed;
+
   const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
   // Take up to 3 words
   const words = first.split(/\s+/).slice(0, 3);
-  return words
+  const cleaned = words
     .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
     .join(" ");
+  return normalizePlaceName(cleaned);
+}
+
+function normalizePlaceName(value: string): string {
+  const compact = value.trim().replace(/\s+/g, " ");
+  const lower = compact.toLowerCase().replace(/[._-]/g, " ");
+  if (/^(india|indien|indya)$/.test(lower)) return "Indien";
+  if (/^(sri\s*lanka|srilanka|sri\s*lanka)$/.test(lower)) return "Sri Lanka";
+  return compact.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function extractRouteDestination(text: string): string | null {
+  const route = text.match(/\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i);
+  if (route) return "Indien & Sri Lanka";
+  return null;
 }
 
 function formatMissingField(field: MissingField): string {
