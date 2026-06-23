@@ -1199,9 +1199,15 @@ export const Route = createFileRoute("/api/chat")({
           ?? (dialog.duration ? parseAnswerDurationDays(dialog.duration) : null)
           ?? extractRequestedDurationDays(userHistory);
 
-        const destination = extracted.destination
-          ? cleanPlace(extractDestination(userHistory) !== "deinem Reiseziel" ? extractDestination(userHistory) : extracted.destination)
-          : (dialog.destination ? cleanPlace(dialog.destination) : extractDestination(userHistory));
+        // Field-mapping rule: dialog answer to the destination question wins.
+        // Never overwrite destination with interest/origin/duration answers,
+        // even if the LLM extractor or loose regex re-interprets later text.
+        const historyDestination = extractDestination(userHistory);
+        const destination = dialog.destination
+          ? cleanPlace(dialog.destination)
+          : (historyDestination !== "deinem Reiseziel"
+              ? cleanPlace(historyDestination)
+              : (extracted.destination ? cleanPlace(extracted.destination) : historyDestination));
 
         const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
           ? extracted.budgetEur
