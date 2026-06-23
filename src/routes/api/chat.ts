@@ -227,6 +227,7 @@ function detectAskedFields(assistantText: string): MissingField[] {
   if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) fields.push("travelers");
   if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) fields.push("origin");
   if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) fields.push("timeframe");
+  if (/interessen|urlaubstyp|reiseart|was.*erleben|strand|kultur|wellness|natur|aktivität|aktivitaet/.test(t)) fields.push("interests");
   return Array.from(new Set(fields));
 }
 
@@ -241,6 +242,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     travelers: /\b(?:personen|personenanzahl|reisende|travelers|travellers|guests|gäste|pax)\s*:\s*([^\n,;]+)/i,
     origin: /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([^\n,;]+)/i,
     timeframe: /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i,
+    interests: /\b(?:interessen|urlaubstyp|reiseart|interests)\s*:\s*([^\n,;]+)/i,
   };
 
   const labeled = v.match(labeledMatchers[field])?.[1]?.trim();
@@ -272,6 +274,8 @@ function isAnswerValid(field: MissingField, value: string): boolean {
         /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(v) ||
         /\b(flexibel|egal)\b/i.test(v)
       );
+    case "interests":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !/^\s*(ja|nein|ok|okay|passt|stimmt)\s*$/i.test(v);
     default:
       return true;
   }
