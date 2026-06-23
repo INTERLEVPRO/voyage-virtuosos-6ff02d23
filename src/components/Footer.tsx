@@ -51,7 +51,7 @@ export function Footer() {
         </div>
 
         {/* Column 2 */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           <h3 className="font-bold text-base sm:text-lg mb-2 sm:mb-4 uppercase">META NAVIGATION</h3>
           <ul className="flex flex-wrap gap-x-4 gap-y-2 sm:block sm:space-y-4">
             <li>
