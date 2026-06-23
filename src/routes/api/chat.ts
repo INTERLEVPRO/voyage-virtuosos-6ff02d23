@@ -637,6 +637,19 @@ function isDateLike(text: string): boolean {
   return MONTH_RE.test(firstWord);
 }
 
+function isLikelyFieldOnlyMessage(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  if (parseBudgetValue(t) !== null) return true;
+  if (parseAnswerDurationDays(t) !== null) return true;
+  if (parseAnswerTravelers(t) !== null && /\b(person|personen|reisende|gäste|gaeste|pax|adult|adults|allein|solo|paar|familie)\b/i.test(t)) return true;
+  if (/^(ja|yes|ok|okay|passt|stimmt|genau|richtig|nein|no|danke|thanks)$/i.test(t)) return true;
+  if (/^(budget|dauer|reisedauer|personen|reisende|abflug|abflughafen|reisezeit|zeitraum|interessen)\b/i.test(t)) return true;
+  if (/\b(abflug|abflughafen|von|ab)\b/i.test(t) && !/\b(nach|to|in)\b/i.test(t)) return true;
+  if (/\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|october|december|sommer|winter|herbst|frühling|fruehling|flexibel|egal)\b/i.test(t) && t.split(/\s+/).length <= 4) return true;
+  return false;
+}
+
 function isGenerationCommand(text: string): boolean {
   return /\b(package|packages|paket|pakete|pakeg|create|erstellen|generieren|mach|machen|generate|build)\b/i.test(text);
 }
