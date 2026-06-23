@@ -811,7 +811,7 @@ function ProviderRow({
   subtitle: string;
   extra?: string;
   ratingLabel: string;
-  rating: string;
+  rating?: string;
   price: number;
   ctaLabel: string;
   provider: string;
@@ -831,7 +831,8 @@ function ProviderRow({
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-foreground">{title}</h3>
             <span className="text-xs text-muted-foreground">
-              {ratingLabel} <span className="font-semibold text-foreground">{rating}</span>
+              {ratingLabel}
+              {rating ? <> <span className="font-semibold text-foreground">{rating}</span></> : null}
             </span>
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
