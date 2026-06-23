@@ -975,7 +975,10 @@ export const Route = createFileRoute("/api/chat")({
           return createTextStreamResponse(msg, uiMessages);
         }
 
-        const interests = extractInterests(userHistory);
+        const llmInterests = (extracted.interests ?? [])
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const interests = llmInterests.length > 0 ? llmInterests : extractInterests(userHistory);
         const origin = extracted.originCity
           ? cleanPlace(extracted.originCity)
           : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
@@ -986,6 +989,23 @@ export const Route = createFileRoute("/api/chat")({
           ? (extractTravelMonth(extracted.timeframe) ?? extracted.timeframe.toLowerCase())
           : (dialog.timeframe ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory)) : extractTravelMonth(userHistory));
         const travelStartDate = extracted.timeframe ?? dialog.timeframe ?? undefined;
+
+        // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
+        const validationMissing: MissingField[] = [];
+        if (!destination || /^deinem reiseziel$/i.test(destination) || isDateLike(destination)) validationMissing.push("destination");
+        if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
+        if (!requestedDurationDays || requestedDurationDays <= 0) validationMissing.push("duration");
+        if (!travelers || travelers <= 0) validationMissing.push("travelers");
+        if (!origin || isDateLike(origin)) validationMissing.push("origin");
+        if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
+        if (validationMissing.length > 0) {
+          const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
+          return createTextStreamResponse(
+            buildConciergeReply(validationMissing, userMessageCount),
+            uiMessages,
+          );
+        }
+
 
 
 
