@@ -909,22 +909,58 @@ export const Route = createFileRoute("/api/chat")({
         // for completeness, and use LLM extraction only to shape the final values.
         const regexSignals = getPlanningSignals("", userHistory);
         const dialogPreview = getDialogAnswers(uiMessages);
+
+        // Track which fields the assistant has already asked the user.
+        // If a field was asked but never validly answered, it counts as missing
+        // even if a loose regex match elsewhere would otherwise satisfy it.
+        const askedFields = new Set<MissingField>();
+        for (const m of uiMessages) {
+          if (m.role !== "assistant") continue;
+          for (const f of detectAskedFields(textOf(m))) askedFields.add(f);
+        }
+        const answeredInDialog = getAnsweredFieldsFromDialog(uiMessages);
+
+        const fieldHas = (field: MissingField, looseSignal: boolean): boolean => {
+          // If the assistant explicitly asked about this field, the user MUST
+          // have replied with a valid answer — no loose/LLM inference allowed.
+          if (askedFields.has(field)) return answeredInDialog.has(field);
+          return looseSignal;
+        };
+
         const has = {
-          destination: !!(regexSignals.hasDestination || dialogPreview.destination),
-          budget: !!(
-            (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
-            || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
+          destination: fieldHas(
+            "destination",
+            !!(regexSignals.hasDestination || dialogPreview.destination),
           ),
-          duration: !!(
-            regexSignals.hasDuration
-            || (dialogPreview.duration && parseAnswerDurationDays(dialogPreview.duration))
+          budget: fieldHas(
+            "budget",
+            !!(
+              (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
+              || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
+            ),
           ),
-          travelers: !!(
-            regexSignals.hasTravelers
-            || (dialogPreview.travelers && parseAnswerTravelers(dialogPreview.travelers))
+          duration: fieldHas(
+            "duration",
+            !!(
+              regexSignals.hasDuration
+              || (dialogPreview.duration && parseAnswerDurationDays(dialogPreview.duration))
+            ),
           ),
-          origin: !!(regexSignals.hasOrigin || dialogPreview.origin),
-          timeframe: !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
+          travelers: fieldHas(
+            "travelers",
+            !!(
+              regexSignals.hasTravelers
+              || (dialogPreview.travelers && parseAnswerTravelers(dialogPreview.travelers))
+            ),
+          ),
+          origin: fieldHas(
+            "origin",
+            !!(regexSignals.hasOrigin || dialogPreview.origin),
+          ),
+          timeframe: fieldHas(
+            "timeframe",
+            !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
+          ),
         };
         const missingFields: MissingField[] = [];
         if (!has.destination) missingFields.push("destination");
