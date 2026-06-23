@@ -462,7 +462,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flüge"
           subtitle={currentPkg.flight}
           ratingLabel="Aviasales"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei Aviasales ansehen"
           provider="flight"
@@ -475,7 +474,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flughafen-Transfer"
           subtitle="Privater Taxi-Transfer vom/zum Flughafen"
           ratingLabel="Kiwitaxi"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.05)}
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
@@ -488,7 +486,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Hotel"
           subtitle={currentPkg.hotel}
           ratingLabel="Klook"
-          rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei Klook ansehen"
@@ -502,7 +499,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
           ratingLabel="Klook"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
@@ -701,57 +697,57 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         </div>
       )}
 
-      {/* German Reviews Section */}
-      <div
-        className={cn(
-          "mt-6 rounded-2xl border border-border bg-card p-6 shadow-card",
-          activeTab !== "reviews" && "max-sm:hidden",
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Echte German Reviews</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              🇩🇪 Was deutsche Reisende sagen — echte Bewertungen aus Deutschland
-            </p>
+      {/* Verified Reviews Section — only shown when real, source-linked ratings exist */}
+      {currentPkg.ratings && currentPkg.ratings.length > 0 && (
+        <div
+          className={cn(
+            "mt-6 rounded-2xl border border-border bg-card p-6 shadow-card",
+            activeTab !== "reviews" && "max-sm:hidden",
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Verifizierte Bewertungen</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Bewertungen direkt von den verlinkten Quellen. Klicke auf eine Quelle, um die Original-Reviews zu lesen.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600">
+              <ThumbsUp className="h-4 w-4" /> Quellen geprüft
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600">
-            <ThumbsUp className="h-4 w-4" /> Top bewertet
-          </div>
-        </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <ReviewCard
-            name="Michael K."
-            location="München"
-            rating={currentPkg.rating}
-            date="vor 2 Wochen"
-            text={`"Wir waren anfangs skeptisch, aber das ${currentPkg.hotel.split(" ").slice(0, 3).join(" ")} hat uns wirklich positiv überrascht! Das Zimmer war sehr sauber und das Personal extrem freundlich. Die Lage war perfekt als Ausgangspunkt für unsere Ausflüge. Das Frühstücksbuffet hätte etwas abwechslungsreicher sein können, aber insgesamt ein tolles Erlebnis!"`}
-            source="Booking.com"
-            linkUrl={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(currentPkg.hotel)}`}
-          />
-          <ReviewCard
-            name="Sabine & Peter"
-            location="Hamburg"
-            rating={Math.min(5, currentPkg.rating + 0.2)}
-            date="vor 1 Monat"
-            text={`"Die Organisation hat super geklappt. Der Transfer in ${currentPkg.destination} stand pünktlich bereit. Besonders schön fanden wir die Tour zu '${currentPkg.activities[0] || 'den Sehenswürdigkeiten'}'. Ein kleiner Minuspunkt war die Flugzeit auf dem Rückflug, aber dafür kann der Veranstalter ja nichts. Gerne wieder!"`}
-            source="Google"
-            linkUrl={`https://www.google.com/search?q=${encodeURIComponent(currentPkg.destination + ' reviews')}`}
-          />
-          <ReviewCard
-            name="Thomas B."
-            location="Berlin"
-            rating={Math.max(4, currentPkg.rating - 0.1)}
-            date="vor 3 Wochen"
-            text={`"Richtig gutes Preis-Leistungs-Verhältnis. Wir hatten erst überlegt, alles einzeln zu buchen, aber das Paket hat uns viel Stress erspart. ${currentPkg.activities[1] ?? currentPkg.activities[0]} war das absolute Highlight der Reise! Ein Tipp: Nehmt euch auf jeden Fall bequeme Schuhe mit. Alles in allem top!"`}
-            source={currentPkg.activities.length > 2 ? "GetYourGuide" : "Google"}
-            linkUrl={currentPkg.activities.length > 2 
-              ? `https://www.getyourguide.com/s?q=${encodeURIComponent(currentPkg.destination)}` 
-              : `https://www.google.com/search?q=${encodeURIComponent((currentPkg.activities[1] ?? currentPkg.activities[0] ?? currentPkg.destination) + ' reviews')}`}
-          />
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+            {currentPkg.ratings.map((rt) => {
+              const num = typeof rt.value === "number" ? rt.value : Number(rt.value);
+              const display = Number.isFinite(num)
+                ? rt.scale === 10
+                  ? `${num.toFixed(1)} / 10`
+                  : `${num.toFixed(1)} / 5`
+                : String(rt.value);
+              return (
+                <li
+                  key={`${rt.source}-${rt.url}`}
+                  className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-4"
+                >
+                  <a
+                    href={rt.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary"
+                  >
+                    {rt.source} <ExternalLink className="h-3.5 w-3.5 opacity-60" />
+                  </a>
+                  <span className="inline-flex items-center gap-1 text-sm font-bold text-foreground">
+                    <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
+                    {display}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      </div>
+      )}
 
       {/* Trust strip */}
       <div
@@ -760,14 +756,13 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           activeTab !== "overview" && "max-sm:hidden",
         )}
       >
-        <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
+        <TrustItem icon={Star} title="Verifizierte Quellen" body="Bewertungen direkt von den Anbietern" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
       <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
-        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit
-        variieren.
+        Preise und Verfügbarkeiten werden bei den jeweiligen Partnern in Echtzeit geprüft. Bewertungen werden nur angezeigt, wenn die Originalquelle verlinkt ist.
       </p>
 
       {/* Mobile sticky bottom action bar — app-like CTA */}
@@ -816,7 +811,7 @@ function ProviderRow({
   subtitle: string;
   extra?: string;
   ratingLabel: string;
-  rating: string;
+  rating?: string;
   price: number;
   ctaLabel: string;
   provider: string;
@@ -836,7 +831,8 @@ function ProviderRow({
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-foreground">{title}</h3>
             <span className="text-xs text-muted-foreground">
-              {ratingLabel} <span className="font-semibold text-foreground">{rating}</span>
+              {ratingLabel}
+              {rating ? <> <span className="font-semibold text-foreground">{rating}</span></> : null}
             </span>
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
