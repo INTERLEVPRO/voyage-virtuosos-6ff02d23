@@ -3,6 +3,7 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DateRange } from "react-day-picker";
+import { de } from "date-fns/locale";
 import {
   Send,
   Loader2,
