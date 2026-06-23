@@ -467,6 +467,40 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
   return prompts[0];
 }
 
+function isTripConfirmationPrompt(text: string): boolean {
+  return /reiseangaben.*prüfen|daten.*pakete.*erstellen|soll ich.*pakete/i.test(text);
+}
+
+function isConfirmPackageReply(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return /^(ja|yes|ok|okay|passt|stimmt|genau|richtig|bestätige|bestaetige|mach|machen|erstellen|create|generate|paket|pakete|pakeg)(\b|\s)/i.test(t)
+    || /\b(ja.*paket|pakete.*erstellen|package.*create|pakeg.*create|create.*pakeg|mach.*pakete|passt.*pakete)\b/i.test(t);
+}
+
+function buildTripConfirmationReply(params: {
+  destination: string;
+  budget: number;
+  durationDays: number;
+  travelers: number;
+  origin: string;
+  timeframe: string;
+  interests: string[];
+}) {
+  return [
+    "Ich prüfe kurz deine Reiseangaben, damit keine alten Daten verwendet werden:",
+    "",
+    `- **Reiseziel:** ${params.destination}`,
+    `- **Budget:** ${params.budget.toLocaleString("de-DE")} € pro Person`,
+    `- **Reisedauer:** ${params.durationDays} Tage`,
+    `- **Personen:** ${params.travelers}`,
+    `- **Abflug:** ${params.origin}`,
+    `- **Reisezeit:** ${params.timeframe}`,
+    `- **Interessen:** ${params.interests.join(", ")}`,
+    "",
+    "Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?",
+  ].join("\n");
+}
+
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
