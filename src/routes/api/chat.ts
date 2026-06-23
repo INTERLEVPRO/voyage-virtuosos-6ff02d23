@@ -1165,7 +1165,7 @@ export const Route = createFileRoute("/api/chat")({
           ?? extractRequestedDurationDays(userHistory);
 
         const destination = extracted.destination
-          ? cleanPlace(extracted.destination)
+          ? cleanPlace(extractDestination(userHistory) !== "deinem Reiseziel" ? extractDestination(userHistory) : extracted.destination)
           : (dialog.destination ? cleanPlace(dialog.destination) : extractDestination(userHistory));
 
         const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
