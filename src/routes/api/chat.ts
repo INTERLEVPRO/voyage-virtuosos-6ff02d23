@@ -45,7 +45,7 @@ const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "p
 // missing/invalid and the concierge will ask the user to clarify.
 const MIN_BUDGET_EUR = 100;
 
-type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
+type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe" | "interests";
 type ResearchData = {
   flights: string[];
   hotels: string[];
@@ -188,6 +188,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(all) ||
     /\b(nächst(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i.test(all) ||
     /\b(flexibel|egal)\b/i.test(all);
+  const hasInterests = /\b(strand|kultur|wellness|essen|kulinarik|natur|abenteuer|aktivität|aktivitaet|shopping|kunst|museum|museen|ruhe|entspannung|wandern|safari|nightlife|nachtleben|familie|honeymoon|flitterwochen)\b/i.test(all);
 
   return {
     hasBudget,
@@ -197,6 +198,7 @@ function getPlanningSignals(text: string, history: string) {
     hasTravelers,
     hasOrigin,
     hasTimeframe,
+    hasInterests,
   };
 }
 
@@ -210,12 +212,14 @@ function getMissingFields(text: string, history: string): MissingField[] {
   if (!signals.hasTravelers) missing.push("travelers");
   if (!signals.hasOrigin) missing.push("origin");
   if (!signals.hasTimeframe) missing.push("timeframe");
+  if (!signals.hasInterests) missing.push("interests");
 
   return missing;
 }
 
 // Identify which fields the assistant asked about, based on the question text.
 function detectAskedFields(assistantText: string): MissingField[] {
+  if (isTripConfirmationPrompt(assistantText)) return [];
   const t = assistantText.toLowerCase();
   const fields: MissingField[] = [];
   if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) fields.push("destination");
@@ -224,6 +228,7 @@ function detectAskedFields(assistantText: string): MissingField[] {
   if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) fields.push("travelers");
   if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) fields.push("origin");
   if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) fields.push("timeframe");
+  if (/interessen|urlaubstyp|reiseart|was.*erleben|strand|kultur|wellness|natur|aktivität|aktivitaet/.test(t)) fields.push("interests");
   return Array.from(new Set(fields));
 }
 
@@ -238,6 +243,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     travelers: /\b(?:personen|personenanzahl|reisende|travelers|travellers|guests|gäste|pax)\s*:\s*([^\n,;]+)/i,
     origin: /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([^\n,;]+)/i,
     timeframe: /\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i,
+    interests: /\b(?:interessen|urlaubstyp|reiseart|interests)\s*:\s*([^\n,;]+)/i,
   };
 
   const labeled = v.match(labeledMatchers[field])?.[1]?.trim();
@@ -249,6 +255,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
 function isAnswerValid(field: MissingField, value: string): boolean {
   const v = extractFieldAnswer(field, value)?.trim() ?? "";
   if (!v) return false;
+  if (isGenerationCommand(v)) return false;
   switch (field) {
     case "destination":
       return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
@@ -269,6 +276,8 @@ function isAnswerValid(field: MissingField, value: string): boolean {
         /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(v) ||
         /\b(flexibel|egal)\b/i.test(v)
       );
+    case "interests":
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !/^\s*(ja|nein|ok|okay|passt|stimmt)\s*$/i.test(v);
     default:
       return true;
   }
@@ -408,6 +417,8 @@ function formatMissingField(field: MissingField): string {
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
+    case "interests":
+      return "**Was ist dir im Urlaub wichtig?** (z. B. Strand, Kultur, Wellness, Natur oder Abenteuer)";
   }
 }
 
@@ -419,6 +430,7 @@ function shortFieldLabel(field: MissingField): string {
     case "travelers": return "Anzahl Personen";
     case "origin": return "Abflughafen";
     case "timeframe": return "Reisezeitraum";
+    case "interests": return "Interessen";
   }
 }
 
@@ -456,6 +468,41 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
   return prompts[0];
 }
 
+function isTripConfirmationPrompt(text: string): boolean {
+  return /reiseangaben.*prüfen|daten.*pakete.*erstellen|soll ich.*pakete/i.test(text);
+}
+
+function isConfirmPackageReply(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (t.length > 80 || /\b(aber|doch|statt|instead|change|ändern|aendern|korrigier|lieber|eigentlich)\b/i.test(t)) return false;
+  return /^(ja|yes|ok|okay|passt|stimmt|genau|richtig|bestätige|bestaetige|mach|machen|erstellen|create|generate|paket|pakete|pakeg)(\b|\s)/i.test(t)
+    || /\b(ja.*paket|pakete.*erstellen|package.*create|pakeg.*create|create.*pakeg|mach.*pakete|passt.*pakete)\b/i.test(t);
+}
+
+function buildTripConfirmationReply(params: {
+  destination: string;
+  budget: number;
+  durationDays: number;
+  travelers: number;
+  origin: string;
+  timeframe: string;
+  interests: string[];
+}) {
+  return [
+    "Ich prüfe kurz deine Reiseangaben, damit keine alten Daten verwendet werden:",
+    "",
+    `- **Reiseziel:** ${params.destination}`,
+    `- **Budget:** ${params.budget.toLocaleString("de-DE")} € pro Person`,
+    `- **Reisedauer:** ${params.durationDays} Tage`,
+    `- **Personen:** ${params.travelers}`,
+    `- **Abflug:** ${params.origin}`,
+    `- **Reisezeit:** ${params.timeframe}`,
+    `- **Interessen:** ${params.interests.join(", ")}`,
+    "",
+    "Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?",
+  ].join("\n");
+}
+
 function createTextStreamResponse(text: string, originalMessages: UIMessage[]) {
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
@@ -487,11 +534,11 @@ function parseDurationDays(value: string): number | null {
 }
 
 function extractRequestedDurationDays(history: string): number {
-  const range = parseDateRangeDays(history);
-  if (range) return range;
-
   const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (isGenerationCommand(lines[i]) || isConfirmPackageReply(lines[i])) continue;
+    const range = parseDateRangeDays(lines[i]);
+    if (range) return range;
     const days = parseDurationDays(lines[i]);
     if (days) return days;
   }
@@ -558,6 +605,10 @@ function isDateLike(text: string): boolean {
   return MONTH_RE.test(firstWord);
 }
 
+function isGenerationCommand(text: string): boolean {
+  return /\b(package|packages|paket|pakete|pakeg|create|erstellen|generieren|mach|machen|generate|build)\b/i.test(text);
+}
+
 function cleanDestination(raw: string): string {
   // Stop at sentence/clause boundaries and strip filler words
   const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
@@ -577,6 +628,7 @@ function extractDestination(history: string): string {
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
+    if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
@@ -635,16 +687,19 @@ function parseResearchData(text: string): ResearchData {
 }
 
 function extractOrigin(history: string): string | undefined {
-  const labeled = history.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
-  if (labeled?.[1]) {
-    const cleaned = labeled[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
-    return cleaned || undefined;
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (isGenerationCommand(line)) continue;
+    const labeled = line.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+    const direct = line.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+    const value = labeled?.[1] ?? direct?.[1];
+    if (value) {
+      const cleaned = value.split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
+      if (cleaned) return cleaned;
+    }
   }
-  const m = history.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
-  if (!m) return undefined;
-  // take first 1-2 words before comma/punct
-  const cleaned = m[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 2).join(" ");
-  return cleaned || undefined;
+  return undefined;
 }
 
 const WORD_NUMS: Record<string, number> = {
@@ -656,34 +711,39 @@ const WORD_NUMS: Record<string, number> = {
 };
 
 function extractTravelers(history: string): number | undefined {
-  const lower = history.toLowerCase();
-  const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
-  if (num) {
-    const n = Number(num[1]);
-    if (n > 0 && n < 30) return n;
-  }
-  for (const [word, n] of Object.entries(WORD_NUMS)) {
-    if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+  const lines = history.split(/\n+/).map((line) => line.toLowerCase().trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const lower = lines[i];
+    if (isGenerationCommand(lower)) continue;
+    const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
+    if (num) {
+      const n = Number(num[1]);
+      if (n > 0 && n < 30) return n;
+    }
+    for (const [word, n] of Object.entries(WORD_NUMS)) {
+      if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+    }
   }
   return undefined;
 }
 
 function extractTravelMonth(history: string): string | undefined {
-  const labeled = history.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
-  if (labeled?.[1]) {
-    const m = labeled[1].match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
+    const labeled = line.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
+    const source = labeled?.[1] ?? line;
+    const m = source.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
     if (m?.[1]) return m[1].toLowerCase();
-    const relative = labeled[1].match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
+    const relative = source.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
     if (relative?.[1]) return relative[1].toLowerCase();
   }
-  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
-  if (m?.[1]) return m[1].toLowerCase();
-  const relative = history.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
-  return relative?.[1].toLowerCase();
+  return undefined;
 }
 
 function extractInterests(history: string): string[] {
-  const lower = history.toLowerCase();
+  const lines = history.split(/\n+/).map((line) => line.toLowerCase().trim()).filter(Boolean);
   const pool = [
     ["strand", "Strand & Entspannung"],
     ["kultur", "Kultur & Altstadt"],
@@ -695,8 +755,12 @@ function extractInterests(history: string): string[] {
     ["kunst", "Kunst & Museen"],
   ] as const;
 
-  const matched = pool.filter(([key]) => lower.includes(key)).map(([, label]) => label);
-  return matched.length > 0 ? matched : ["Highlights entdecken", "Entspannung", "Lokales erleben"];
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (isGenerationCommand(lines[i])) continue;
+    const matched = pool.filter(([key]) => lines[i].includes(key)).map(([, label]) => label);
+    if (matched.length > 0) return matched;
+  }
+  return ["Highlights entdecken", "Entspannung", "Lokales erleben"];
 }
 
 function buildDeterministicItinerary(destination: string, days: number, interests: string[]) {
@@ -896,6 +960,14 @@ export const Route = createFileRoute("/api/chat")({
           m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
         const lastUser = [...uiMessages].reverse().find((m) => m.role === "user");
         const lastUserText = lastUser ? textOf(lastUser) : "";
+        const previousAssistant = [...uiMessages]
+          .reverse()
+          .find((m) => m.role === "assistant");
+        const confirmedFinalTripState = Boolean(
+          previousAssistant
+          && isTripConfirmationPrompt(textOf(previousAssistant))
+          && isConfirmPackageReply(lastUserText),
+        );
         const userHistory = uiMessages
           .filter((m) => m.role === "user")
           .map(textOf)
@@ -961,6 +1033,10 @@ export const Route = createFileRoute("/api/chat")({
             "timeframe",
             !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
           ),
+          interests: fieldHas(
+            "interests",
+            !!(regexSignals.hasInterests || dialogPreview.interests || (extracted.interests && extracted.interests.length > 0)),
+          ),
         };
         const missingFields: MissingField[] = [];
         if (!has.destination) missingFields.push("destination");
@@ -969,6 +1045,7 @@ export const Route = createFileRoute("/api/chat")({
         if (!has.travelers) missingFields.push("travelers");
         if (!has.origin) missingFields.push("origin");
         if (!has.timeframe) missingFields.push("timeframe");
+        if (!has.interests) missingFields.push("interests");
 
         // Concierge mode
         if (missingFields.length > 0) {
@@ -1014,7 +1091,9 @@ export const Route = createFileRoute("/api/chat")({
         const llmInterests = (extracted.interests ?? [])
           .map((s) => s.trim())
           .filter(Boolean);
-        const interests = llmInterests.length > 0 ? llmInterests : extractInterests(userHistory);
+        const interests = llmInterests.length > 0
+          ? llmInterests
+          : (dialog.interests ? [dialog.interests] : extractInterests(userHistory));
         const origin = extracted.originCity
           ? cleanPlace(extracted.originCity)
           : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
@@ -1034,10 +1113,26 @@ export const Route = createFileRoute("/api/chat")({
         if (!travelers || travelers <= 0) validationMissing.push("travelers");
         if (!origin || isDateLike(origin)) validationMissing.push("origin");
         if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
+        if (interests.length === 0) validationMissing.push("interests");
         if (validationMissing.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
             buildConciergeReply(validationMissing, userMessageCount),
+            uiMessages,
+          );
+        }
+
+        if (!confirmedFinalTripState) {
+          return createTextStreamResponse(
+            buildTripConfirmationReply({
+              destination,
+              budget,
+              durationDays: requestedDurationDays,
+              travelers: travelers!,
+              origin: origin!,
+              timeframe: travelStartDate ?? travelMonth ?? "flexibel",
+              interests,
+            }),
             uiMessages,
           );
         }
