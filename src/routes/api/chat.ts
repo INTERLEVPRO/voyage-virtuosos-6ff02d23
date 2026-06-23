@@ -260,8 +260,15 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     if (place && place !== "deinem Reiseziel" && !isDateLike(place)) return place;
   }
   if (field === "origin") {
+    // Route text like "srilanka to indiya" is NOT a valid departure city/airport.
+    if (extractRouteParts(v)) return null;
+    if (/\b(to|nach|bis|->|→)\b/i.test(v)) return null;
     const o = extractOrigin(v);
     if (o) return o;
+  }
+  if (field === "interests") {
+    // Avoid treating interest words as anything else; keep raw value.
+    return v;
   }
   return v;
 }
