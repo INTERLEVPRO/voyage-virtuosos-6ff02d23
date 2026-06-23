@@ -533,11 +533,11 @@ function parseDurationDays(value: string): number | null {
 }
 
 function extractRequestedDurationDays(history: string): number {
-  const range = parseDateRangeDays(history);
-  if (range) return range;
-
   const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (isGenerationCommand(lines[i]) || isConfirmPackageReply(lines[i])) continue;
+    const range = parseDateRangeDays(lines[i]);
+    if (range) return range;
     const days = parseDurationDays(lines[i]);
     if (days) return days;
   }
@@ -627,7 +627,7 @@ function extractDestination(history: string): string {
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
-    if (isGenerationCommand(line)) continue;
+    if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
@@ -727,17 +727,18 @@ function extractTravelers(history: string): number | undefined {
 }
 
 function extractTravelMonth(history: string): string | undefined {
-  const labeled = history.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
-  if (labeled?.[1]) {
-    const m = labeled[1].match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
+    const labeled = line.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
+    const source = labeled?.[1] ?? line;
+    const m = source.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
     if (m?.[1]) return m[1].toLowerCase();
-    const relative = labeled[1].match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
+    const relative = source.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
     if (relative?.[1]) return relative[1].toLowerCase();
   }
-  const m = history.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
-  if (m?.[1]) return m[1].toLowerCase();
-  const relative = history.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
-  return relative?.[1].toLowerCase();
+  return undefined;
 }
 
 function extractInterests(history: string): string[] {
