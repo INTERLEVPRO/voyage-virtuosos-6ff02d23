@@ -742,12 +742,14 @@ function extractOrigin(history: string): string | undefined {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     if (isGenerationCommand(line)) continue;
+    const routeOrigin = extractRouteParts(line)?.origin;
+    if (routeOrigin) return routeOrigin;
     const labeled = line.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const direct = line.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const value = labeled?.[1] ?? direct?.[1];
     if (value) {
       const cleaned = value.split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
-      if (cleaned) return cleaned;
+      if (cleaned) return normalizePlaceName(cleaned);
     }
   }
   return undefined;
