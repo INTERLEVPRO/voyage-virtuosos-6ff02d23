@@ -475,7 +475,7 @@ function formatMissingField(field: MissingField): string {
     case "travelers":
       return "**Wie viele Personen reisen mit?**";
     case "origin":
-      return "**Von wo möchtest du abfliegen?**";
+      return "**Von welchem Flughafen oder welcher Stadt möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
     case "interests":
