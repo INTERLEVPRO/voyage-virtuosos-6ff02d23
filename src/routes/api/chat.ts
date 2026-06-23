@@ -1113,11 +1113,12 @@ export const Route = createFileRoute("/api/chat")({
           for (const f of detectAskedFields(textOf(m))) askedFields.add(f);
         }
         const answeredInDialog = getAnsweredFieldsFromDialog(uiMessages);
+        const answeredInUserMessages = getAnsweredFieldsFromUserMessages(uiMessages);
 
         const fieldHas = (field: MissingField, looseSignal: boolean): boolean => {
           // If the assistant explicitly asked about this field, the user MUST
           // have replied with a valid answer — no loose/LLM inference allowed.
-          if (askedFields.has(field)) return answeredInDialog.has(field);
+          if (askedFields.has(field)) return answeredInDialog.has(field) || answeredInUserMessages.has(field);
           return looseSignal;
         };
 
