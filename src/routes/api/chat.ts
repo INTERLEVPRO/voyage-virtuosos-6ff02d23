@@ -838,6 +838,55 @@ function buildPackageBadges(type: "basic" | "medium" | "premium", research: Rese
   return Array.from(new Set(base)).slice(0, type === "premium" ? 4 : 3);
 }
 
+function cleanHotelDescription(raw: string, destination: string): string {
+  if (!raw) return raw;
+  const dest = destination.trim();
+  if (!dest) return raw.trim();
+  const escaped = dest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Strip patterns like " in Indien", " in der Region Indien", trailing "(Indien)", etc.
+  let out = raw
+    .replace(new RegExp(`\\s*\\(\\s*${escaped}\\s*\\)`, "gi"), "")
+    .replace(new RegExp(`\\s+in\\s+(?:der\\s+Region\\s+|den\\s+|dem\\s+|der\\s+)?${escaped}\\b`, "gi"), "")
+    .replace(new RegExp(`\\b${escaped}\\s+`, "gi"), "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+·\s+·\s+/g, " · ")
+    .trim()
+    .replace(/^[·,\-\s]+|[·,\-\s]+$/g, "");
+  return out || raw.trim();
+}
+
+function extractActivitiesFromItinerary(
+  itinerary: ParsedPackage["itinerary"],
+  destination: string,
+): string[] {
+  const dest = destination.trim().toLowerCase();
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const day of itinerary) {
+    // Split description by "·" and pull each segment (Vormittag/Nachmittag/Abend).
+    const segments = (day.description || "").split(/·|•/g);
+    for (const seg of segments) {
+      const cleaned = seg
+        .replace(/^\s*(Vormittag|Nachmittag|Abend|Morgens|Mittags|Abends)\s*:?\s*/i, "")
+        .trim()
+        .replace(/[.;]+$/, "");
+      if (!cleaned) continue;
+      // Skip pure arrival/departure filler
+      if (/^(Anreise|Heimreise|Rückreise|Transfer|Heimflug|Abflug|Ankunft|Einchecken|Heim)/i.test(cleaned)) continue;
+      // Skip if it's just the destination name
+      if (cleaned.toLowerCase() === dest) continue;
+      // Keep short, activity-sounding phrases
+      const short = cleaned.length > 90 ? cleaned.slice(0, 87).trim() + "…" : cleaned;
+      const key = short.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(short);
+      if (out.length >= 8) return out;
+    }
+  }
+  return out;
+}
+
 function buildPackagesFromResearch(params: {
   budget: number;
   destination: string;
@@ -849,10 +898,12 @@ function buildPackagesFromResearch(params: {
 
   return TIER_ORDER.map((type, index) => {
     const multiplier = type === "basic" ? 0.85 : type === "medium" ? 1 : 1.15;
-    const hotel = research.hotels[index] ?? research.hotels.at(-1) ?? `Sorgfältig ausgewähltes Hotel in ${destination}`;
+    const hotelRaw = research.hotels[index] ?? research.hotels.at(-1) ?? `Sorgfältig ausgewähltes Hotel`;
+    const hotel = cleanHotelDescription(hotelRaw, destination);
     const flight = research.flights[index] ?? research.flights.at(-1) ?? `Passender Flug nach ${destination}`;
     const badges = buildPackageBadges(type, research);
-    const activities = Array.from(new Set(itineraryTemplate.map((day) => day.title))).slice(0, 8);
+    const extracted = extractActivitiesFromItinerary(itineraryTemplate, destination);
+    const activities = extracted.length > 0 ? extracted : [`Highlights in ${destination}`];
 
     return {
       type,
@@ -881,7 +932,7 @@ function buildPackagesFromResearch(params: {
             ? `Passt gut, wenn du für ${destination} eine starke Balance aus Preis, Lage und Komfort suchst.`
             : `Passt gut, wenn du bei ${destination} für die lange Reisedauer mehr Komfort und Qualität priorisierst.`,
       badges,
-      activities: activities.length > 0 ? activities : [`Highlights in ${destination}`],
+      activities,
       itinerary: itineraryTemplate,
     };
   });
