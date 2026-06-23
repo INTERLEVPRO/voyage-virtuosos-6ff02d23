@@ -219,6 +219,7 @@ function getMissingFields(text: string, history: string): MissingField[] {
 
 // Identify which fields the assistant asked about, based on the question text.
 function detectAskedFields(assistantText: string): MissingField[] {
+  if (isTripConfirmationPrompt(assistantText)) return [];
   const t = assistantText.toLowerCase();
   const fields: MissingField[] = [];
   if (/wohin soll es gehen|welche art urlaub|reiseziel/.test(t)) fields.push("destination");
