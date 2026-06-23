@@ -676,6 +676,9 @@ function isLikelyFieldOnlyMessage(text: string): boolean {
   if (/^(budget|dauer|reisedauer|personen|reisende|abflug|abflughafen|reisezeit|zeitraum|interessen)\b/i.test(t)) return true;
   if (/\b(abflug|abflughafen|von|ab)\b/i.test(t) && !/\b(nach|to|in)\b/i.test(t)) return true;
   if (/\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|october|december|sommer|winter|herbst|frühling|fruehling|flexibel|egal)\b/i.test(t) && t.split(/\s+/).length <= 4) return true;
+  // Interest-only replies (e.g. "Wellness", "Strand, Kultur") must not be
+  // re-interpreted as a destination by extractDestination().
+  if (t.split(/\s+/).length <= 5 && /^(?:[a-zäöüß&,\/\s\-]+)$/i.test(t) && /\b(wellness|strand|kultur|natur|abenteuer|luxus|entspannung|shopping|essen|kulinarik|safari|kunst|museen|sport|nightlife|familie|romantik|honeymoon)\b/i.test(t)) return true;
   return false;
 }
 
