@@ -247,7 +247,19 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
   };
 
   const labeled = v.match(labeledMatchers[field])?.[1]?.trim();
-  return labeled || v;
+  if (labeled) return labeled;
+
+  // Natural-language fallbacks: replies like "10 Tage nach Indien" should still
+  // yield a clean destination/origin rather than a date-like whole sentence.
+  if (field === "destination") {
+    const place = extractDestination(v);
+    if (place && place !== "deinem Reiseziel" && !isDateLike(place)) return place;
+  }
+  if (field === "origin") {
+    const o = extractOrigin(v);
+    if (o) return o;
+  }
+  return v;
 }
 
 // Walk the dialog: when the assistant asked about a field and the user replied
