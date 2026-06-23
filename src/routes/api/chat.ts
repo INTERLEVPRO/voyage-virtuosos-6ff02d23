@@ -821,12 +821,13 @@ function placeholderLinks(destination: string) {
 }
 
 const TRIP_FIELDS_SCHEMA = z.object({
-  destination: z.string().nullable().describe("Reiseziel: Stadt, Region oder Land (z. B. 'Sri Lanka', 'Mallorca', 'Lissabon'). null wenn unklar."),
-  budgetEur: z.number().nullable().describe("Gesamtbudget pro Person in EUR. Akzeptiere '1500 EUR', '1.500 €', '1500'. Null wenn fehlt oder < 100."),
-  durationDays: z.number().nullable().describe("Reisedauer in Tagen. '12 Tage'=12, '2 Wochen'=14, '1 Monat'=30. Null wenn fehlt."),
-  travelers: z.number().nullable().describe("Anzahl reisender Personen. 'Ich bin nur'/'allein'/'solo'/'1 Person'=1, 'Paar'/'zu zweit'=2, 'Familie'=4. Null wenn fehlt."),
-  originCity: z.string().nullable().describe("Abflugort/Stadt/Flughafen. 'aus Frankfurt'/'ab München'/'von Berlin'/'aus Sri Lanka' → Stadtname. Null wenn fehlt."),
-  timeframe: z.string().nullable().describe("Reisezeitraum: Monat ('Juni'), Saison ('Sommer'), Datum, 'flexibel'. Null wenn fehlt."),
+  destination: z.string().nullable().describe("Reiseziel: Stadt, Region oder Land. null wenn unklar."),
+  budgetEur: z.number().nullable().describe("Gesamtbudget pro Person in EUR. Null wenn fehlt oder < 100."),
+  durationDays: z.number().nullable().describe("Reisedauer in Tagen. '2 Wochen'=14, '1 Monat'=30. Null wenn fehlt."),
+  travelers: z.number().nullable().describe("Anzahl Personen. 'allein'=1, 'Paar'=2, 'Familie'=4. Null wenn fehlt."),
+  originCity: z.string().nullable().describe("Abflugort/Stadt/Flughafen. Null wenn fehlt."),
+  timeframe: z.string().nullable().describe("Reisezeitraum: Monat/Saison/Datum/'flexibel'. Null wenn fehlt."),
+  interests: z.array(z.string()).nullable().describe("Zuletzt genannte Interessen/Urlaubsart. Null wenn nichts genannt."),
 });
 
 type ExtractedTripFields = z.infer<typeof TRIP_FIELDS_SCHEMA>;
@@ -848,11 +849,18 @@ async function extractTripFieldsLLM(
     const { experimental_output } = await generateText({
       model,
       experimental_output: Output.object({ schema: TRIP_FIELDS_SCHEMA }),
-      system: `Du extrahierst Reisedaten aus einem Chat zwischen einem Reiseberater und einem Nutzer.
-Berücksichtige den GESAMTEN Verlauf — Antworten können kurz und über mehrere Nachrichten verteilt sein (z. B. "Indien", "1500 EUR", "12 Tage", "Ich bin nur", "aus Sri Lanka").
-Verstehe natürliche Sprache, nicht nur strikte Formate. Wenn ein Feld nicht eindeutig genannt wurde, gib null zurück.
+      system: `Du extrahierst Reisedaten aus einem Chat zwischen Reiseberater und Nutzer.
+Berücksichtige den GESAMTEN Verlauf — Antworten können kurz und über mehrere Nachrichten verteilt sein.
+
+KRITISCH — LETZTER WERT GEWINNT (Overwrite-Regel):
+- Ändert/korrigiert/überschreibt der Nutzer einen Wert (z. B. erst "Indien", später "eigentlich Malaysia"; oder "doch 2000€", "lieber 10 Tage", "ab Berlin statt München", "doch Wellness statt Strand"), nimm IMMER die ZULETZT genannte Version.
+- Das gilt für JEDES Feld: destination, budgetEur, durationDays, travelers, originCity, timeframe, interests.
+- Bei interests: nur die zuletzt genannten Interessen zurückgeben, NICHT mit alten kombinieren.
+- Gib niemals einen veralteten Wert zurück, wenn später ein neuer genannt wurde.
+
+Verstehe natürliche Sprache, nicht nur strikte Formate. Wenn ein Feld nie genannt wurde, gib null zurück.
 Antworte ausschließlich gemäß Schema.`,
-      prompt: `Chatverlauf:\n${transcript}\n\nExtrahiere die Reisedaten.`,
+      prompt: `Chatverlauf (chronologisch, unten = neuer):\n${transcript}\n\nExtrahiere die FINALEN Reisedaten — bei Änderungen zählt die jeweils neueste Angabe.`,
     });
     return experimental_output;
   } catch {
@@ -863,6 +871,7 @@ Antworte ausschließlich gemäß Schema.`,
       travelers: null,
       originCity: null,
       timeframe: null,
+      interests: null,
     };
   }
 }
@@ -966,7 +975,10 @@ export const Route = createFileRoute("/api/chat")({
           return createTextStreamResponse(msg, uiMessages);
         }
 
-        const interests = extractInterests(userHistory);
+        const llmInterests = (extracted.interests ?? [])
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const interests = llmInterests.length > 0 ? llmInterests : extractInterests(userHistory);
         const origin = extracted.originCity
           ? cleanPlace(extracted.originCity)
           : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
@@ -977,6 +989,23 @@ export const Route = createFileRoute("/api/chat")({
           ? (extractTravelMonth(extracted.timeframe) ?? extracted.timeframe.toLowerCase())
           : (dialog.timeframe ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory)) : extractTravelMonth(userHistory));
         const travelStartDate = extracted.timeframe ?? dialog.timeframe ?? undefined;
+
+        // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
+        const validationMissing: MissingField[] = [];
+        if (!destination || /^deinem reiseziel$/i.test(destination) || isDateLike(destination)) validationMissing.push("destination");
+        if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
+        if (!requestedDurationDays || requestedDurationDays <= 0) validationMissing.push("duration");
+        if (!travelers || travelers <= 0) validationMissing.push("travelers");
+        if (!origin || isDateLike(origin)) validationMissing.push("origin");
+        if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
+        if (validationMissing.length > 0) {
+          const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
+          return createTextStreamResponse(
+            buildConciergeReply(validationMissing, userMessageCount),
+            uiMessages,
+          );
+        }
+
 
 
 
