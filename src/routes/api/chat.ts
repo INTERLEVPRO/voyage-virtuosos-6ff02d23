@@ -1054,18 +1054,19 @@ export const Route = createFileRoute("/api/chat")({
         );
 
         if (requestedDurationDays <= 14) {
-          const research = await generateText({
-            model,
-            system: RESEARCH_SYSTEM,
-            prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
-          });
+          const [research, itinerary] = await Promise.all([
+            generateText({
+              model,
+              system: RESEARCH_SYSTEM,
+              prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
+            }),
+            generateText({
+              model,
+              system: ITINERARY_SYSTEM,
+              prompt: `Brief:\n${brief}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days in ${destination}. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
+            }),
+          ]);
           researchText = research.text;
-
-          const itinerary = await generateText({
-            model,
-            system: ITINERARY_SYSTEM,
-            prompt: `Brief:\n${brief}\n\nResearch:\n${research.text}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
-          });
 
           itineraryTemplate = parseItineraryDraft(
             itinerary.text,
