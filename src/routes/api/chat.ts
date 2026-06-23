@@ -645,16 +645,18 @@ function parseResearchData(text: string): ResearchData {
 }
 
 function extractOrigin(history: string): string | undefined {
-  const labeled = history.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
-  if (labeled?.[1]) {
-    const cleaned = labeled[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
-    return cleaned || undefined;
+  const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    const labeled = line.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+    const direct = line.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
+    const value = labeled?.[1] ?? direct?.[1];
+    if (value) {
+      const cleaned = value.split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
+      if (cleaned) return cleaned;
+    }
   }
-  const m = history.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
-  if (!m) return undefined;
-  // take first 1-2 words before comma/punct
-  const cleaned = m[1].split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 2).join(" ");
-  return cleaned || undefined;
+  return undefined;
 }
 
 const WORD_NUMS: Record<string, number> = {
@@ -666,14 +668,17 @@ const WORD_NUMS: Record<string, number> = {
 };
 
 function extractTravelers(history: string): number | undefined {
-  const lower = history.toLowerCase();
-  const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
-  if (num) {
-    const n = Number(num[1]);
-    if (n > 0 && n < 30) return n;
-  }
-  for (const [word, n] of Object.entries(WORD_NUMS)) {
-    if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+  const lines = history.split(/\n+/).map((line) => line.toLowerCase().trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const lower = lines[i];
+    const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
+    if (num) {
+      const n = Number(num[1]);
+      if (n > 0 && n < 30) return n;
+    }
+    for (const [word, n] of Object.entries(WORD_NUMS)) {
+      if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
+    }
   }
   return undefined;
 }
