@@ -3,6 +3,7 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DateRange } from "react-day-picker";
+import { de } from "date-fns/locale";
 import {
   Send,
   Loader2,
@@ -336,13 +337,15 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               </div>
               <Calendar
                 mode="range"
+                locale={de}
+                weekStartsOn={1}
                 selected={dateRange}
                 onSelect={setDateRange}
                 numberOfMonths={1}
                 min={1}
                 disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
                 defaultMonth={dateRange?.from ?? new Date()}
-                className="pointer-events-auto w-full [--cell-size:2.25rem]"
+                className="pointer-events-auto w-full [--cell-size:2rem] sm:[--cell-size:2.25rem]"
               />
 
               <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
