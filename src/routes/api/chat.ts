@@ -254,7 +254,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
 function isAnswerValid(field: MissingField, value: string): boolean {
   const v = extractFieldAnswer(field, value)?.trim() ?? "";
   if (!v) return false;
-  if (/\b(package|paket|pakete|pakeg|create|erstellen|generieren|mach|machen)\b/i.test(v)) return false;
+  if (isGenerationCommand(v)) return false;
   switch (field) {
     case "destination":
       return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
@@ -569,6 +569,10 @@ function isDateLike(text: string): boolean {
   return MONTH_RE.test(firstWord);
 }
 
+function isGenerationCommand(text: string): boolean {
+  return /\b(package|packages|paket|pakete|pakeg|create|erstellen|generieren|mach|machen|generate|build)\b/i.test(text);
+}
+
 function cleanDestination(raw: string): string {
   // Stop at sentence/clause boundaries and strip filler words
   const stopped = raw.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
@@ -588,6 +592,7 @@ function extractDestination(history: string): string {
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
+    if (isGenerationCommand(line)) continue;
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
 
