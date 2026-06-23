@@ -254,6 +254,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
 function isAnswerValid(field: MissingField, value: string): boolean {
   const v = extractFieldAnswer(field, value)?.trim() ?? "";
   if (!v) return false;
+  if (/\b(package|paket|pakete|pakeg|create|erstellen|generieren|mach|machen)\b/i.test(v)) return false;
   switch (field) {
     case "destination":
       return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
@@ -698,7 +699,7 @@ function extractTravelMonth(history: string): string | undefined {
 }
 
 function extractInterests(history: string): string[] {
-  const lower = history.toLowerCase();
+  const lines = history.split(/\n+/).map((line) => line.toLowerCase().trim()).filter(Boolean);
   const pool = [
     ["strand", "Strand & Entspannung"],
     ["kultur", "Kultur & Altstadt"],
@@ -710,8 +711,11 @@ function extractInterests(history: string): string[] {
     ["kunst", "Kunst & Museen"],
   ] as const;
 
-  const matched = pool.filter(([key]) => lower.includes(key)).map(([, label]) => label);
-  return matched.length > 0 ? matched : ["Highlights entdecken", "Entspannung", "Lokales erleben"];
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const matched = pool.filter(([key]) => lines[i].includes(key)).map(([, label]) => label);
+    if (matched.length > 0) return matched;
+  }
+  return ["Highlights entdecken", "Entspannung", "Lokales erleben"];
 }
 
 function buildDeterministicItinerary(destination: string, days: number, interests: string[]) {
