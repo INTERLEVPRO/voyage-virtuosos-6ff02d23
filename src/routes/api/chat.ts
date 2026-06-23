@@ -260,8 +260,15 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     if (place && place !== "deinem Reiseziel" && !isDateLike(place)) return place;
   }
   if (field === "origin") {
+    // Route text like "srilanka to indiya" is NOT a valid departure city/airport.
+    if (extractRouteParts(v)) return null;
+    if (/\b(to|nach|bis|->|→)\b/i.test(v)) return null;
     const o = extractOrigin(v);
     if (o) return o;
+  }
+  if (field === "interests") {
+    // Avoid treating interest words as anything else; keep raw value.
+    return v;
   }
   return v;
 }
@@ -282,7 +289,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "travelers":
       return parseAnswerTravelers(v) !== null;
     case "origin":
-      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v);
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v);
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
@@ -468,7 +475,7 @@ function formatMissingField(field: MissingField): string {
     case "travelers":
       return "**Wie viele Personen reisen mit?**";
     case "origin":
-      return "**Von wo möchtest du abfliegen?**";
+      return "**Von welchem Flughafen oder welcher Stadt möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
     case "interests":
@@ -669,6 +676,9 @@ function isLikelyFieldOnlyMessage(text: string): boolean {
   if (/^(budget|dauer|reisedauer|personen|reisende|abflug|abflughafen|reisezeit|zeitraum|interessen)\b/i.test(t)) return true;
   if (/\b(abflug|abflughafen|von|ab)\b/i.test(t) && !/\b(nach|to|in)\b/i.test(t)) return true;
   if (/\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|october|december|sommer|winter|herbst|frühling|fruehling|flexibel|egal)\b/i.test(t) && t.split(/\s+/).length <= 4) return true;
+  // Interest-only replies (e.g. "Wellness", "Strand, Kultur") must not be
+  // re-interpreted as a destination by extractDestination().
+  if (t.split(/\s+/).length <= 5 && /^(?:[a-zäöüß&,\/\s\-]+)$/i.test(t) && /\b(wellness|strand|kultur|natur|abenteuer|luxus|entspannung|shopping|essen|kulinarik|safari|kunst|museen|sport|nightlife|familie|romantik|honeymoon)\b/i.test(t)) return true;
   return false;
 }
 
@@ -1189,9 +1199,15 @@ export const Route = createFileRoute("/api/chat")({
           ?? (dialog.duration ? parseAnswerDurationDays(dialog.duration) : null)
           ?? extractRequestedDurationDays(userHistory);
 
-        const destination = extracted.destination
-          ? cleanPlace(extractDestination(userHistory) !== "deinem Reiseziel" ? extractDestination(userHistory) : extracted.destination)
-          : (dialog.destination ? cleanPlace(dialog.destination) : extractDestination(userHistory));
+        // Field-mapping rule: dialog answer to the destination question wins.
+        // Never overwrite destination with interest/origin/duration answers,
+        // even if the LLM extractor or loose regex re-interprets later text.
+        const historyDestination = extractDestination(userHistory);
+        const destination = dialog.destination
+          ? cleanPlace(dialog.destination)
+          : (historyDestination !== "deinem Reiseziel"
+              ? cleanPlace(historyDestination)
+              : (extracted.destination ? cleanPlace(extracted.destination) : historyDestination));
 
         const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
           ? extracted.budgetEur
@@ -1217,9 +1233,9 @@ export const Route = createFileRoute("/api/chat")({
         const interests = llmInterests.length > 0
           ? llmInterests
           : (dialog.interests ? [dialog.interests] : extractInterests(userHistory));
-        const origin = extracted.originCity
-          ? cleanPlace(extracted.originCity)
-          : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
+        const origin = dialog.origin
+          ? cleanPlace(dialog.origin)
+          : (extracted.originCity ? cleanPlace(extracted.originCity) : extractOrigin(userHistory));
         const travelers = extracted.travelers
           ?? (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null)
           ?? extractTravelers(userHistory);
