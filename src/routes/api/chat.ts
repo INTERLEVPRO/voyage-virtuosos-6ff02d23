@@ -30,6 +30,8 @@ RULES:
 - The <Thema> MUST be a real area, neighborhood, attraction, or theme tied to the destination (e.g. "Altstadt & Kathedrale", "Taj Mahal & Agra Fort", "Strand Es Trenc & Cap de Ses Salines"). Never write "Erlebnisse in <Stadt>" or generic placeholders.
 - Vormittag/Nachmittag/Abend each MUST mention concrete real place names, restaurants, viewpoints, beaches, museums, or activities that actually exist at the destination.
 - Group places by geographic proximity so each day is logistically feasible (no zig-zag across the country).
+- DISTANCE/TIME REALITY CHECK: a single day must never combine places that are more than ~150 km / 3 h apart by car/train. If a transfer between cities is needed (e.g. Delhi → Agra, Jaipur → Udaipur), dedicate the whole day to the transfer + one arrival sight; do NOT cram sightseeing in both cities into the same day. Use realistic Indian/European travel times.
+- Never put attractions in different cities into the same Vormittag/Nachmittag/Abend slot.
 - Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
 - Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
 
