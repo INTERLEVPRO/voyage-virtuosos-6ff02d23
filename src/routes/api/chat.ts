@@ -152,6 +152,7 @@ function getPlanningSignals(text: string, history: string) {
   // Strict: only a real place / labeled destination counts.
   const hasDestination =
     hasLabeledDestination ||
+    /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     /\b(nach|in|to)\s+[A-ZÄÖÜ][a-zäöüß.'’-]{2,}/.test(combined) ||
     /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-ZÄÖÜ][a-zäöüß.'’-]{2,})/.test(combined) ||
     /(?:^|\n)\s*(?!Budget|Abflug|Hi|Hallo|Hey|Ok|Okay|Ja|Nein|Danke)[A-ZÄÖÜ][a-zäöüß.'’-]{2,}\s*,/.test(combined) ||
@@ -176,6 +177,7 @@ function getPlanningSignals(text: string, history: string) {
   const KNOWN_ORIGIN_CITIES = /(münchen|muenchen|berlin|hamburg|frankfurt|köln|koeln|stuttgart|düsseldorf|duesseldorf|wien|zürich|zuerich|basel|genf|geneva|hannover|nürnberg|nuernberg|leipzig|dresden|bremen|dortmund|salzburg|innsbruck|graz|linz|bern)/i;
   const hasOrigin =
     hasLabeledOrigin ||
+    /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     new RegExp(`\\b(abflug|abflughafen|abflugort|flughafen|start(?:en)?\\s+in)\\s+[a-zäöüß]{3,}`, "i").test(all) ||
     new RegExp(`\\b(ab|von)\\s+${KNOWN_ORIGIN_CITIES.source}\\b`, "i").test(all) ||
     /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm|txl|sxf)\b/i.test(all);
