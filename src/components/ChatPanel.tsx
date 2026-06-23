@@ -80,90 +80,37 @@ function stripJsonBlock(text: string): string {
   return text.replace(JSON_BLOCK_RE, "").trim();
 }
 
-/* ── Schnellstart: icon circles on mobile, full cards on desktop ── */
+/* ── Schnellstart: horizontal scroll on mobile, full cards on desktop ── */
 function StarterPrompts({ submit }: { submit: (text: string) => void }) {
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const scrollYRef = useRef(0);
-
-  const handleOpen = (e: React.MouseEvent, i: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    scrollYRef.current = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollYRef.current}px`;
-    document.body.style.width = "100%";
-    setOpenIdx(i);
-  };
-
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.width = "";
-    requestAnimationFrame(() => window.scrollTo(0, scrollYRef.current));
-    setOpenIdx(null);
-  };
-
   return (
     <div className="space-y-2">
       <div className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Schnellstart
       </div>
 
-      {/* ── Mobile: compact icon row ── */}
-      <div className="flex justify-center gap-5 sm:hidden">
-        {STARTER_PROMPTS.map((p, i) => (
+      {/* ── Mobile: horizontally scrollable cards ── */}
+      <div className="flex gap-3 overflow-x-auto pb-4 pt-1 px-1 sm:hidden hide-scrollbar snap-x snap-mandatory">
+        {STARTER_PROMPTS.map((p) => (
           <button
             key={p.title}
-            onClick={(e) => handleOpen(e, i)}
-            className="flex flex-col items-center gap-1.5 transition-all duration-300"
+            onClick={() => submit(p.prompt)}
+            className="snap-start shrink-0 w-[240px] flex flex-col items-start gap-1.5 rounded-2xl border border-border bg-card p-3 text-left shadow-sm active:scale-[0.98] transition-transform"
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-card border border-border shadow-soft transition-all duration-300 hover:scale-110 text-2xl">
-              {p.emoji}
+            <div className="flex items-center gap-2 w-full">
+              <span className="text-2xl leading-none" aria-hidden>
+                {p.emoji}
+              </span>
+              <span className="text-sm font-semibold text-foreground truncate">{p.title}</span>
             </div>
-            <span className="text-[11px] font-semibold text-foreground">{p.title}</span>
+            <span className="text-xs leading-tight text-muted-foreground line-clamp-2">
+              {p.subtitle}
+            </span>
+            <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/5 px-2 py-1 rounded-md">
+              <Sparkles className="h-3 w-3" /> Paket erstellen
+            </span>
           </button>
         ))}
       </div>
-
-      {/* ── Mobile: detail modal ── */}
-      {openIdx !== null && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm sm:hidden animate-in fade-in duration-200"
-          onClick={handleClose}
-        >
-          <div
-            className="mx-6 w-full max-w-xs rounded-3xl border border-border bg-card p-6 shadow-luxe animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center gap-3 text-center">
-              <span className="text-5xl">{STARTER_PROMPTS[openIdx].emoji}</span>
-              <div className="text-lg font-bold text-foreground">{STARTER_PROMPTS[openIdx].title}</div>
-              <div className="text-sm text-muted-foreground leading-relaxed">
-                {STARTER_PROMPTS[openIdx].subtitle}
-              </div>
-              <button
-                onClick={(e) => {
-                  submit(STARTER_PROMPTS[openIdx].prompt);
-                  handleClose(e);
-                }}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90"
-              >
-                <Sparkles className="h-4 w-4" /> Paket erstellen
-              </button>
-              <button
-                onClick={handleClose}
-                className="text-xs text-muted-foreground hover:text-foreground transition"
-              >
-                Schließen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Desktop: original cards ── */}
       <div className="hidden sm:grid sm:grid-cols-3 gap-2.5">
@@ -374,10 +321,11 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               </button>
             </PopoverTrigger>
             <PopoverContent
-              align="start"
+              align="center"
               side="top"
-              sideOffset={8}
-              className="w-[min(92vw,360px)] max-w-[92vw] p-0 overflow-hidden"
+              sideOffset={12}
+              className="w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[340px] p-0 overflow-hidden shadow-luxe rounded-3xl sm:rounded-2xl border-white/20 bg-white/95 backdrop-blur-md"
+              avoidCollisions={true}
             >
               <div className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">
                 {dateRange?.from
