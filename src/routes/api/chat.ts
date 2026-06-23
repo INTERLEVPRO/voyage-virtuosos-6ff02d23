@@ -45,7 +45,7 @@ const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "p
 // missing/invalid and the concierge will ask the user to clarify.
 const MIN_BUDGET_EUR = 100;
 
-type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe";
+type MissingField = "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe" | "interests";
 type ResearchData = {
   flights: string[];
   hotels: string[];
@@ -188,6 +188,7 @@ function getPlanningSignals(text: string, history: string) {
     /\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|april|may|june|july|august|september|october|november|december|frühling|fruehling|sommer|herbst|winter)\b/i.test(all) ||
     /\b(nächst(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i.test(all) ||
     /\b(flexibel|egal)\b/i.test(all);
+  const hasInterests = /\b(strand|kultur|wellness|essen|kulinarik|natur|abenteuer|aktivität|aktivitaet|shopping|kunst|museum|museen|ruhe|entspannung|wandern|safari|nightlife|nachtleben|familie|honeymoon|flitterwochen)\b/i.test(all);
 
   return {
     hasBudget,
@@ -197,6 +198,7 @@ function getPlanningSignals(text: string, history: string) {
     hasTravelers,
     hasOrigin,
     hasTimeframe,
+    hasInterests,
   };
 }
 
@@ -210,6 +212,7 @@ function getMissingFields(text: string, history: string): MissingField[] {
   if (!signals.hasTravelers) missing.push("travelers");
   if (!signals.hasOrigin) missing.push("origin");
   if (!signals.hasTimeframe) missing.push("timeframe");
+  if (!signals.hasInterests) missing.push("interests");
 
   return missing;
 }
