@@ -654,6 +654,7 @@ function extractOrigin(history: string): string | undefined {
   const lines = history.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
+    if (isGenerationCommand(line)) continue;
     const labeled = line.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const direct = line.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const value = labeled?.[1] ?? direct?.[1];
@@ -677,6 +678,7 @@ function extractTravelers(history: string): number | undefined {
   const lines = history.split(/\n+/).map((line) => line.toLowerCase().trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const lower = lines[i];
+    if (isGenerationCommand(lower)) continue;
     const num = lower.match(/(\d{1,2})\s?(person|personen|erwachsene|reisende|gäste|leute|pers\.?|pax|adult|adults)\b/);
     if (num) {
       const n = Number(num[1]);
@@ -717,6 +719,7 @@ function extractInterests(history: string): string[] {
   ] as const;
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (isGenerationCommand(lines[i])) continue;
     const matched = pool.filter(([key]) => lines[i].includes(key)).map(([, label]) => label);
     if (matched.length > 0) return matched;
   }
