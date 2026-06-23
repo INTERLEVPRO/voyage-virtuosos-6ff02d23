@@ -760,14 +760,13 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           activeTab !== "overview" && "max-sm:hidden",
         )}
       >
-        <TrustItem icon={Star} title="Top bewertet" body="Echte Bewertungen aus Deutschland" />
+        <TrustItem icon={Star} title="Verifizierte Quellen" body="Bewertungen direkt von den Anbietern" />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
       <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
-        🇩🇪 Alle Bewertungen stammen von deutschen Nutzern. Preise sind Richtwerte und können je nach Verfügbarkeit
-        variieren.
+        Preise und Verfügbarkeiten werden bei den jeweiligen Partnern in Echtzeit geprüft. Bewertungen werden nur angezeigt, wenn die Originalquelle verlinkt ist.
       </p>
 
       {/* Mobile sticky bottom action bar — app-like CTA */}
