@@ -980,6 +980,10 @@ export const Route = createFileRoute("/api/chat")({
             "timeframe",
             !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
           ),
+          interests: fieldHas(
+            "interests",
+            !!(regexSignals.hasInterests || dialogPreview.interests || (extracted.interests && extracted.interests.length > 0)),
+          ),
         };
         const missingFields: MissingField[] = [];
         if (!has.destination) missingFields.push("destination");
@@ -988,6 +992,7 @@ export const Route = createFileRoute("/api/chat")({
         if (!has.travelers) missingFields.push("travelers");
         if (!has.origin) missingFields.push("origin");
         if (!has.timeframe) missingFields.push("timeframe");
+        if (!has.interests) missingFields.push("interests");
 
         // Concierge mode
         if (missingFields.length > 0) {
@@ -1033,7 +1038,9 @@ export const Route = createFileRoute("/api/chat")({
         const llmInterests = (extracted.interests ?? [])
           .map((s) => s.trim())
           .filter(Boolean);
-        const interests = llmInterests.length > 0 ? llmInterests : extractInterests(userHistory);
+        const interests = llmInterests.length > 0
+          ? llmInterests
+          : (dialog.interests ? [dialog.interests] : extractInterests(userHistory));
         const origin = extracted.originCity
           ? cleanPlace(extracted.originCity)
           : (dialog.origin ? cleanPlace(dialog.origin) : extractOrigin(userHistory));
@@ -1053,6 +1060,7 @@ export const Route = createFileRoute("/api/chat")({
         if (!travelers || travelers <= 0) validationMissing.push("travelers");
         if (!origin || isDateLike(origin)) validationMissing.push("origin");
         if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
+        if (interests.length === 0) validationMissing.push("interests");
         if (validationMissing.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
