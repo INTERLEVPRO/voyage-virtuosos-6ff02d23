@@ -3,10 +3,10 @@ import { Phone, Mail, Facebook, Instagram } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#1a2e4a] text-white py-8 px-6 sm:py-12 sm:px-10 border-t border-white/10 pb-16 sm:pb-12">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10">
+    <footer className="bg-[#1a2e4a] text-white py-6 px-5 sm:py-12 sm:px-10 border-t border-white/10 pb-16 sm:pb-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-6 sm:gap-10">
         {/* Column 1 */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           <h3 className="font-bold text-base sm:text-lg mb-2 sm:mb-4 uppercase">INTERLEV GmbH</h3>
 
           <div className="flex flex-col sm:flex-col gap-3 sm:gap-4">
