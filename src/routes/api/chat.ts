@@ -415,6 +415,8 @@ function formatMissingField(field: MissingField): string {
       return "**Von wo möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
+    case "interests":
+      return "**Was ist dir im Urlaub wichtig?** (z. B. Strand, Kultur, Wellness, Natur oder Abenteuer)";
   }
 }
 
@@ -426,6 +428,7 @@ function shortFieldLabel(field: MissingField): string {
     case "travelers": return "Anzahl Personen";
     case "origin": return "Abflughafen";
     case "timeframe": return "Reisezeitraum";
+    case "interests": return "Interessen";
   }
 }
 
