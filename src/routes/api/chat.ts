@@ -958,6 +958,14 @@ export const Route = createFileRoute("/api/chat")({
           m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
         const lastUser = [...uiMessages].reverse().find((m) => m.role === "user");
         const lastUserText = lastUser ? textOf(lastUser) : "";
+        const previousAssistant = [...uiMessages]
+          .reverse()
+          .find((m) => m.role === "assistant");
+        const confirmedFinalTripState = Boolean(
+          previousAssistant
+          && isTripConfirmationPrompt(textOf(previousAssistant))
+          && isConfirmPackageReply(lastUserText),
+        );
         const userHistory = uiMessages
           .filter((m) => m.role === "user")
           .map(textOf)
@@ -1108,6 +1116,21 @@ export const Route = createFileRoute("/api/chat")({
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
             buildConciergeReply(validationMissing, userMessageCount),
+            uiMessages,
+          );
+        }
+
+        if (!confirmedFinalTripState) {
+          return createTextStreamResponse(
+            buildTripConfirmationReply({
+              destination,
+              budget,
+              durationDays: requestedDurationDays,
+              travelers,
+              origin,
+              timeframe: travelStartDate ?? travelMonth ?? "flexibel",
+              interests,
+            }),
             uiMessages,
           );
         }
