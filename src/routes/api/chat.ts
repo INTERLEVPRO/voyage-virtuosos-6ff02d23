@@ -674,26 +674,28 @@ function extractDestination(history: string): string {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
+    const routeDestination = extractRouteDestination(line);
+    if (routeDestination) return routeDestination;
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
+    if (explicit?.[1] && !isDateLike(explicit[1])) return normalizePlaceName(cleanDestination(explicit[1]));
 
     // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
     const afterDuration = line.match(/\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
       const cand = cleanDestination(afterDuration[1]);
-      if (cand && !isDateLike(cand)) return cand;
+      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
-      if (cand && !isDateLike(cand)) return cand;
+      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
     const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
+    if (firstChunk && !isLikelyFieldOnlyMessage(firstChunk) && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
       const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      if (cleaned && !isDateLike(cleaned)) return cleanDestination(cleaned);
+      if (cleaned && !isDateLike(cleaned)) return normalizePlaceName(cleanDestination(cleaned));
     }
   }
 
