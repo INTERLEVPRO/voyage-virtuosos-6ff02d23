@@ -462,7 +462,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flüge"
           subtitle={currentPkg.flight}
           ratingLabel="Aviasales"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei Aviasales ansehen"
           provider="flight"
@@ -475,7 +474,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flughafen-Transfer"
           subtitle="Privater Taxi-Transfer vom/zum Flughafen"
           ratingLabel="Kiwitaxi"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.05)}
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
@@ -488,7 +486,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Hotel"
           subtitle={currentPkg.hotel}
           ratingLabel="Klook"
-          rating={(currentPkg.rating * 2).toFixed(1)}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei Klook ansehen"
@@ -502,7 +499,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
           ratingLabel="Klook"
-          rating={`${currentPkg.rating.toFixed(1)}/5`}
           price={Math.round(currentPkg.price * 0.18)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
