@@ -59,7 +59,7 @@ type ResearchData = {
 // a year (1900–2099) are ignored — they're almost certainly travel dates.
 function parseBudgetValue(text: string): number | null {
   const candidates: number[] = [];
-  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$)?/gi)) {
+  for (const m of text.matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euro?|euros?)?/gi)) {
     const raw = m[1];
     const currency = m[2];
     const n = Number(raw.replace(/[.,]/g, ""));
@@ -74,7 +74,7 @@ function parseBudgetValue(text: string): number | null {
 
 // Did the user mention a budget at all (even an unrealistically low one)?
 function mentionedBudget(text: string): boolean {
-  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro|usd|\$)/i.test(text);
+  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
 }
 
 const MONTH_TO_NUM: Record<string, number> = {
@@ -152,6 +152,7 @@ function getPlanningSignals(text: string, history: string) {
   // Strict: only a real place / labeled destination counts.
   const hasDestination =
     hasLabeledDestination ||
+    /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     /\b(nach|in|to)\s+[A-ZÄÖÜ][a-zäöüß.'’-]{2,}/.test(combined) ||
     /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-ZÄÖÜ][a-zäöüß.'’-]{2,})/.test(combined) ||
     /(?:^|\n)\s*(?!Budget|Abflug|Hi|Hallo|Hey|Ok|Okay|Ja|Nein|Danke)[A-ZÄÖÜ][a-zäöüß.'’-]{2,}\s*,/.test(combined) ||
@@ -176,6 +177,7 @@ function getPlanningSignals(text: string, history: string) {
   const KNOWN_ORIGIN_CITIES = /(münchen|muenchen|berlin|hamburg|frankfurt|köln|koeln|stuttgart|düsseldorf|duesseldorf|wien|zürich|zuerich|basel|genf|geneva|hannover|nürnberg|nuernberg|leipzig|dresden|bremen|dortmund|salzburg|innsbruck|graz|linz|bern)/i;
   const hasOrigin =
     hasLabeledOrigin ||
+    /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     new RegExp(`\\b(abflug|abflughafen|abflugort|flughafen|start(?:en)?\\s+in)\\s+[a-zäöüß]{3,}`, "i").test(all) ||
     new RegExp(`\\b(ab|von)\\s+${KNOWN_ORIGIN_CITIES.source}\\b`, "i").test(all) ||
     /\b(fra|muc|ber|ham|cgn|str|dus|vie|zrh|bsl|gva|haj|nue|lej|drs|bre|dtm|txl|sxf)\b/i.test(all);
@@ -321,6 +323,22 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
   return answered;
 }
 
+function getAnsweredFieldsFromUserMessages(uiMessages: UIMessage[]): Set<MissingField> {
+  const answered = new Set<MissingField>();
+  const fields: MissingField[] = ["destination", "budget", "duration", "travelers", "origin", "timeframe", "interests"];
+  const textOf = (m: UIMessage) =>
+    m.parts?.map((p) => (p.type === "text" ? p.text : "")).join(" ") ?? "";
+
+  for (const m of uiMessages) {
+    if (m.role !== "user") continue;
+    const reply = textOf(m);
+    for (const field of fields) {
+      if (isAnswerValid(field, reply)) answered.add(field);
+    }
+  }
+  return answered;
+}
+
 // Collect the literal user reply that followed each assistant question.
 // Latest answer wins if a field was asked multiple times.
 function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField, string>> {
@@ -409,12 +427,34 @@ function parseAnswerTravelers(value: string): number | null {
 }
 
 function cleanPlace(value: string): string {
+  const routed = extractRouteDestination(value);
+  if (routed) return routed;
+
   const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
   // Take up to 3 words
   const words = first.split(/\s+/).slice(0, 3);
-  return words
+  const cleaned = words
     .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
     .join(" ");
+  return normalizePlaceName(cleaned);
+}
+
+function normalizePlaceName(value: string): string {
+  const compact = value.trim().replace(/\s+/g, " ");
+  const lower = compact.toLowerCase().replace(/[._-]/g, " ");
+  if (/^(india|indien|indya)$/.test(lower)) return "Indien";
+  if (/^(sri\s*lanka|srilanka|sri\s*lanka)$/.test(lower)) return "Sri Lanka";
+  return compact.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function extractRouteParts(text: string): { origin: string; destination: string } | null {
+  const route = text.match(/\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i);
+  if (route) return { origin: "Indien", destination: "Sri Lanka" };
+  return null;
+}
+
+function extractRouteDestination(text: string): string | null {
+  return extractRouteParts(text)?.destination ?? null;
 }
 
 function formatMissingField(field: MissingField): string {
@@ -619,6 +659,19 @@ function isDateLike(text: string): boolean {
   return MONTH_RE.test(firstWord);
 }
 
+function isLikelyFieldOnlyMessage(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  if (parseBudgetValue(t) !== null) return true;
+  if (parseAnswerDurationDays(t) !== null) return true;
+  if (parseAnswerTravelers(t) !== null && /\b(person|personen|reisende|gäste|gaeste|pax|adult|adults|allein|solo|paar|familie)\b/i.test(t)) return true;
+  if (/^(ja|yes|ok|okay|passt|stimmt|genau|richtig|nein|no|danke|thanks)$/i.test(t)) return true;
+  if (/^(budget|dauer|reisedauer|personen|reisende|abflug|abflughafen|reisezeit|zeitraum|interessen)\b/i.test(t)) return true;
+  if (/\b(abflug|abflughafen|von|ab)\b/i.test(t) && !/\b(nach|to|in)\b/i.test(t)) return true;
+  if (/\b(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|october|december|sommer|winter|herbst|frühling|fruehling|flexibel|egal)\b/i.test(t) && t.split(/\s+/).length <= 4) return true;
+  return false;
+}
+
 function isGenerationCommand(text: string): boolean {
   return /\b(package|packages|paket|pakete|pakeg|create|erstellen|generieren|mach|machen|generate|build)\b/i.test(text);
 }
@@ -643,26 +696,28 @@ function extractDestination(history: string): string {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
+    const routeDestination = extractRouteDestination(line);
+    if (routeDestination) return routeDestination;
     const explicit = line.match(/(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
-    if (explicit?.[1] && !isDateLike(explicit[1])) return cleanDestination(explicit[1]);
+    if (explicit?.[1] && !isDateLike(explicit[1])) return normalizePlaceName(cleanDestination(explicit[1]));
 
     // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
     const afterDuration = line.match(/\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
       const cand = cleanDestination(afterDuration[1]);
-      if (cand && !isDateLike(cand)) return cand;
+      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
     const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
-      if (cand && !isDateLike(cand)) return cand;
+      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
     const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
+    if (firstChunk && !isLikelyFieldOnlyMessage(firstChunk) && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
       const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      if (cleaned && !isDateLike(cleaned)) return cleanDestination(cleaned);
+      if (cleaned && !isDateLike(cleaned)) return normalizePlaceName(cleanDestination(cleaned));
     }
   }
 
@@ -705,12 +760,14 @@ function extractOrigin(history: string): string | undefined {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     if (isGenerationCommand(line)) continue;
+    const routeOrigin = extractRouteParts(line)?.origin;
+    if (routeOrigin) return routeOrigin;
     const labeled = line.match(/\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const direct = line.match(/\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i);
     const value = labeled?.[1] ?? direct?.[1];
     if (value) {
       const cleaned = value.split(/[,.;:!?\n]/)[0].trim().split(/\s+/).slice(0, 3).join(" ");
-      if (cleaned) return cleaned;
+      if (cleaned) return normalizePlaceName(cleaned);
     }
   }
   return undefined;
@@ -1056,11 +1113,12 @@ export const Route = createFileRoute("/api/chat")({
           for (const f of detectAskedFields(textOf(m))) askedFields.add(f);
         }
         const answeredInDialog = getAnsweredFieldsFromDialog(uiMessages);
+        const answeredInUserMessages = getAnsweredFieldsFromUserMessages(uiMessages);
 
         const fieldHas = (field: MissingField, looseSignal: boolean): boolean => {
           // If the assistant explicitly asked about this field, the user MUST
           // have replied with a valid answer — no loose/LLM inference allowed.
-          if (askedFields.has(field)) return answeredInDialog.has(field);
+          if (askedFields.has(field)) return answeredInDialog.has(field) || answeredInUserMessages.has(field);
           return looseSignal;
         };
 
@@ -1132,7 +1190,7 @@ export const Route = createFileRoute("/api/chat")({
           ?? extractRequestedDurationDays(userHistory);
 
         const destination = extracted.destination
-          ? cleanPlace(extracted.destination)
+          ? cleanPlace(extractDestination(userHistory) !== "deinem Reiseziel" ? extractDestination(userHistory) : extracted.destination)
           : (dialog.destination ? cleanPlace(dialog.destination) : extractDestination(userHistory));
 
         const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
