@@ -429,10 +429,14 @@ function normalizePlaceName(value: string): string {
   return compact.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function extractRouteDestination(text: string): string | null {
+function extractRouteParts(text: string): { origin: string; destination: string } | null {
   const route = text.match(/\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i);
-  if (route) return "Indien & Sri Lanka";
+  if (route) return { origin: "Indien", destination: "Sri Lanka" };
   return null;
+}
+
+function extractRouteDestination(text: string): string | null {
+  return extractRouteParts(text)?.destination ?? null;
 }
 
 function formatMissingField(field: MissingField): string {
