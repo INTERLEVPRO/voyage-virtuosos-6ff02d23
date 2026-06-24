@@ -79,9 +79,12 @@ function mentionedBudget(text: string): boolean {
 
 // "pro Person" / "p.P." / "per person" / "je Person" / "pro Kopf" => per-person.
 // Anything else with a budget amount defaults to total/group budget.
-function parseBudgetType(text: string): "perPerson" | "total" {
+function parseBudgetType(text: string): "perPerson" | "total" | "totalExplicit" {
   if (/\b(pro\s+person|p\.?\s*p\.?|per\s+person|je\s+person|pro\s+kopf|each|per\s+adult)\b/i.test(text)) {
     return "perPerson";
+  }
+  if (/\b(insgesamt|total|für alle|for all|gesamt|für \d|for \d)\b/i.test(text)) {
+    return "totalExplicit";
   }
   return "total";
 }
@@ -292,7 +295,24 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     if (!/\b(budget|dauer|personen|reisende|tage|wochen|monate|euro|eur)\b/i.test(v)) return v;
   }
   if (field === "interests") {
-    // Avoid treating interest words as anything else; keep raw value.
+    if (extractRouteParts(v)) return null;
+    if (/\b(to|nach|bis|->|→)\b/i.test(v)) return null;
+    if (v.length > 50) {
+      const clauses = v.split(/[.;!?\n]/);
+      for (const clause of clauses) {
+        if (/\b(strand|kultur|wellness|essen|kulinarik|natur|abenteuer|shopping|einkauf|kunst|museum|museen|tempel|sehenswürdig|sehenswuerdig|touristisch)\b/i.test(clause)) {
+          return clause.replace(/^.*?(?:möchte|suche|interessiere mich für|wichtig ist|hätte gerne)\s+/i, "").trim();
+        }
+      }
+    }
+    return v;
+  }
+  if (field === "timeframe") {
+    if (v.length <= 40) return v;
+    const m = v.match(/\b((?:anfang|mitte|ende)?\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|frühling|fruehling|sommer|herbst|winter))\b/i);
+    if (m) return m[1];
+    const r = v.match(/\b(\d{1,2}\.\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)|flexibel|egal)\b/i);
+    if (r) return r[1];
     return v;
   }
   return v;
@@ -625,7 +645,7 @@ function isConfirmPackageReply(text: string): boolean {
 function buildTripConfirmationReply(params: {
   destination: string;
   budget: number;
-  budgetType: "perPerson" | "total";
+  budgetType: "perPerson" | "total" | "totalExplicit";
   durationDays: number;
   travelers: number;
   origin: string;
