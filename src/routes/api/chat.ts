@@ -97,7 +97,7 @@ const MONTH_TO_NUM: Record<string, number> = {
 // Returns the duration in days when both endpoints parse.
 function parseDateRangeDays(text: string): number | null {
   const verbose = text.match(
-    /(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
+    /(?:vom\s+)?(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
   );
   if (verbose) {
     const m1 = MONTH_TO_NUM[verbose[2].toLowerCase()];
