@@ -591,8 +591,8 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number, 
       "Du kannst mir z. B. einfach schreiben:",
       '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
       "",
-      "Oder wir gehen es Schritt für Schritt durch:",
-      prompt,
+      "Damit ich direkt loslegen kann, brauche ich noch kurz:",
+      ...missing.map((f) => `- ${formatMissingField(f, ctx)}`),
     ].join("\n");
   }
 
