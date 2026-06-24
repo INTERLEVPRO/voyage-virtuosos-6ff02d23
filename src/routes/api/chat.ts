@@ -521,12 +521,18 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number):
     ].join("\n");
   }
 
-  // Otherwise: ask ONE question at a time
-  if (missing.length === 1) {
-    return `Eine letzte Frage noch: ${prompts[0]}`;
+  // Bundle all remaining missing fields in ONE concise message.
+  // Never say "Perfekt" or imply planning can start while fields are missing.
+  if (missing.length > 1) {
+    const intro =
+      userMessageCount <= 2
+        ? "Super, fast alles da! Mir fehlen noch:"
+        : `Fast geschafft — noch ${missing.length} Angaben fehlen:`;
+    return [intro, "", ...prompts.map((prompt) => `- ${prompt}`)].join("\n");
   }
 
-  return prompts[0];
+  // Exactly one field left → ask that one question directly.
+  return `Eine letzte Frage noch: ${prompts[0]}`;
 }
 
 function isTripConfirmationPrompt(text: string): boolean {
