@@ -105,17 +105,32 @@ const MONTH_TO_NUM: Record<string, number> = {
 // "18.07.2026 - 23.07.2026" or "2026-07-18 to 2026-07-23".
 // Returns the duration in days when both endpoints parse.
 function parseDateRangeDays(text: string): number | null {
-  const verbose = text.match(
-    /(?:vom\s+)?(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
-  );
-  if (verbose) {
-    const m1 = MONTH_TO_NUM[verbose[2].toLowerCase()];
-    const m2 = MONTH_TO_NUM[verbose[5].toLowerCase()];
-    const y1 = Number(verbose[3] ?? verbose[6] ?? new Date().getFullYear());
-    const y2 = Number(verbose[6] ?? verbose[3] ?? y1);
-    if (m1 && m2) {
-      const d1 = new Date(y1, m1 - 1, Number(verbose[1]));
-      const d2 = new Date(y2, m2 - 1, Number(verbose[4]));
+  // Flexible text-based date parser (handles "Juli 2026 5", "5 Juli 2026", "18. Juli - 23. Juli 2026")
+  const sepMatch = text.match(/(.*?)\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*(.*)/i);
+  if (sepMatch) {
+    const parseFlex = (s: string, defaultYear: number): Date | null => {
+      const m = s.match(/\b(januar|februar|märz|maerz|mar|march|apr|april|mai|may|jun|juni|june|jul|juli|july|aug|august|sep|sept|september|oct|okt|oktober|october|nov|november|dec|dez|dezember|december)\b/i);
+      if (!m) return null;
+      const monthNum = MONTH_TO_NUM[m[1].toLowerCase()];
+      if (!monthNum) return null;
+      
+      const nums = Array.from(s.matchAll(/\b\d+\b/g)).map(x => Number(x[0]));
+      let day: number | null = null;
+      let year: number | null = null;
+      for (const n of nums) {
+        if (n >= 1900 && n <= 2100) year = n;
+        else if (n >= 1 && n <= 31 && day === null) day = n;
+      }
+      if (day === null) return null;
+      return new Date(year ?? defaultYear, monthNum - 1, day);
+    };
+
+    const d1 = parseFlex(sepMatch[1], new Date().getFullYear());
+    const d2 = parseFlex(sepMatch[2], d1 ? d1.getFullYear() : new Date().getFullYear());
+    if (d1 && d2) {
+      if (!sepMatch[1].match(/\b20\d{2}\b/) && sepMatch[2].match(/\b20\d{2}\b/)) {
+        d1.setFullYear(d2.getFullYear());
+      }
       const diff = Math.round((d2.getTime() - d1.getTime()) / 86400000) + 1;
       if (diff > 0 && diff <= 365) return diff;
     }
