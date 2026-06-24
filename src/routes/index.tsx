@@ -18,6 +18,26 @@ import {
 import type { TravelPackage } from "@/types/travel";
 import { Footer } from "@/components/Footer";
 
+const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => {
+  const seed = i + 1;
+  const wave = (multiplier: number, offset = 0) => {
+    const value = Math.sin(seed * multiplier + offset) * 10000;
+    return value - Math.floor(value);
+  };
+  const percent = (value: number) => `${value.toFixed(4)}%`;
+  const px = (value: number) => `${value.toFixed(3)}px`;
+  const seconds = (value: number) => `${value.toFixed(3)}s`;
+
+  return {
+    left: percent(10 + wave(12.9898) * 80),
+    top: percent(10 + wave(78.233, 1.7) * 80),
+    dx: px(-30 + wave(37.719, 0.5) * 60),
+    dy: px(-40 + wave(19.371, 2.3) * 80),
+    duration: seconds(4 + wave(7.113, 4.1) * 6),
+    delay: seconds(-wave(3.917, 6.2) * 8),
+  };
+});
+
 
 export const Route = createFileRoute("/")(
   {
@@ -109,17 +129,17 @@ function Index() {
           <div className="orb w-[150px] h-[150px] bg-[#0d9e4f] top-[60%] right-[10%] sm:w-[250px] sm:h-[250px]" style={{ animationDelay: "-5s" }} />
 
           {/* Particles */}
-          {Array.from({ length: 12 }).map((_, i) => (
+          {HERO_PARTICLES.map((particle, i) => (
             <div
               key={i}
               className="particle"
               style={{
-                left: `${10 + Math.random() * 80}%`,
-                top: `${10 + Math.random() * 80}%`,
-                ["--dx" as string]: `${-30 + Math.random() * 60}px`,
-                ["--dy" as string]: `${-40 + Math.random() * 80}px`,
-                ["--dur" as string]: `${4 + Math.random() * 6}s`,
-                animationDelay: `${-Math.random() * 8}s`,
+                left: particle.left,
+                top: particle.top,
+                ["--dx" as string]: particle.dx,
+                ["--dy" as string]: particle.dy,
+                ["--dur" as string]: particle.duration,
+                animationDelay: particle.delay,
               }}
             />
           ))}
