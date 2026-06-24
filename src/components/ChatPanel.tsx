@@ -1,5 +1,3 @@
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DateRange } from "react-day-picker";
@@ -80,6 +78,39 @@ function stripJsonBlock(text: string): string {
   return text.replace(JSON_BLOCK_RE, "").trim();
 }
 
+type ChatPart = { type: "text"; text: string };
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  parts: ChatPart[];
+};
+type ChatStatus = "ready" | "submitted" | "streaming";
+
+function makeMessage(role: ChatMessage["role"], text: string): ChatMessage {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    role,
+    parts: [{ type: "text", text }],
+  };
+}
+
+function appendAssistantDelta(
+  messages: ChatMessage[],
+  assistantId: string,
+  delta: string,
+) {
+  const existing = messages.find((m) => m.id === assistantId);
+  if (!existing) {
+    return [...messages, { id: assistantId, role: "assistant" as const, parts: [{ type: "text" as const, text: delta }] }];
+  }
+
+  return messages.map((m) => {
+    if (m.id !== assistantId) return m;
+    const current = m.parts[0]?.text ?? "";
+    return { ...m, parts: [{ type: "text" as const, text: current + delta }] };
+  });
+}
+
 /* ── Schnellstart: horizontal scroll on mobile, full cards on desktop ── */
 function StarterPrompts({ submit }: { submit: (text: string) => void }) {
   return (
@@ -139,8 +170,9 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
 }
 
 export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: TravelPackage[]) => void }) {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [status, setStatus] = useState<ChatStatus>("ready");
+  const [error, setError] = useState<Error | null>(null);
   const [input, setInput] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [showGeneratingLoader, setShowGeneratingLoader] = useState(false);
@@ -151,6 +183,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handedOffRef = useRef<Set<string>>(new Set());
+  const abortRef = useRef<AbortController | null>(null);
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -174,6 +207,10 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   }, [status]);
 
   useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
+
+  useEffect(() => {
     if (status === "streaming" || status === "submitted") return;
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return;
@@ -190,15 +227,85 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
   const lastUserMessage = useMemo(() => {
     const m = [...messages].reverse().find(m => m.role === "user");
     if (!m) return input;
-    return m.parts.map((p: any) => (p.type === "text" ? p.text : "")).join("");
+    return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
   }, [messages, input]);
 
-  const submit = (text: string) => {
+  const submit = async (text: string) => {
     if (!text.trim() || isLoading) return;
-    sendMessage({ text: text.trim() });
+    const userMessage = makeMessage("user", text.trim());
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setError(null);
+    setStatus("submitted");
     setInput("");
     if (inputRef.current) {
       inputRef.current.style.height = "48px";
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: nextMessages }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        throw new Error(body || `Chat request failed (${response.status})`);
+      }
+
+      if (!response.body) throw new Error("Keine Antwort vom Chat-Server erhalten.");
+
+      setStatus("streaming");
+      const assistantId = `assistant-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      const handleFrame = (frame: string) => {
+        const dataLines = frame
+          .split("\n")
+          .filter((line) => line.startsWith("data:"))
+          .map((line) => line.slice(5).trimStart());
+        if (dataLines.length === 0) return;
+        const payload = dataLines.join("\n").trim();
+        if (!payload || payload === "[DONE]") return;
+
+        try {
+          const event = JSON.parse(payload) as { type?: string; delta?: string; errorText?: string; message?: string };
+          if (event.type === "text-delta" && event.delta) {
+            setMessages((current) => appendAssistantDelta(current, assistantId, event.delta!));
+          }
+          if (event.type === "error") {
+            throw new Error(event.errorText || event.message || "Chat stream error");
+          }
+        } catch (err) {
+          if (err instanceof SyntaxError) return;
+          throw err;
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const frames = buffer.split(/\r?\n\r?\n/);
+        buffer = frames.pop() ?? "";
+        frames.forEach(handleFrame);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) handleFrame(buffer);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+      setStatus("ready");
     }
   };
 
