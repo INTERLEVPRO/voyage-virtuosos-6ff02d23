@@ -1362,11 +1362,20 @@ export const Route = createFileRoute("/api/chat")({
           // non-fatal
         }
 
-        const ratingsPerPackage = await Promise.all(
-          normalized.map((p) =>
-            fetchPackageRatings({ hotel: p.hotel, destination: p.destination }),
+        // Hard timeout: ratings scraping can be very slow (multiple Firecrawl
+        // searches per package). Cap the whole batch at 20s so we don't hit
+        // Cloudflare's 100s gateway timeout. Fall back to empty ratings.
+        const ratingsPerPackage = await Promise.race([
+          Promise.all(
+            normalized.map((p) =>
+              fetchPackageRatings({ hotel: p.hotel, destination: p.destination })
+                .catch(() => [] as Awaited<ReturnType<typeof fetchPackageRatings>>),
+            ),
           ),
-        );
+          new Promise<Awaited<ReturnType<typeof fetchPackageRatings>>[]>((resolve) =>
+            setTimeout(() => resolve(normalized.map(() => [])), 20_000),
+          ),
+        ]);
 
         const packagesWithLinks = normalized.map((p, i) => ({
           ...p,
