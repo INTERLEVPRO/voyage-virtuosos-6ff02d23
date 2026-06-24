@@ -1,35 +1,19 @@
 ## Problem
-Im Screenshot fehlt eine Pflichtangabe: **Anzahl Reisende**. Der Concierge fragt nur nach dem Reisezeitraum und springt dann direkt zur Paketerstellung ("Perfekt — ich lasse mein Team…"), obwohl noch echte Daten fehlen.
 
-Grund: `isPlanningRequest` in `src/routes/api/chat.ts` prüft nur **Budget + Ziel/Art + Wortzahl**. Reisedauer, Anzahl Reisende, Abflughafen und Zeitraum werden NICHT geprüft → Planung startet zu früh, der Concierge fragt fehlende Felder nicht mehr ab.
+On https://weltweiturlaub.de the chat is "dead": Schnellstart cards don't click, send button doesn't react, only the frontend UI shows. Locally everything works because we replaced `useChat` (AI SDK) with a custom `fetch`-based client in `src/components/ChatPanel.tsx`. The deployed bundle still contains the older broken build.
 
-## Fix (nur `src/routes/api/chat.ts`)
+## Plan
 
-### 1. `isPlanningRequest` strenger machen
-Alle 6 Pflichtfelder müssen im Verlauf vorkommen, sonst bleibt der Concierge im Frage-Modus:
+1. Verify the live bundle is stale (compare deployed JS hash vs current source behavior).
+2. Re-run `preview_ui--publish` so the latest `ChatPanel.tsx` (custom chat client) and the working `/api/chat` server route ship to weltweiturlaub.de.
+3. After deploy, smoke-test the live domain:
+   - POST `/api/chat` returns a streaming SSE response
+   - Quickstart card click triggers a request
+   - Typing + send/Enter triggers a request and shows the assistant reply
+4. If a Schnellstart card still doesn't trigger after redeploy, inspect its handler in `ChatPanel.tsx` — it must call the same `submit()` path as the send button, not the old `useChat` `append`.
 
-- **Budget**: `\d{2,5}\s?(€|eur|euro)` ODER Wort "budget"
-- **Ziel ODER Urlaubsart**: bestehende Regex
-- **Dauer**: `\d+\s?(tag|tage|nacht|nächte|woche|wochen)`
-- **Reisende**: `\d+\s?(person|personen|erwachsene|reisende|gäste)` ODER "allein"/"solo"/"paar"/"familie"
-- **Abflughafen**: "ab/von/abflug" + Ort, oder bekannte Flughafencodes/Städte-Heuristik (`ab\s+\w+` / `abflug\s+\w+` / `von\s+\w+`)
-- **Reisezeitraum**: Monat/Saison/relativ/"flexibel"/"egal" (Liste von Keywords: januar…dezember, frühling, sommer, herbst, winter, nächst…, in \d+ monat…, flexibel, egal)
+## Notes for the user (plain language)
 
-Nur wenn **alle 6** matchen → Planung startet.
+The backend (`/api/chat`) is already working on the live domain — I tested it directly and it streamed a German reply. The reason the buttons feel dead is that the published site is still running the old frontend code. Republishing pushes the fixed chat code live, and then the cards + send button + Enter will all work.
 
-### 2. Concierge-Prompt schärfen
-Klare Anweisung: nenne in EINER Nachricht **kurz und gebündelt** die noch fehlenden Felder als Liste (nicht eins nach dem anderen), z. B.:
-> "Super, fast alles da! Mir fehlen noch zwei Kleinigkeiten: **Wie viele Personen reisen?** und **wann ungefähr** (Monat/Saison/"flexibel")?"
-
-Außerdem: NIEMALS "Perfekt — ich lasse mein Team…" sagen, solange noch ein Pflichtfeld fehlt.
-
-### 3. Verhalten im Beispielfall
-Eingabe "Städtetrip Lissabon, 4 Tage, 1200€, Kunst & gutes Essen, Abflug München" + "june" →
-fehlt noch: **Anzahl Reisende**.
-Concierge fragt: *"Eine letzte Frage: Wie viele Personen reisen mit?"*
-Erst danach startet die Paketerstellung.
-
-## Out of scope
-- Keine UI-Änderungen (kein Date-Picker, keine Chips).
-- Keine Änderungen an Packager / Research / Refine / Weather.
-- Keine DB- oder Schema-Änderungen.
+No database, no env vars, no secret changes needed.
