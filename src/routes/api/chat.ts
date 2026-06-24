@@ -8,7 +8,7 @@ import {
   type LanguageModel,
 } from "ai";
 import { z } from "zod";
-import { createOpenAIProvider } from "@/lib/openai-provider";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
 type ChatRequestBody = { messages?: unknown };
@@ -1087,11 +1087,11 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages required", { status: 400 });
         }
 
-        const key = process.env.OPENAI_API_KEY;
-        if (!key) return new Response("OPENAI_API_KEY missing", { status: 500 });
+        const key = process.env.LOVABLE_API_KEY;
+        if (!key) return new Response("AI backend key missing", { status: 500 });
 
-        const openai = createOpenAIProvider(key);
-        const model = openai("gpt-4o-mini");
+        const aiGateway = createLovableAiGatewayProvider(key);
+        const model = aiGateway("google/gemini-3-flash-preview");
         const uiMessages = messages as UIMessage[];
 
         const textOf = (m: UIMessage) =>
