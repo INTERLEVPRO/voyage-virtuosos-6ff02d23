@@ -608,24 +608,31 @@ function isConfirmPackageReply(text: string): boolean {
 function buildTripConfirmationReply(params: {
   destination: string;
   budget: number;
+  budgetType: "perPerson" | "total";
   durationDays: number;
   travelers: number;
   origin: string;
   timeframe: string;
   interests: string[];
 }) {
+  const budgetLabel = params.budgetType === "perPerson"
+    ? `${params.budget.toLocaleString("de-DE")} € pro Person`
+    : `${params.budget.toLocaleString("de-DE")} € insgesamt`;
+  const budgetClarify = params.budgetType === "total"
+    ? `\n\nKurz zur Sicherheit: Sind die ${params.budget.toLocaleString("de-DE")} € **insgesamt für alle ${params.travelers} Personen** gemeint? Falls pro Person, schreib einfach „pro Person".`
+    : "";
   return [
     "Ich prüfe kurz deine Reiseangaben, damit keine alten Daten verwendet werden:",
     "",
     `- **Reiseziel:** ${params.destination}`,
-    `- **Budget:** ${params.budget.toLocaleString("de-DE")} € pro Person`,
+    `- **Budget:** ${budgetLabel}`,
     `- **Reisedauer:** ${params.durationDays} Tage`,
     `- **Personen:** ${params.travelers}`,
     `- **Abflug:** ${params.origin}`,
     `- **Reisezeit:** ${params.timeframe}`,
     `- **Interessen:** ${params.interests.join(", ")}`,
     "",
-    "Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?",
+    `Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?${budgetClarify}`,
   ].join("\n");
 }
 
