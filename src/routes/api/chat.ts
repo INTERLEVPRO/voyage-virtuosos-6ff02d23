@@ -274,6 +274,7 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     if (/\b(to|nach|bis|->|→)\b/i.test(v)) return null;
     const o = extractOrigin(v);
     if (o) return o;
+    if (!/\b(budget|dauer|personen|reisende|tage|wochen|monate|euro|eur)\b/i.test(v)) return v;
   }
   if (field === "interests") {
     // Avoid treating interest words as anything else; keep raw value.
@@ -298,7 +299,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "travelers":
       return parseAnswerTravelers(v) !== null;
     case "origin":
-      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v) && !isCountryOnly(v);
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v) && !isCountryOnly(v) && !/\b(budget|dauer|personen|reisende|euro|eur)\b/i.test(v);
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
@@ -309,7 +310,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
         /\b(flexibel|egal)\b/i.test(v)
       );
     case "interests":
-      return /[A-Za-zÄÖÜäöüß]/.test(v) && !/^\s*(ja|nein|ok|okay|passt|stimmt)\s*$/i.test(v);
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !/^\s*(ja|nein|ok|okay|passt|stimmt)\s*$/i.test(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v);
     default:
       return true;
   }
@@ -602,7 +603,8 @@ function isConfirmPackageReply(text: string): boolean {
   const t = text.trim().toLowerCase();
   if (t.length > 80 || /\b(aber|doch|statt|instead|change|ändern|aendern|korrigier|lieber|eigentlich)\b/i.test(t)) return false;
   return /^(ja|yes|ok|okay|passt|stimmt|genau|richtig|bestätige|bestaetige|mach|machen|erstellen|create|generate|paket|pakete|pakeg)(\b|\s)/i.test(t)
-    || /\b(ja.*paket|pakete.*erstellen|package.*create|pakeg.*create|create.*pakeg|mach.*pakete|passt.*pakete)\b/i.test(t);
+    || /\b(ja.*paket|pakete.*erstellen|package.*create|pakeg.*create|create.*pakeg|mach.*pakete|passt.*pakete)\b/i.test(t)
+    || /\b(pro\s+person|p\.?\s*p\.?|per\s+person|je\s+person|pro\s+kopf|insgesamt|total|für alle|for all|für\s+\d|for\s+\d|to\s+\d)\b/i.test(t);
 }
 
 function buildTripConfirmationReply(params: {
@@ -1312,6 +1314,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const llmInterests = (extracted.interests ?? [])
           .map((s) => s.trim())
+          .filter(s => !extractRouteParts(s) && !/\b(to|nach|bis|->|→)\b/i.test(s))
           .filter(Boolean);
         const interests = llmInterests.length > 0
           ? llmInterests
