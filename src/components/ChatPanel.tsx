@@ -696,7 +696,12 @@ function detectDestination(query: string): { emoji: string; title: string; secti
 function buildGenericGuide(query: string): { emoji: string; title: string; sections: string[] } {
   // Try to extract the destination name — take the first capitalized word or phrase
   const destMatch = query.match(/([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*)/);
-  const dest = destMatch?.[1] || "dein Traumziel";
+  // hasDest distinguishes "real destination" from generic fallback wording.
+  const hasDest = !!destMatch?.[1];
+  const dest = destMatch?.[1] || "Traumziel";
+  const closing = hasDest
+    ? `\n\n🌅 Warum ${dest} perfekt für dich ist:\nJede Reise verändert uns ein Stück. ${dest} wird dir Momente schenken, die du für immer in deinem Herzen trägst. Die perfekte Mischung aus Abenteuer und Erholung wartet auf dich.\n\nIch stelle jetzt dein perfektes ${dest}-Paket zusammen...`
+    : `\n\n🌅 Warum deine Reise besonders wird:\nJede Reise verändert uns ein Stück. Sie wird dir Momente schenken, die du für immer in deinem Herzen trägst. Die perfekte Mischung aus Abenteuer und Erholung wartet auf dich.\n\nIch stelle jetzt dein perfektes Traumziel-Paket zusammen...`;
   return {
     emoji: "🌍",
     title: dest,
@@ -705,7 +710,7 @@ function buildGenericGuide(query: string): { emoji: string; title: string; secti
       `\n\n🏛️ Was dich erwartet:\n${dest} hat seine ganz eigene Magie. Ob historische Sehenswürdigkeiten, atemberaubende Natur oder pulsierende Städte — hier findest du Erlebnisse, die du nie vergessen wirst. Jede Ecke erzählt eine Geschichte, jeder Moment wird zu einer Erinnerung.`,
       `\n\n🌊 Deine schönsten Erlebnisse:\nEntdecke die Highlights der Region wie ein Einheimischer. Besuche die berühmtesten Sehenswürdigkeiten, finde versteckte Geheimtipps und lass dich von der lokalen Kultur inspirieren. Ob Abenteuer, Entspannung oder Kultur — hier ist für jeden etwas dabei.`,
       `\n\n🍽️ Kulinarische Highlights:\nDie lokale Küche ist ein Erlebnis für sich! Probiere authentische Gerichte in kleinen Restaurants, besuche lokale Märkte und entdecke Geschmäcker, die du so noch nie erlebt hast. Essen verbindet — und hier wirst du dich sofort willkommen fühlen.`,
-      `\n\n🌅 Warum ${dest} perfekt für dich ist:\nJede Reise verändert uns ein Stück. ${dest} wird dir Momente schenken, die du für immer in deinem Herzen trägst. Die perfekte Mischung aus Abenteuer und Erholung wartet auf dich.\n\nIch stelle jetzt dein perfektes ${dest}-Paket zusammen...`,
+      closing,
     ],
   };
 }
@@ -719,12 +724,16 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
   // Keep narrative short: just the intro section + a closing line.
   const sections = useMemo(() => {
     const base = detectDestination(userQuery) || buildGenericGuide(userQuery);
+    const knownTitle = base.title && base.title !== "Traumziel" && base.title !== "dein Traumziel";
+    const closingLine = knownTitle
+      ? `\n\nIch stelle jetzt dein perfektes ${base.title}-Paket zusammen…`
+      : `\n\nIch stelle jetzt dein perfektes Traumziel-Paket zusammen…`;
     return {
       emoji: base.emoji,
       title: base.title,
       sections: [
-        base.sections[0],
-        `\n\nIch stelle jetzt dein perfektes ${base.title}-Paket zusammen…`,
+        base.sections[0] ?? "",
+        closingLine,
       ],
     };
   }, [userQuery]);
