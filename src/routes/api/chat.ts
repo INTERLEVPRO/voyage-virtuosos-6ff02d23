@@ -925,6 +925,10 @@ function extractTravelMonth(history: string): string | undefined {
     if (isGenerationCommand(line) || isConfirmPackageReply(line)) continue;
     const labeled = line.match(/\b(?:datum|startdatum|reisezeit|reisezeitraum|zeitraum|monat|month|date|start date|timeframe)\s*:\s*([^\n,;]+)/i);
     const source = labeled?.[1] ?? line;
+    // First try to capture "Anfang/Mitte/Ende September" etc.
+    const withPrefix = source.match(/\b((?:anfang|mitte|ende)\s+(?:januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january))\b/i);
+    if (withPrefix?.[1]) return withPrefix[1].toLowerCase();
+    // Bare month name
     const m = source.match(/\b(januar|february|februar|märz|maerz|march|april|mai|may|juni|june|juli|july|august|september|oktober|october|november|dezember|december|january|aug|sep|sept|oct|nov|dec|jan|feb|mar|apr|jun|jul|frühling|fruehling|sommer|herbst|winter|flexibel|egal)\b/i);
     if (m?.[1]) return m[1].toLowerCase();
     const relative = source.match(/\b(nächst(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|kommend(?:e|en|er|es)?\s+(?:monat|sommer|winter|frühling|fruehling|herbst)|in\s+\d+\s+monat(?:en)?)\b/i);
@@ -951,7 +955,7 @@ function extractInterests(history: string): string[] {
     ["tempel", "Tempel & Spiritualität"],
     ["sehenswürdig", "Sehenswürdigkeiten"],
     ["sehenswuerdig", "Sehenswürdigkeiten"],
-    ["touristisch", "Sehenswürdigkeiten"],
+    ["touristisch", "Sehenswürdigkeiten & touristische Orte"],
   ] as const;
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
@@ -959,6 +963,13 @@ function extractInterests(history: string): string[] {
     if (isGenerationCommand(line)) continue;
     // Skip lines that are pure route text — they're not interests.
     if (extractRouteParts(line) || /^[a-zäöüß\s]+\s+(to|nach|bis|→|->)\s+[a-zäöüß\s]+$/i.test(line)) continue;
+    // Try to extract raw interest clauses from user message first.
+    // Look for specific pattern phrases the user writes.
+    const interestClause = line.match(/\b(?:möchte|suche|wichtig|interessiert?|erleben|besichtigen|anschauen|besuchen)\b([^.;!?\n]{3,60})/i);
+    if (interestClause) {
+      const raw = interestClause[1].trim().replace(/^[,:\s]+/, "");
+      if (raw.length > 2) return [raw];
+    }
     const matched = Array.from(new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)));
     if (matched.length > 0) return matched;
   }
@@ -1170,10 +1181,17 @@ async function extractTripFieldsLLM(
 Berücksichtige den GESAMTEN Verlauf — Antworten können kurz und über mehrere Nachrichten verteilt sein.
 
 KRITISCH — LETZTER WERT GEWINNT (Overwrite-Regel):
-- Ändert/korrigiert/überschreibt der Nutzer einen Wert (z. B. erst "Indien", später "eigentlich Malaysia"; oder "doch 2000€", "lieber 10 Tage", "ab Berlin statt München", "doch Wellness statt Strand"), nimm IMMER die ZULETZT genannte Version.
+- Ändert/korrigiert/überschreibt der Nutzer einen Wert, nimm IMMER die ZULETZT genannte Version.
 - Das gilt für JEDES Feld: destination, budgetEur, durationDays, travelers, originCity, timeframe, interests.
 - Bei interests: nur die zuletzt genannten Interessen zurückgeben, NICHT mit alten kombinieren.
 - Gib niemals einen veralteten Wert zurück, wenn später ein neuer genannt wurde.
+
+EXTRAKTIONS-REGELN:
+- timeframe: Extrahiere NUR die Zeitangabe (z.B. "Anfang September", "Juli", "Sommer"), NIEMALS den ganzen Satz.
+- interests: Extrahiere NUR die Interessen/Aktivitäten die der Nutzer erwähnt hat (z.B. ["Sehenswürdigkeiten", "touristische Orte"]), KEINE generischen Vorschläge.
+- originCity: Extrahiere Stadt oder Flughafen-Namen, NICHT Landesname allein (z.B. "Colombo" oder "Colombo Jayawardenepura Airport", NICHT "Sri Lanka").
+- destination: Wenn User schreibt "nach Deutschland reisen" ist das Reiseziel = "Deutschland".
+- travelers: "zu dritt"=3, "zu zweit"=2, "zu viert"=4, "wir reisen zu dritt"=3.
 
 Verstehe natürliche Sprache, nicht nur strikte Formate. Wenn ein Feld nie genannt wurde, gib null zurück.
 Antworte ausschließlich gemäß Schema.`,
