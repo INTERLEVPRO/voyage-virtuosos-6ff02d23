@@ -581,7 +581,7 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number, 
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  const prompts = missing.map((f) => formatMissingField(f, ctx));
+  const prompt = formatMissingField(missing[0], ctx);
 
   // First user message with little parsed → warm welcome + bundled list (only once at start)
   if (userMessageCount <= 1 && missing.length >= 5) {
@@ -591,23 +591,20 @@ function buildConciergeReply(missing: MissingField[], userMessageCount: number, 
       "Du kannst mir z. B. einfach schreiben:",
       '> *„7 Tage Mallorca, 2 Personen, Budget 1.500 €, Strand & Entspannung, ab Frankfurt, im Juni"*',
       "",
-      "Damit ich direkt loslegen kann, brauche ich noch kurz:",
-      ...prompts.map((prompt) => `- ${prompt}`),
+      "Oder wir gehen es Schritt für Schritt durch:",
+      prompt,
     ].join("\n");
   }
 
-  // Bundle all remaining missing fields in ONE concise message.
-  // Never say "Perfekt" or imply planning can start while fields are missing.
-  if (missing.length > 1) {
-    const intro =
-      userMessageCount <= 2
-        ? "Super, fast alles da! Mir fehlen noch:"
-        : `Fast geschafft — noch ${missing.length} Angaben fehlen:`;
-    return [intro, "", ...prompts.map((prompt) => `- ${prompt}`)].join("\n");
+  if (missing.length === 1) {
+    return `Eine letzte Frage noch: ${prompt}`;
   }
 
-  // Exactly one field left → ask that one question directly.
-  return `Eine letzte Frage noch: ${prompts[0]}`;
+  if (missing.length === 2) {
+    return `Fast geschafft! ${prompt}`;
+  }
+
+  return prompt;
 }
 
 function isTripConfirmationPrompt(text: string): boolean {
