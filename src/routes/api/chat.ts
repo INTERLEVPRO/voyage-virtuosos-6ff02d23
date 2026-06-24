@@ -77,6 +77,15 @@ function mentionedBudget(text: string): boolean {
   return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
 }
 
+// "pro Person" / "p.P." / "per person" / "je Person" / "pro Kopf" => per-person.
+// Anything else with a budget amount defaults to total/group budget.
+function parseBudgetType(text: string): "perPerson" | "total" {
+  if (/\b(pro\s+person|p\.?\s*p\.?|per\s+person|je\s+person|pro\s+kopf|each|per\s+adult)\b/i.test(text)) {
+    return "perPerson";
+  }
+  return "total";
+}
+
 const MONTH_TO_NUM: Record<string, number> = {
   januar: 1, jan: 1, january: 1,
   februar: 2, feb: 2, february: 2,
