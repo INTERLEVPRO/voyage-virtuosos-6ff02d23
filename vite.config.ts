@@ -13,21 +13,8 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    // Increase chunk size warning limit and configure manual chunking to split large assets
     build: {
-      chunkSizeWarningLimit: 1000, // raise limit to 1 MB
-      rollupOptions: {
-        output: {
-          // Create separate chunks for large vendor libraries
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('@tanstack')) return '@tanstack';
-              if (id.includes('react')) return 'react';
-              if (id.includes('lodash')) return 'lodash';
-            }
-          },
-        },
-      },
+      chunkSizeWarningLimit: 1000,
     },
   },
 });
