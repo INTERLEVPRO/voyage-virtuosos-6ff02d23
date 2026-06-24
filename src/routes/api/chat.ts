@@ -454,7 +454,10 @@ function parseAnswerTravelers(value: string): number | null {
   }
   if (/\b(allein|solo)\b/.test(t)) return 1;
   if (/\b(paar|pärchen|paerchen|zu zweit)\b/.test(t)) return 2;
-  if (/\bfamilie\b/.test(t)) return 4;
+  if (/\b(zu dritt)\b/.test(t)) return 3;
+  if (/\b(zu viert|familie)\b/.test(t)) return 4;
+  if (/\b(zu fünft|zu fuenft)\b/.test(t)) return 5;
+  if (/\b(zu sechst)\b/.test(t)) return 6;
   return null;
 }
 
@@ -874,7 +877,8 @@ const WORD_NUMS: Record<string, number> = {
   paar: 2, pärchen: 2, paerchen: 2, "zu zweit": 2, zwei: 2,
   "zu dritt": 3, drei: 3,
   "zu viert": 4, vier: 4, familie: 4,
-  fünf: 5, fuenf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10,
+  "zu fünft": 5, "zu fuenft": 5, fünf: 5, fuenf: 5,
+  "zu sechst": 6, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10,
 };
 
 function extractTravelers(history: string): number | undefined {
