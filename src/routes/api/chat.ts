@@ -892,15 +892,26 @@ function extractInterests(history: string): string[] {
     ["kultur", "Kultur & Altstadt"],
     ["wellness", "Wellness & Ruhe"],
     ["essen", "Kulinarik & lokale Küche"],
+    ["kulinarik", "Kulinarik & lokale Küche"],
     ["natur", "Natur & Aussichtspunkte"],
     ["abenteuer", "Abenteuer & Aktivität"],
     ["shopping", "Shopping & Bummeln"],
+    ["einkauf", "Shopping & Bummeln"],
     ["kunst", "Kunst & Museen"],
+    ["museum", "Kunst & Museen"],
+    ["museen", "Kunst & Museen"],
+    ["tempel", "Tempel & Spiritualität"],
+    ["sehenswürdig", "Sehenswürdigkeiten"],
+    ["sehenswuerdig", "Sehenswürdigkeiten"],
+    ["touristisch", "Sehenswürdigkeiten"],
   ] as const;
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
-    if (isGenerationCommand(lines[i])) continue;
-    const matched = pool.filter(([key]) => lines[i].includes(key)).map(([, label]) => label);
+    const line = lines[i];
+    if (isGenerationCommand(line)) continue;
+    // Skip lines that are pure route text — they're not interests.
+    if (extractRouteParts(line) || /^[a-zäöüß\s]+\s+(to|nach|bis|→|->)\s+[a-zäöüß\s]+$/i.test(line)) continue;
+    const matched = Array.from(new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)));
     if (matched.length > 0) return matched;
   }
   return ["Highlights entdecken", "Entspannung", "Lokales erleben"];
