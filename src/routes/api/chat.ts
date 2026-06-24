@@ -520,17 +520,20 @@ function extractRouteDestination(text: string): string | null {
   return extractRouteParts(text)?.destination ?? null;
 }
 
-function formatMissingField(field: MissingField): string {
+function formatMissingField(field: MissingField, ctx?: { originCountry?: string | null }): string {
   switch (field) {
     case "destination":
       return "**Wohin soll es gehen** oder welche Art Urlaub möchtest du?";
     case "budget":
-      return "**Wie hoch ist dein ungefähres Budget?**";
+      return "**Wie hoch ist dein ungefähres Budget?** (gesamt für die Gruppe oder pro Person — bitte angeben)";
     case "duration":
       return "**Wie lange möchtest du reisen?**";
     case "travelers":
       return "**Wie viele Personen reisen mit?**";
     case "origin":
+      if (ctx?.originCountry) {
+        return `**Von welcher Stadt oder welchem Flughafen in ${ctx.originCountry} möchtest du abfliegen?**`;
+      }
       return "**Von welchem Flughafen oder welcher Stadt möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
