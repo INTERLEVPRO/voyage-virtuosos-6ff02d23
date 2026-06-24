@@ -5,9 +5,9 @@
     "": {
       "name": "tanstack_start_ts",
       "dependencies": {
-        "@ai-sdk/openai": "^3.0.65",
-        "@ai-sdk/openai-compatible": "^2.0.47",
-        "@ai-sdk/react": "^3.0.179",
+        "@ai-sdk/openai": "^3.0.74",
+        "@ai-sdk/openai-compatible": "^2.0.51",
+        "@ai-sdk/react": "^3.0.210",
         "@cloudflare/vite-plugin": "^1.25.5",
         "@hookform/resolvers": "^5.2.2",
         "@lovable.dev/cloud-auth-js": "^1.1.2",
@@ -44,7 +44,7 @@
         "@tanstack/react-router": "^1.168.25",
         "@tanstack/react-start": "^1.167.50",
         "@tanstack/router-plugin": "^1.167.28",
-        "ai": "^6.0.177",
+        "ai": "^6.0.208",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
@@ -89,17 +89,17 @@
     },
   },
   "packages": {
-    "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.112", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/gateway/-/gateway-3.0.112.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.27", "@vercel/oidc": "3.2.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-jiBao9pR4owWyjo0BnuNc7WSQBGOD0thysE4AFgZXaG+zMFbISQXUkJr7ePw/phBvePy7jE5FSA2Lf7lwqUiiQ=="],
+    "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.133", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/gateway/-/gateway-3.0.133.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.30", "@vercel/oidc": "3.2.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-Ebs+7iS9zUgJu5B0RlxM2JmDWzq79Cpd6YdiqcCzB5qFdpfQJPUDiXutqlQP89F2XGjOdDeidulBTXUdXWzOxw=="],
 
-    "@ai-sdk/openai": ["@ai-sdk/openai@3.0.65", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/openai/-/openai-3.0.65.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.27" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-ZlVoWH+zrdiYDiUt6n/xvfCsk33mzsB81TUQkBRVx79rxU1FKZqVH9J/QCtEpSLqx0cUzjvtIw9l9p7EbUv+dw=="],
+    "@ai-sdk/openai": ["@ai-sdk/openai@3.0.74", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/openai/-/openai-3.0.74.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.30" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-LPDBWd2WCv0GQs29K2pHcNrGx24hm4D8QEP386HwUAUPr1URho6bNVXHNmIv0FxaW+xDkLpNMTen+mFCUBp2LA=="],
 
-    "@ai-sdk/openai-compatible": ["@ai-sdk/openai-compatible@2.0.47", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/openai-compatible/-/openai-compatible-2.0.47.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.27" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-Enm5UlL0zUCrW3792opk5h7hRWxZOZzDe6eQYVFqX9LUOGGCe1h8MZWAGim765nwzgnjlpeYOsuzZmLtRsTPlg=="],
+    "@ai-sdk/openai-compatible": ["@ai-sdk/openai-compatible@2.0.51", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/openai-compatible/-/openai-compatible-2.0.51.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.30" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-A6qfyaVs4lxmRxRux6U3ViOa8mMbsSd0OaHghpei2MpiBT6791J4zFH5MN7kaW1tLfQ246rSC2DVTMOavsycjQ=="],
 
     "@ai-sdk/provider": ["@ai-sdk/provider@3.0.10", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/provider/-/provider-3.0.10.tgz", { "dependencies": { "json-schema": "^0.4.0" } }, "sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw=="],
 
-    "@ai-sdk/provider-utils": ["@ai-sdk/provider-utils@4.0.27", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/provider-utils/-/provider-utils-4.0.27.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@standard-schema/spec": "^1.1.0", "eventsource-parser": "^3.0.8" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-ubkAJ+xODouwtmN1tYlvTPphH1hPOBfZaEQe8U7skGvFAnIRs9PPpsq57bC2+Ky/MB4yzhd6YOsxTAx9sGpazw=="],
+    "@ai-sdk/provider-utils": ["@ai-sdk/provider-utils@4.0.30", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/provider-utils/-/provider-utils-4.0.30.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.10", "@standard-schema/spec": "^1.1.0", "eventsource-parser": "^3.0.8" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-VO7I+vPffqI5sMnPoUq5DCSqKIgQIk/naJWRdQVpz2ma2zoprC/lqiJiUEl2s6DfvTD76TbhD3q39ROjlA6rGw=="],
 
-    "@ai-sdk/react": ["@ai-sdk/react@3.0.179", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/react/-/react-3.0.179.tgz", { "dependencies": { "@ai-sdk/provider-utils": "4.0.27", "ai": "6.0.177", "swr": "^2.2.5", "throttleit": "2.1.0" }, "peerDependencies": { "react": "^18 || ~19.0.1 || ~19.1.2 || ^19.2.1" } }, "sha512-wq3gqDrwi6QvwHQuVrTpjeUQI/LHZ5ysokWTIS1hOFw0UIIX8eVpri5iVvqQuq5CeQw/6bYXSI15SfMtZJixpQ=="],
+    "@ai-sdk/react": ["@ai-sdk/react@3.0.210", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@ai-sdk/react/-/react-3.0.210.tgz", { "dependencies": { "@ai-sdk/provider-utils": "4.0.30", "ai": "6.0.208", "swr": "^2.2.5", "throttleit": "2.1.0" }, "peerDependencies": { "react": "^18 || ~19.0.1 || ~19.1.2 || ^19.2.1" } }, "sha512-VprBlyc8yvwlpIdcIICL307vRncXrLlmcRTY/7JR5ND9+LvUcxJU16yW6prClFahqEWVza8Vr8P4Bgk5ZBtp4A=="],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
@@ -725,7 +725,7 @@
 
     "acorn-jsx": ["acorn-jsx@5.3.2", "", { "peerDependencies": { "acorn": "^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="],
 
-    "ai": ["ai@6.0.177", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/ai/-/ai-6.0.177.tgz", { "dependencies": { "@ai-sdk/gateway": "3.0.112", "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.27", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-1xQtbeWwNcLyyM86ixZhkKvT+WRXc1lvarIKqPVtsyn8F9NDikwUMBqYu+aQKDgMht50SMXh4qboYuU8MeHZZA=="],
+    "ai": ["ai@6.0.208", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/ai/-/ai-6.0.208.tgz", { "dependencies": { "@ai-sdk/gateway": "3.0.133", "@ai-sdk/provider": "3.0.10", "@ai-sdk/provider-utils": "4.0.30", "@opentelemetry/api": "^1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-STz+AaZqJ4ZjH7UkpXkbHx+bjgIDOsE8fIUoZjkZ2whoZcfVmG9K/TqEKouJZ03SuZuD7lagntlU3zBhAEkRpQ=="],
 
     "ajv": ["ajv@6.14.0", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "fast-json-stable-stringify": "^2.0.0", "json-schema-traverse": "^0.4.1", "uri-js": "^4.2.2" } }, "sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw=="],
 
