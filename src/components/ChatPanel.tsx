@@ -1,4 +1,5 @@
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DateRange } from "react-day-picker";
@@ -138,7 +139,8 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
 }
 
 export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: TravelPackage[]) => void }) {
-  const { messages, sendMessage, status, error } = useChat({ api: "/api/chat" });
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const { messages, sendMessage, status, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [showGeneratingLoader, setShowGeneratingLoader] = useState(false);
