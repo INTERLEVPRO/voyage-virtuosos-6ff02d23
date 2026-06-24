@@ -1333,22 +1333,34 @@ export const Route = createFileRoute("/api/chat")({
         if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
         if (!requestedDurationDays || requestedDurationDays <= 0) validationMissing.push("duration");
         if (!travelers || travelers <= 0) validationMissing.push("travelers");
-        if (!origin || isDateLike(origin)) validationMissing.push("origin");
+        // Origin must be a city/airport — country-only triggers a clarification.
+        const originIsCountryOnly = !!origin && isCountryOnly(origin);
+        if (!origin || isDateLike(origin) || originIsCountryOnly) validationMissing.push("origin");
+        // Destination must NOT equal origin (data corruption from overwrite bugs).
+        if (origin && destination && !originIsCountryOnly && origin.trim().toLowerCase() === destination.trim().toLowerCase()) {
+          validationMissing.push("origin");
+        }
         if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
         if (interests.length === 0) validationMissing.push("interests");
         if (validationMissing.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
-            buildConciergeReply(validationMissing, userMessageCount),
+            buildConciergeReply(validationMissing, userMessageCount, {
+              originCountry: originIsCountryOnly ? origin : null,
+            }),
             uiMessages,
           );
         }
+
+        // Determine budget type from full transcript (per Person vs insgesamt).
+        const budgetType = parseBudgetType(`${userHistory}\n${dialog.budget ?? ""}`);
 
         if (!confirmedFinalTripState) {
           return createTextStreamResponse(
             buildTripConfirmationReply({
               destination,
               budget,
+              budgetType,
               durationDays: requestedDurationDays,
               travelers: travelers!,
               origin: origin!,
