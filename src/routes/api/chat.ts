@@ -254,7 +254,7 @@ function detectAskedFields(assistantText: string): MissingField[] {
   if (/budget/.test(t)) fields.push("budget");
   if (/wie lange|reisedauer|wie viele tage/.test(t)) fields.push("duration");
   if (/wie viele personen|wie viele reisende|anzahl.*reisende/.test(t)) fields.push("travelers");
-  if (/von wo.*abfliegen|abflughafen|abflugort|von welchem flughafen/.test(t)) fields.push("origin");
+  if (/von wo.*abfliegen|abflughafen|abflugort|von welch|abfliegen/.test(t)) fields.push("origin");
   if (/wann.*reisen|reisezeit|monat.*saison|startdatum|reise starten/.test(t)) fields.push("timeframe");
   if (/interessen|urlaubstyp|reiseart|was.*erleben|strand|kultur|wellness|natur|aktivität|aktivitaet/.test(t)) fields.push("interests");
   return Array.from(new Set(fields));
