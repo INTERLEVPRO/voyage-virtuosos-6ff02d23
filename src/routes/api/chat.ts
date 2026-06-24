@@ -446,18 +446,65 @@ function cleanPlace(value: string): string {
   return normalizePlaceName(cleaned);
 }
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  india: "Indien", indien: "Indien", indiya: "Indien",
+  "sri lanka": "Sri Lanka", srilanka: "Sri Lanka",
+  germany: "Deutschland", deutschland: "Deutschland",
+  turkey: "Türkei", türkei: "Türkei", tuerkei: "Türkei",
+  greece: "Griechenland", griechenland: "Griechenland",
+  spain: "Spanien", spanien: "Spanien",
+  italy: "Italien", italien: "Italien",
+  france: "Frankreich", frankreich: "Frankreich",
+  thailand: "Thailand",
+  malaysia: "Malaysia",
+  indonesia: "Indonesien", indonesien: "Indonesien",
+  egypt: "Ägypten", ägypten: "Ägypten", aegypten: "Ägypten",
+  croatia: "Kroatien", kroatien: "Kroatien",
+  portugal: "Portugal",
+  morocco: "Marokko", marokko: "Marokko",
+  japan: "Japan",
+  china: "China",
+  vietnam: "Vietnam",
+};
+
+// Country names (German/English) used to detect country-only origins.
+const COUNTRY_ONLY_SET = new Set([
+  "indien", "india", "sri lanka", "srilanka", "deutschland", "germany",
+  "türkei", "turkei", "tuerkei", "turkey", "griechenland", "greece",
+  "spanien", "spain", "italien", "italy", "frankreich", "france",
+  "thailand", "malaysia", "indonesien", "indonesia", "ägypten", "aegypten", "egypt",
+  "kroatien", "croatia", "portugal", "marokko", "morocco", "japan", "china", "vietnam",
+]);
+
+function isCountryOnly(value: string): boolean {
+  const k = value.trim().toLowerCase().replace(/\s+/g, " ");
+  return COUNTRY_ONLY_SET.has(k);
+}
+
 function normalizePlaceName(value: string): string {
   const compact = value.trim().replace(/\s+/g, " ");
-  const lower = compact.toLowerCase().replace(/[._-]/g, " ");
-  if (/^(india|indien|indya)$/.test(lower)) return "Indien";
-  if (/^(sri\s*lanka|srilanka|sri\s*lanka)$/.test(lower)) return "Sri Lanka";
+  const key = compact.toLowerCase().replace(/[._-]/g, " ");
+  if (COUNTRY_ALIASES[key]) return COUNTRY_ALIASES[key];
   return compact.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Generic route parser: "von X nach Y", "from X to Y", "X to Y", "X → Y", "X -> Y".
+// Captures up to 3 words per side; stops at punctuation.
 function extractRouteParts(text: string): { origin: string; destination: string } | null {
-  const route = text.match(/\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i);
-  if (route) return { origin: "Indien", destination: "Sri Lanka" };
-  return null;
+  const PLACE = "[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß'’.\\- ]{1,40}?";
+  // German: "von X nach Y" (optionally "Ich reise … von X nach Y")
+  let m = text.match(new RegExp(`\\bvon\\s+(${PLACE})\\s+nach\\s+(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // English: "from X to Y"
+  if (!m) m = text.match(new RegExp(`\\bfrom\\s+(${PLACE})\\s+to\\s+(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // Arrows / dashes: "X → Y" / "X -> Y"
+  if (!m) m = text.match(new RegExp(`\\b(${PLACE})\\s*(?:→|->|—|–)\\s*(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // Bare "X to Y" (English fallback; avoid matching "to" inside longer sentences)
+  if (!m) m = text.match(new RegExp(`^\\s*(${PLACE})\\s+to\\s+(${PLACE})\\s*$`, "i"));
+  if (!m) return null;
+  const origin = normalizePlaceName(m[1].trim().split(/\s+/).slice(0, 3).join(" "));
+  const destination = normalizePlaceName(m[2].trim().split(/\s+/).slice(0, 3).join(" "));
+  if (!origin || !destination || origin.toLowerCase() === destination.toLowerCase()) return null;
+  return { origin, destination };
 }
 
 function extractRouteDestination(text: string): string | null {
