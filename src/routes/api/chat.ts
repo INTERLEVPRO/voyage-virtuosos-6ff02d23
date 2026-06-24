@@ -77,6 +77,15 @@ function mentionedBudget(text: string): boolean {
   return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
 }
 
+// "pro Person" / "p.P." / "per person" / "je Person" / "pro Kopf" => per-person.
+// Anything else with a budget amount defaults to total/group budget.
+function parseBudgetType(text: string): "perPerson" | "total" {
+  if (/\b(pro\s+person|p\.?\s*p\.?|per\s+person|je\s+person|pro\s+kopf|each|per\s+adult)\b/i.test(text)) {
+    return "perPerson";
+  }
+  return "total";
+}
+
 const MONTH_TO_NUM: Record<string, number> = {
   januar: 1, jan: 1, january: 1,
   februar: 2, feb: 2, february: 2,
@@ -97,7 +106,7 @@ const MONTH_TO_NUM: Record<string, number> = {
 // Returns the duration in days when both endpoints parse.
 function parseDateRangeDays(text: string): number | null {
   const verbose = text.match(
-    /(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
+    /(?:vom\s+)?(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*(\d{1,2})\.\s*([a-zäöüA-ZÄÖÜ]+)\s*(\d{4})?/i,
   );
   if (verbose) {
     const m1 = MONTH_TO_NUM[verbose[2].toLowerCase()];
@@ -289,7 +298,7 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "travelers":
       return parseAnswerTravelers(v) !== null;
     case "origin":
-      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v);
+      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v) && !isCountryOnly(v);
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
@@ -399,8 +408,8 @@ function parseAnswerDurationDays(value: string): number | null {
     if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
     return n;
   }
-  // word number + unit ("one month", "ein monat")
-  const word = t.match(/^(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|nacht|nächte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
+  // word number + unit ("one month", "ein monat", "eine woche", "zwei wochen")
+  const word = t.match(/\b(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|tagen|nacht|nächte|naechte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
   if (word) {
     const n = WORD_NUM_BASIC[word[1]] ?? 1;
     const u = word[2];
@@ -446,35 +455,85 @@ function cleanPlace(value: string): string {
   return normalizePlaceName(cleaned);
 }
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  india: "Indien", indien: "Indien", indiya: "Indien",
+  "sri lanka": "Sri Lanka", srilanka: "Sri Lanka",
+  germany: "Deutschland", deutschland: "Deutschland",
+  turkey: "Türkei", türkei: "Türkei", tuerkei: "Türkei",
+  greece: "Griechenland", griechenland: "Griechenland",
+  spain: "Spanien", spanien: "Spanien",
+  italy: "Italien", italien: "Italien",
+  france: "Frankreich", frankreich: "Frankreich",
+  thailand: "Thailand",
+  malaysia: "Malaysia",
+  indonesia: "Indonesien", indonesien: "Indonesien",
+  egypt: "Ägypten", ägypten: "Ägypten", aegypten: "Ägypten",
+  croatia: "Kroatien", kroatien: "Kroatien",
+  portugal: "Portugal",
+  morocco: "Marokko", marokko: "Marokko",
+  japan: "Japan",
+  china: "China",
+  vietnam: "Vietnam",
+};
+
+// Country names (German/English) used to detect country-only origins.
+const COUNTRY_ONLY_SET = new Set([
+  "indien", "india", "sri lanka", "srilanka", "deutschland", "germany",
+  "türkei", "turkei", "tuerkei", "turkey", "griechenland", "greece",
+  "spanien", "spain", "italien", "italy", "frankreich", "france",
+  "thailand", "malaysia", "indonesien", "indonesia", "ägypten", "aegypten", "egypt",
+  "kroatien", "croatia", "portugal", "marokko", "morocco", "japan", "china", "vietnam",
+]);
+
+function isCountryOnly(value: string): boolean {
+  const k = value.trim().toLowerCase().replace(/\s+/g, " ");
+  return COUNTRY_ONLY_SET.has(k);
+}
+
 function normalizePlaceName(value: string): string {
   const compact = value.trim().replace(/\s+/g, " ");
-  const lower = compact.toLowerCase().replace(/[._-]/g, " ");
-  if (/^(india|indien|indya)$/.test(lower)) return "Indien";
-  if (/^(sri\s*lanka|srilanka|sri\s*lanka)$/.test(lower)) return "Sri Lanka";
+  const key = compact.toLowerCase().replace(/[._-]/g, " ");
+  if (COUNTRY_ALIASES[key]) return COUNTRY_ALIASES[key];
   return compact.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Generic route parser: "von X nach Y", "from X to Y", "X to Y", "X → Y", "X -> Y".
+// Captures up to 3 words per side; stops at punctuation.
 function extractRouteParts(text: string): { origin: string; destination: string } | null {
-  const route = text.match(/\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i);
-  if (route) return { origin: "Indien", destination: "Sri Lanka" };
-  return null;
+  const PLACE = "[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß'’.\\- ]{1,40}?";
+  // German: "von X nach Y" (optionally "Ich reise … von X nach Y")
+  let m = text.match(new RegExp(`\\bvon\\s+(${PLACE})\\s+nach\\s+(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // English: "from X to Y"
+  if (!m) m = text.match(new RegExp(`\\bfrom\\s+(${PLACE})\\s+to\\s+(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // Arrows / dashes: "X → Y" / "X -> Y"
+  if (!m) m = text.match(new RegExp(`\\b(${PLACE})\\s*(?:→|->|—|–)\\s*(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
+  // Bare "X to Y" (English fallback; avoid matching "to" inside longer sentences)
+  if (!m) m = text.match(new RegExp(`^\\s*(${PLACE})\\s+to\\s+(${PLACE})\\s*$`, "i"));
+  if (!m) return null;
+  const origin = normalizePlaceName(m[1].trim().split(/\s+/).slice(0, 3).join(" "));
+  const destination = normalizePlaceName(m[2].trim().split(/\s+/).slice(0, 3).join(" "));
+  if (!origin || !destination || origin.toLowerCase() === destination.toLowerCase()) return null;
+  return { origin, destination };
 }
 
 function extractRouteDestination(text: string): string | null {
   return extractRouteParts(text)?.destination ?? null;
 }
 
-function formatMissingField(field: MissingField): string {
+function formatMissingField(field: MissingField, ctx?: { originCountry?: string | null }): string {
   switch (field) {
     case "destination":
       return "**Wohin soll es gehen** oder welche Art Urlaub möchtest du?";
     case "budget":
-      return "**Wie hoch ist dein ungefähres Budget?**";
+      return "**Wie hoch ist dein ungefähres Budget?** (gesamt für die Gruppe oder pro Person — bitte angeben)";
     case "duration":
       return "**Wie lange möchtest du reisen?**";
     case "travelers":
       return "**Wie viele Personen reisen mit?**";
     case "origin":
+      if (ctx?.originCountry) {
+        return `**Von welcher Stadt oder welchem Flughafen in ${ctx.originCountry} möchtest du abfliegen?**`;
+      }
       return "**Von welchem Flughafen oder welcher Stadt möchtest du abfliegen?**";
     case "timeframe":
       return '**Wann ungefähr möchtest du reisen?** (Monat, Saison oder „flexibel")';
@@ -501,12 +560,12 @@ function joinWithUnd(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
 }
 
-function buildConciergeReply(missing: MissingField[], userMessageCount: number): string {
+function buildConciergeReply(missing: MissingField[], userMessageCount: number, ctx?: { originCountry?: string | null }): string {
   if (missing.length === 0) {
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  const prompts = missing.map(formatMissingField);
+  const prompts = missing.map((f) => formatMissingField(f, ctx));
 
   // First user message with little parsed → warm welcome + bundled list (only once at start)
   if (userMessageCount <= 1 && missing.length >= 5) {
@@ -549,24 +608,31 @@ function isConfirmPackageReply(text: string): boolean {
 function buildTripConfirmationReply(params: {
   destination: string;
   budget: number;
+  budgetType: "perPerson" | "total";
   durationDays: number;
   travelers: number;
   origin: string;
   timeframe: string;
   interests: string[];
 }) {
+  const budgetLabel = params.budgetType === "perPerson"
+    ? `${params.budget.toLocaleString("de-DE")} € pro Person`
+    : `${params.budget.toLocaleString("de-DE")} € insgesamt`;
+  const budgetClarify = params.budgetType === "total"
+    ? `\n\nKurz zur Sicherheit: Sind die ${params.budget.toLocaleString("de-DE")} € **insgesamt für alle ${params.travelers} Personen** gemeint? Falls pro Person, schreib einfach „pro Person".`
+    : "";
   return [
     "Ich prüfe kurz deine Reiseangaben, damit keine alten Daten verwendet werden:",
     "",
     `- **Reiseziel:** ${params.destination}`,
-    `- **Budget:** ${params.budget.toLocaleString("de-DE")} € pro Person`,
+    `- **Budget:** ${budgetLabel}`,
     `- **Reisedauer:** ${params.durationDays} Tage`,
     `- **Personen:** ${params.travelers}`,
     `- **Abflug:** ${params.origin}`,
     `- **Reisezeit:** ${params.timeframe}`,
     `- **Interessen:** ${params.interests.join(", ")}`,
     "",
-    "Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?",
+    `Soll ich **mit genau diesen Daten** die 3 Pakete erstellen?${budgetClarify}`,
   ].join("\n");
 }
 
@@ -836,15 +902,26 @@ function extractInterests(history: string): string[] {
     ["kultur", "Kultur & Altstadt"],
     ["wellness", "Wellness & Ruhe"],
     ["essen", "Kulinarik & lokale Küche"],
+    ["kulinarik", "Kulinarik & lokale Küche"],
     ["natur", "Natur & Aussichtspunkte"],
     ["abenteuer", "Abenteuer & Aktivität"],
     ["shopping", "Shopping & Bummeln"],
+    ["einkauf", "Shopping & Bummeln"],
     ["kunst", "Kunst & Museen"],
+    ["museum", "Kunst & Museen"],
+    ["museen", "Kunst & Museen"],
+    ["tempel", "Tempel & Spiritualität"],
+    ["sehenswürdig", "Sehenswürdigkeiten"],
+    ["sehenswuerdig", "Sehenswürdigkeiten"],
+    ["touristisch", "Sehenswürdigkeiten"],
   ] as const;
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
-    if (isGenerationCommand(lines[i])) continue;
-    const matched = pool.filter(([key]) => lines[i].includes(key)).map(([, label]) => label);
+    const line = lines[i];
+    if (isGenerationCommand(line)) continue;
+    // Skip lines that are pure route text — they're not interests.
+    if (extractRouteParts(line) || /^[a-zäöüß\s]+\s+(to|nach|bis|→|->)\s+[a-zäöüß\s]+$/i.test(line)) continue;
+    const matched = Array.from(new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)));
     if (matched.length > 0) return matched;
   }
   return ["Highlights entdecken", "Entspannung", "Lokales erleben"];
@@ -1256,22 +1333,34 @@ export const Route = createFileRoute("/api/chat")({
         if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
         if (!requestedDurationDays || requestedDurationDays <= 0) validationMissing.push("duration");
         if (!travelers || travelers <= 0) validationMissing.push("travelers");
-        if (!origin || isDateLike(origin)) validationMissing.push("origin");
+        // Origin must be a city/airport — country-only triggers a clarification.
+        const originIsCountryOnly = !!origin && isCountryOnly(origin);
+        if (!origin || isDateLike(origin) || originIsCountryOnly) validationMissing.push("origin");
+        // Destination must NOT equal origin (data corruption from overwrite bugs).
+        if (origin && destination && !originIsCountryOnly && origin.trim().toLowerCase() === destination.trim().toLowerCase()) {
+          validationMissing.push("origin");
+        }
         if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
         if (interests.length === 0) validationMissing.push("interests");
         if (validationMissing.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
-            buildConciergeReply(validationMissing, userMessageCount),
+            buildConciergeReply(validationMissing, userMessageCount, {
+              originCountry: originIsCountryOnly ? origin : null,
+            }),
             uiMessages,
           );
         }
+
+        // Determine budget type from full transcript (per Person vs insgesamt).
+        const budgetType = parseBudgetType(`${userHistory}\n${dialog.budget ?? ""}`);
 
         if (!confirmedFinalTripState) {
           return createTextStreamResponse(
             buildTripConfirmationReply({
               destination,
               budget,
+              budgetType,
               durationDays: requestedDurationDays,
               travelers: travelers!,
               origin: origin!,
