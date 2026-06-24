@@ -24,14 +24,17 @@ const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => {
     const value = Math.sin(seed * multiplier + offset) * 10000;
     return value - Math.floor(value);
   };
+  const percent = (value: number) => `${value.toFixed(4)}%`;
+  const px = (value: number) => `${value.toFixed(3)}px`;
+  const seconds = (value: number) => `${value.toFixed(3)}s`;
 
   return {
-    left: `${10 + wave(12.9898) * 80}%`,
-    top: `${10 + wave(78.233, 1.7) * 80}%`,
-    dx: `${-30 + wave(37.719, 0.5) * 60}px`,
-    dy: `${-40 + wave(19.371, 2.3) * 80}px`,
-    duration: `${4 + wave(7.113, 4.1) * 6}s`,
-    delay: `${-wave(3.917, 6.2) * 8}s`,
+    left: percent(10 + wave(12.9898) * 80),
+    top: percent(10 + wave(78.233, 1.7) * 80),
+    dx: px(-30 + wave(37.719, 0.5) * 60),
+    dy: px(-40 + wave(19.371, 2.3) * 80),
+    duration: seconds(4 + wave(7.113, 4.1) * 6),
+    delay: seconds(-wave(3.917, 6.2) * 8),
   };
 });
 
