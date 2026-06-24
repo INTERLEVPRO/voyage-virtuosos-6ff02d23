@@ -289,10 +289,18 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
   if (field === "origin") {
     // Route text like "srilanka to indiya" is NOT a valid departure city/airport.
     if (extractRouteParts(v)) return null;
-    if (/\b(to|nach|bis|->|→)\b/i.test(v)) return null;
+    if (/\b(to|nach|bis|-\u003e|→)\b/i.test(v)) return null;
+    // If it contains budget/duration/traveler keywords, not an airport name
+    if (/\b(budget|dauer|personen|reisende|tage|wochen|monate|euro|eur)\b/i.test(v)) return null;
+    // Try label-pattern first
     const o = extractOrigin(v);
     if (o) return o;
-    if (!/\b(budget|dauer|personen|reisende|tage|wochen|monate|euro|eur)\b/i.test(v)) return v;
+    // If the answer looks like a plain city/airport name (1-4 words, no sentence structure), accept as-is
+    const words = v.trim().split(/\s+/);
+    if (words.length >= 1 && words.length <= 5 && /^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß''.\-\s]+$/.test(v.trim())) {
+      return v.trim();
+    }
+    return null;
   }
   if (field === "interests") {
     if (extractRouteParts(v)) return null;
@@ -334,7 +342,8 @@ function isAnswerValid(field: MissingField, value: string): boolean {
     case "travelers":
       return parseAnswerTravelers(v) !== null;
     case "origin":
-      return /[A-Za-zÄÖÜäöüß]/.test(v) && !isDateLike(v) && !extractRouteParts(v) && !/\b(to|nach|bis|->|→)\b/i.test(v) && !isCountryOnly(v) && !/\b(budget|dauer|personen|reisende|euro|eur)\b/i.test(v);
+      // extractFieldAnswer already applies all origin validation rules; trust its result.
+      return extractFieldAnswer("origin", value) !== null;
     case "timeframe":
       return (
         /\b\d{1,2}\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i.test(v) ||
