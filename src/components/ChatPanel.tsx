@@ -205,7 +205,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
 
   return (
-    <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-[#1a2e4a]/10 glass-card shadow-luxe sm:h-[660px]">
+    <div className="flex h-[calc(100svh-120px)] min-h-[480px] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-[#1a2e4a]/10 glass-card shadow-luxe sm:h-[660px]">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#1a2e4a] via-[#243b5c] to-[#1a2e4a] text-white px-4 py-3 sm:px-5 sm:py-4 shimmer">
         <div className="flex items-center gap-3">
