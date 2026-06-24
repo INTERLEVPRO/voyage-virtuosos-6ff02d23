@@ -205,7 +205,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
 
   return (
-    <div className="flex h-[calc(100svh-120px)] min-h-[480px] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-[#1a2e4a]/10 glass-card shadow-luxe sm:h-[660px]">
+    <div className="flex h-[calc(100vh-140px)] min-h-[560px] flex-col overflow-hidden rounded-3xl border border-[#1a2e4a]/10 glass-card shadow-luxe sm:h-[660px]">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#1a2e4a] via-[#243b5c] to-[#1a2e4a] text-white px-4 py-3 sm:px-5 sm:py-4 shimmer">
         <div className="flex items-center gap-3">
@@ -394,8 +394,8 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               }
             }}
             rows={1}
-            placeholder="Reiseziel, Tage, Personen, Budget…"
-            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] leading-snug text-foreground placeholder:text-muted-foreground/70 placeholder:italic placeholder:truncate focus:outline-none focus:ring-0"
+            placeholder="z.B. Mallorca, 7 Tage, 2 Personen, Budget 1.500€..."
+            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent italic px-2 py-2.5 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0"
             style={{ height: 44 }}
             disabled={isLoading}
           />
