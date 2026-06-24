@@ -560,12 +560,12 @@ function joinWithUnd(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} und ${items[items.length - 1]}`;
 }
 
-function buildConciergeReply(missing: MissingField[], userMessageCount: number): string {
+function buildConciergeReply(missing: MissingField[], userMessageCount: number, ctx?: { originCountry?: string | null }): string {
   if (missing.length === 0) {
     return "Perfekt — ich lasse mein Team jetzt 3 Pakete für dich entwerfen…";
   }
 
-  const prompts = missing.map(formatMissingField);
+  const prompts = missing.map((f) => formatMissingField(f, ctx));
 
   // First user message with little parsed → warm welcome + bundled list (only once at start)
   if (userMessageCount <= 1 && missing.length >= 5) {
