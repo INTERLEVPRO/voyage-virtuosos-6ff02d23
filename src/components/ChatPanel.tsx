@@ -394,8 +394,8 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               }
             }}
             rows={1}
-            placeholder="Reiseziel, Tage, Personen, Budget…"
-            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] leading-snug text-foreground placeholder:text-muted-foreground/70 placeholder:italic placeholder:truncate focus:outline-none focus:ring-0"
+            placeholder="z.B. Mallorca, 7 Tage, 2 Personen, Budget 1.500€..."
+            className="composer-textarea min-h-[44px] max-h-[160px] flex-1 resize-none border-0 bg-transparent italic px-2 py-2.5 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0"
             style={{ height: 44 }}
             disabled={isLoading}
           />
