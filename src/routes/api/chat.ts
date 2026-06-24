@@ -399,8 +399,8 @@ function parseAnswerDurationDays(value: string): number | null {
     if (u.startsWith("monat") || u.startsWith("month")) return n * 30;
     return n;
   }
-  // word number + unit ("one month", "ein monat")
-  const word = t.match(/^(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|nacht|nächte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
+  // word number + unit ("one month", "ein monat", "eine woche", "zwei wochen")
+  const word = t.match(/\b(one|ein|eine|two|zwei|three|drei|four|vier|five|fünf|fuenf|six|sechs|seven|sieben|eight|acht|nine|neun|ten|zehn)\s+(tag|tage|tagen|nacht|nächte|naechte|day|days|night|nights|woche|wochen|week|weeks|monat|monate|month|months)\b/);
   if (word) {
     const n = WORD_NUM_BASIC[word[1]] ?? 1;
     const u = word[2];
