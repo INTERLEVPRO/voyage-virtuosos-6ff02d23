@@ -455,7 +455,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-2 border-t border-border bg-white/95 px-3 py-2.5 shrink-0 sticky bottom-0">
+              <div className="flex items-center justify-between gap-2 border-t border-border bg-white px-3 py-2.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setDateRange(undefined)}
