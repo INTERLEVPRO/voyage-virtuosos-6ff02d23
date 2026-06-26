@@ -101,6 +101,18 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
  * Each entry is an array of 4 slot-specific query lists [slot0, slot1, slot2, slot3].
  */
 const DESTINATION_ICONIC_QUERIES: Record<string, string[][]> = {
+  "jaffna, sri lanka": [
+    ["Jaffna Fort", "Jaffna Fort Sri Lanka"],
+    ["Nallur Kandaswamy temple", "Nallur temple Jaffna"],
+    ["Casuarina Beach Jaffna", "Casuarina beach Sri Lanka"],
+    ["Nagadeepa island Jaffna", "Nainativu island Sri Lanka"],
+  ],
+  "jaffna": [
+    ["Jaffna Fort", "Jaffna Fort Sri Lanka"],
+    ["Nallur Kandaswamy temple", "Nallur temple Jaffna"],
+    ["Casuarina Beach Jaffna", "Casuarina beach Sri Lanka"],
+    ["Nagadeepa island Jaffna", "Nainativu island Sri Lanka"],
+  ],
   "sri lanka": [
     ["Sigiriya Rock Fortress", "Sigiriya Sri Lanka"],
     ["Temple of the Tooth Kandy", "Kandy Sri Lanka temple"],
@@ -334,6 +346,33 @@ export function buildPackageCollageQueries(pkg: {
   const destKey = dest.toLowerCase().trim();
 
   // Check for destination-specific iconic queries first.
+  // For Jaffna (with or without country suffix), use dedicated per-tier queries.
+  if (destKey === "jaffna, sri lanka" || destKey === "jaffna") {
+    const label = "Jaffna Sri Lanka";
+    if (pkg.type === "basic") {
+      return [
+        ["Jaffna Fort", "Jaffna Fort Sri Lanka", label],
+        ["Nallur Kandaswamy temple", "Nallur temple Jaffna", label],
+        ["Casuarina Beach Jaffna", "Casuarina beach Sri Lanka", label],
+        ["Keerimalai Springs Jaffna", "Keerimalai hot springs", label],
+      ];
+    } else if (pkg.type === "medium") {
+      return [
+        ["Nagadeepa island Jaffna", "Nainativu island Sri Lanka", label],
+        ["Jaffna Public Library", "Jaffna library Sri Lanka", label],
+        ["Point Pedro lighthouse", "Point Pedro Jaffna", label],
+        ["Delft Island Sri Lanka", "Delft island Jaffna", label],
+      ];
+    } else {
+      return [
+        ["Jaffna Fort", "Jaffna Fort Sri Lanka", label],
+        ["Nallur Kandaswamy temple", "Nallur temple Jaffna", label],
+        ["Nagadeepa island Jaffna", "Nainativu island Sri Lanka", label],
+        ["Casuarina Beach Jaffna", "Casuarina beach Sri Lanka", label],
+      ];
+    }
+  }
+
   if (destKey === "japan" && pkg.type) {
     if (pkg.type === "basic") {
       return [
