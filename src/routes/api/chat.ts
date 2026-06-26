@@ -854,10 +854,33 @@ function extractDestination(history: string): string {
       if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
-    const firstChunk = line.split(",")[0]?.trim();
-    if (firstChunk && !isLikelyFieldOnlyMessage(firstChunk) && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am)/i.test(firstChunk) && !isDateLike(firstChunk)) {
-      const cleaned = firstChunk.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-      if (cleaned && !isDateLike(cleaned)) return normalizePlaceName(cleanDestination(cleaned));
+    // Fallback: Check all comma-separated chunks
+    const chunks = line.split(/[,;]+/);
+    for (const chunk of chunks) {
+      let trimmed = chunk.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.includes(":")) {
+        const parts = trimmed.split(":");
+        const label = parts[0].trim().toLowerCase();
+        const rest = parts.slice(1).join(":").trim();
+        if (/^(ziel|reiseziel|destination|nach|to|land|stadt|ort)$/.test(label)) {
+          trimmed = rest;
+        } else {
+          continue;
+        }
+      }
+
+      const cleanedPrep = trimmed.replace(/^(nach|to|in|ab|von)\s+/i, "").trim();
+
+      if (cleanedPrep && !isLikelyFieldOnlyMessage(cleanedPrep) && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am|von|ab|origin|departure|person|personen|reisende|tour|trip)/i.test(cleanedPrep) && !isDateLike(cleanedPrep)) {
+        const cleaned = cleanedPrep.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
+        if (cleaned && !isDateLike(cleaned)) {
+          if (cleaned.length >= 2 && !/^\d+$/.test(cleaned)) {
+            return normalizePlaceName(cleanDestination(cleaned));
+          }
+        }
+      }
     }
   }
 
