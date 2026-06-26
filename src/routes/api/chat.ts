@@ -107,7 +107,7 @@ const MONTH_TO_NUM: Record<string, number> = {
 // Detect a date range like "18. Juli 2026 – 23. Juli 2026" or
 // "18.07.2026 - 23.07.2026" or "2026-07-18 to 2026-07-23".
 // Returns the duration in days when both endpoints parse.
-function parseDateRangeDays(text: string): number | null {
+function parseSingleLineDateRangeDays(text: string): number | null {
   // Flexible text-based date parser (handles "Juli 2026 5", "5 Juli 2026", "18. Juli - 23. Juli 2026")
   const sepMatch = text.match(/(.*?)\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*(.*)/i);
   if (sepMatch) {
@@ -161,6 +161,15 @@ function parseDateRangeDays(text: string): number | null {
     }
   }
 
+  return null;
+}
+
+function parseDateRangeDays(text: string): number | null {
+  const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const range = parseSingleLineDateRangeDays(lines[i]);
+    if (range !== null) return range;
+  }
   return null;
 }
 
@@ -527,6 +536,10 @@ function cleanPlace(value: string): string {
   const routed = extractRouteDestination(value);
   if (routed) return routed;
 
+  // Try to parse as city-country first, to preserve "Jaffna, Sri Lanka"
+  const compound = parseCountryCity(value);
+  if (compound) return compound;
+
   const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
   // Take up to 3 words
   const words = first.split(/\s+/).slice(0, 3);
@@ -574,6 +587,12 @@ function isCountryOnly(value: string): boolean {
 function normalizePlaceName(value: string): string {
   const compact = value.trim().replace(/\s+/g, " ");
   const key = compact.toLowerCase().replace(/[._-]/g, " ");
+  
+  // Custom normalization for Jaffna / Sri Lanka patterns
+  if (key.includes("jaffna")) {
+    return "Jaffna, Sri Lanka";
+  }
+  
   if (COUNTRY_ALIASES[key]) return COUNTRY_ALIASES[key];
   return compact.replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -584,7 +603,8 @@ function normalizePlaceName(value: string): string {
  *      "jaffna sri lanka" → "Jaffna, Sri Lanka"
  */
 function parseCountryCity(value: string): string | null {
-  const words = value.trim().split(/\s+/);
+  const cleaned = value.replace(/[,;]+/g, " ");
+  const words = cleaned.trim().split(/\s+/);
   if (words.length < 2) return null;
   // Try: first N words = country alias, rest = city
   for (let cnt = 1; cnt < words.length; cnt++) {
@@ -1129,6 +1149,69 @@ function normalizeInterest(interest: string): string {
   return interest.trim().replace(/\b\w/g, c => c.toUpperCase());
 }
 
+type ConfirmedFields = {
+  destination?: string;
+  budget?: number;
+  budgetType?: "perPerson" | "total" | "totalExplicit";
+  durationDays?: number;
+  travelers?: number;
+  origin?: string;
+  timeframe?: string;
+  interests?: string[];
+};
+
+function parsePreviousConfirmation(text: string): ConfirmedFields | null {
+  if (!isTripConfirmationPrompt(text)) return null;
+  
+  const fields: ConfirmedFields = {};
+  
+  const destMatch = text.match(/-\s*\*\*Reiseziel:\*\*\s*(.+)/i);
+  if (destMatch) fields.destination = destMatch[1].trim();
+  
+  const budgetMatch = text.match(/-\s*\*\*Budget:\*\*\s*(.+)/i);
+  if (budgetMatch) {
+    const val = budgetMatch[1].trim();
+    const numStr = val.replace(/[^\d]/g, "");
+    const num = Number(numStr);
+    if (!isNaN(num) && numStr.length > 0) {
+      fields.budget = num;
+      if (val.includes("pro Person")) fields.budgetType = "perPerson";
+      else if (val.includes("insgesamt")) fields.budgetType = "totalExplicit";
+      else fields.budgetType = "total";
+    }
+  }
+  
+  const durationMatch = text.match(/-\s*\*\*Reisedauer:\*\*\s*(.+)/i);
+  if (durationMatch) {
+    const val = durationMatch[1].trim();
+    const days = parseDurationDays(val);
+    if (days) fields.durationDays = days;
+  }
+  
+  const travelersMatch = text.match(/-\s*\*\*Personen:\*\*\s*(.+)/i);
+  if (travelersMatch) {
+    const val = travelersMatch[1].trim();
+    const num = Number(val.replace(/[^\d]/g, ""));
+    if (!isNaN(num)) fields.travelers = num;
+  }
+  
+  const originMatch = text.match(/-\s*\*\*Abflug:\*\*\s*(.+)/i);
+  if (originMatch) fields.origin = originMatch[1].trim();
+  
+  const timeframeMatch = text.match(/-\s*\*\*Reisezeit:\*\*\s*(.+)/i);
+  if (timeframeMatch) fields.timeframe = timeframeMatch[1].trim();
+  
+  const interestsMatch = text.match(/-\s*\*\*Interessen:\*\*\s*(.+)/i);
+  if (interestsMatch) {
+    fields.interests = interestsMatch[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  
+  return fields;
+}
+
 function buildDeterministicItinerary(destination: string, days: number, interests: string[]) {
   const titles = [
     "Ankunft und Orientierung",
@@ -1492,7 +1575,7 @@ export const Route = createFileRoute("/api/chat")({
         const dialog = getDialogAnswers(uiMessages);
 
         const historyDateRangeDays = parseDateRangeDays(userHistory);
-        const requestedDurationDays = historyDateRangeDays
+        let requestedDurationDays = historyDateRangeDays
           ?? extracted.durationDays
           ?? (dialog.duration ? parseAnswerDurationDays(dialog.duration) : null)
           ?? extractRequestedDurationDays(userHistory);
@@ -1501,13 +1584,13 @@ export const Route = createFileRoute("/api/chat")({
         // Never overwrite destination with interest/origin/duration answers,
         // even if the LLM extractor or loose regex re-interprets later text.
         const historyDestination = extractDestination(userHistory);
-        const destination = dialog.destination
+        let destination = dialog.destination
           ? cleanPlace(dialog.destination)
           : (extracted.destination
               ? cleanPlace(extracted.destination)
               : (historyDestination !== "deinem Reiseziel" ? cleanPlace(historyDestination) : historyDestination));
 
-        const budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
+        let budget = extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
           ? extracted.budgetEur
           : (() => {
               if (dialog.budget) {
@@ -1529,22 +1612,99 @@ export const Route = createFileRoute("/api/chat")({
           .map((s) => s.trim())
           .filter(s => !extractRouteParts(s) && !/\b(to|nach|bis|->|→)\b/i.test(s))
           .filter(Boolean);
-        const interests = (llmInterests.length > 0
+        let interests = (llmInterests.length > 0
           ? llmInterests
           : (dialog.interests ? [dialog.interests] : extractInterests(userHistory))
         ).map(normalizeInterest);
-        const origin = dialog.origin
+        let origin = dialog.origin
           ? cleanPlace(dialog.origin)
           : (extracted.originCity ? cleanPlace(extracted.originCity) : extractOrigin(userHistory));
-        const travelers = extracted.travelers
+        let travelers = extracted.travelers
           ?? (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null)
           ?? extractTravelers(userHistory);
 
         const historyDateRange = extractDateRangeString(userHistory);
-        const travelStartDate = historyDateRange ?? extracted.timeframe ?? dialog.timeframe ?? undefined;
-        const travelMonth = travelStartDate
+        let travelStartDate = historyDateRange ?? extracted.timeframe ?? dialog.timeframe ?? undefined;
+        let travelMonth = travelStartDate
           ? (extractTravelMonth(travelStartDate) ?? travelStartDate.toLowerCase())
           : (dialog.timeframe ? (extractTravelMonth(dialog.timeframe) ?? extractTravelMonth(userHistory)) : extractTravelMonth(userHistory));
+
+        const previousAssistantText = previousAssistant ? textOf(previousAssistant) : "";
+        const wasInConfirmationState = previousAssistant && isTripConfirmationPrompt(previousAssistantText);
+        const prevConf = wasInConfirmationState ? parsePreviousConfirmation(previousAssistantText) : null;
+
+        if (prevConf) {
+          // Establish baseline from previous confirmation
+          if (prevConf.destination) destination = prevConf.destination;
+          if (prevConf.budget) budget = prevConf.budget;
+          if (prevConf.durationDays) requestedDurationDays = prevConf.durationDays;
+          if (prevConf.travelers) travelers = prevConf.travelers;
+          if (prevConf.origin) origin = prevConf.origin;
+          if (prevConf.timeframe) {
+            travelStartDate = prevConf.timeframe;
+            travelMonth = extractTravelMonth(prevConf.timeframe) ?? prevConf.timeframe.toLowerCase();
+          }
+          if (prevConf.interests) interests = prevConf.interests;
+
+          // If this is a correction (not a confirmation), apply the new corrections from lastUserText
+          if (!confirmedFinalTripState) {
+            // 1. Destination correction
+            const newDest = extractDestination(lastUserText);
+            if (newDest && newDest !== "deinem Reiseziel" && !isDateLike(newDest)) {
+              destination = cleanPlace(newDest);
+            } else {
+              const compound = parseCountryCity(lastUserText);
+              if (compound) destination = compound;
+            }
+
+            // 2. Budget correction
+            const newBudget = parseBudgetValue(lastUserText);
+            if (newBudget !== null) {
+              budget = newBudget;
+            }
+
+            // 3. Duration correction
+            const newDuration = parseAnswerDurationDays(lastUserText) ?? parseDateRangeDays(lastUserText);
+            if (newDuration !== null) {
+              requestedDurationDays = newDuration;
+            }
+
+            // 4. Travelers correction
+            const newTravelers = parseAnswerTravelers(lastUserText);
+            if (newTravelers !== null) {
+              travelers = newTravelers;
+            }
+
+            // 5. Origin correction
+            const newOrigin = extractOrigin(lastUserText);
+            if (newOrigin !== undefined) {
+              origin = cleanPlace(newOrigin);
+            }
+
+            // 6. Timeframe correction
+            const newTimeframeStr = extractDateRangeString(lastUserText);
+            if (newTimeframeStr) {
+              travelStartDate = newTimeframeStr;
+              travelMonth = extractTravelMonth(newTimeframeStr) ?? newTimeframeStr.toLowerCase();
+              const rangeDays = parseDateRangeDays(lastUserText);
+              if (rangeDays) requestedDurationDays = rangeDays;
+            } else {
+              const newMonth = extractTravelMonth(lastUserText);
+              if (newMonth !== undefined) {
+                travelStartDate = undefined;
+                travelMonth = newMonth;
+              }
+            }
+
+            // 7. Interests correction
+            const rawInterests = extractInterests(lastUserText);
+            const hasNewInterests = rawInterests.length > 0 && 
+              !(rawInterests.length === 3 && rawInterests[0] === "Highlights entdecken");
+            if (hasNewInterests) {
+              interests = rawInterests.map(normalizeInterest);
+            }
+          }
+        }
 
         // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
         const validationMissing: MissingField[] = [];
