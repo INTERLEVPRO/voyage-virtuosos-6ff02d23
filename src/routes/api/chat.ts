@@ -316,12 +316,16 @@ function extractFieldAnswer(field: MissingField, value: string): string | null {
     return v;
   }
   if (field === "timeframe") {
-    if (v.length <= 40) return v;
-    const m = v.match(/\b((?:anfang|mitte|ende)?\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|frühling|fruehling|sommer|herbst|winter))\b/i);
-    if (m) return m[1];
-    const r = v.match(/\b(\d{1,2}\.\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)|flexibel|egal)\b/i);
-    if (r) return r[1];
-    return v;
+    // Try to extract a month/season phrase like "Anfang September" or "September"
+    const monthMatch = v.match(/\b((?:anfang|mitte|ende)?\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|frühling|fruehling|sommer|herbst|winter))\b/i);
+    if (monthMatch) return monthMatch[1].trim();
+    // Try to extract a specific day-month like "15. September"
+    const dayMonthMatch = v.match(/\b(\d{1,2}\.\s*(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember))\b/i);
+    if (dayMonthMatch) return dayMonthMatch[1].trim();
+    // Fallback: short answer as is
+    if (v.length <= 40) return v.trim();
+    // otherwise return empty to indicate not parsed
+    return "";
   }
   return v;
 }
@@ -373,9 +377,13 @@ function getAnsweredFieldsFromDialog(uiMessages: UIMessage[]): Set<MissingField>
     for (let j = i + 1; j < uiMessages.length; j += 1) {
       const next = uiMessages[j];
       if (next.role === "user") {
-        const reply = textOf(next);
+        const reply = textOf(next).trim();
         for (const field of asked) {
-          if (isAnswerValid(field, reply)) answered.add(field);
+          if (isAnswerValid(field, reply)) {
+            answered.add(field);
+          } else if (asked.length === 1 && reply.length > 0 && reply.length <= 150 && !isGenerationCommand(reply)) {
+            answered.add(field);
+          }
         }
         break;
       }
@@ -418,7 +426,11 @@ function getDialogAnswers(uiMessages: UIMessage[]): Partial<Record<MissingField,
         const t = textOf(next).trim();
         for (const field of asked) {
           const extracted = extractFieldAnswer(field, t)?.trim();
-          if (extracted && isAnswerValid(field, extracted)) answers[field] = extracted;
+          if (extracted && isAnswerValid(field, extracted)) {
+            answers[field] = extracted;
+          } else if (asked.length === 1 && t.length > 0 && t.length <= 150 && !isGenerationCommand(t)) {
+            answers[field] = t;
+          }
         }
         break;
       }
@@ -548,7 +560,7 @@ function normalizePlaceName(value: string): string {
 // Generic route parser: "von X nach Y", "from X to Y", "X to Y", "X → Y", "X -> Y".
 // Captures up to 3 words per side; stops at punctuation.
 function extractRouteParts(text: string): { origin: string; destination: string } | null {
-  const PLACE = "[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß'’.\\- ]{1,40}?";
+  const PLACE = "[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß'’.\\- ]{1,40}";
   // German: "von X nach Y" (optionally "Ich reise … von X nach Y")
   let m = text.match(new RegExp(`\\bvon\\s+(${PLACE})\\s+nach\\s+(${PLACE})(?=[\\s,.;:!?\\n]|$)`, "i"));
   // English: "from X to Y"
