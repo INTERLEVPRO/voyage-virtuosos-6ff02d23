@@ -431,7 +431,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               align="center"
               side="top"
               sideOffset={12}
-              className="w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[340px] p-0 overflow-hidden shadow-luxe rounded-3xl sm:rounded-2xl border-white/20 bg-white/95 backdrop-blur-md"
+              className="w-[calc(100vw-1rem)] max-w-[26rem] sm:w-auto sm:min-w-[340px] p-0 overflow-hidden shadow-luxe rounded-3xl sm:rounded-2xl border-white/20 bg-white/95 backdrop-blur-md pointer-events-auto"
               avoidCollisions={true}
             >
               <div className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">
@@ -449,8 +449,9 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
                 min={1}
                 disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
                 defaultMonth={dateRange?.from ?? new Date()}
-                className="pointer-events-auto w-full [--cell-size:2.25rem]"
+                className="pointer-events-auto w-full [--cell-size:2.75rem] sm:[--cell-size:2.25rem] [touch-action:manipulation] [&_button]:[touch-action:manipulation] [&_button]:pointer-events-auto"
               />
+
 
               <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
                 <button
