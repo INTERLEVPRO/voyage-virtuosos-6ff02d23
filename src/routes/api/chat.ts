@@ -557,6 +557,38 @@ function normalizePlaceName(value: string): string {
   return compact.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Detect "country city" or "city country" patterns.
+ * e.g. "srilanka jaffna" → "Jaffna, Sri Lanka"
+ *      "jaffna sri lanka" → "Jaffna, Sri Lanka"
+ */
+function parseCountryCity(value: string): string | null {
+  const words = value.trim().split(/\s+/);
+  if (words.length < 2) return null;
+  // Try: first N words = country alias, rest = city
+  for (let cnt = 1; cnt < words.length; cnt++) {
+    const countryKey = words.slice(0, cnt).join(" ").toLowerCase();
+    const cityPart = words.slice(cnt).join(" ");
+    if (COUNTRY_ALIASES[countryKey] && cityPart) {
+      return `${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`;
+    }
+  }
+  // Try: last N words = country alias, preceding = city
+  for (let cnt = 1; cnt < words.length; cnt++) {
+    const countryKey = words.slice(words.length - cnt).join(" ").toLowerCase();
+    const cityPart = words.slice(0, words.length - cnt).join(" ");
+    if (COUNTRY_ALIASES[countryKey] && cityPart) {
+      return `${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`;
+    }
+  }
+  return null;
+}
+
+/** Returns true when a chunk starts with a known field label (must never become a destination). */
+function isFieldLabelChunk(text: string): boolean {
+  return /^(abflug|abflugort|abflughafen|budget|personen|reisende|reisezeit|zeitraum|interessen|dauer|reisedauer|origin|departure)(\s|:|$)/i.test(text);
+}
+
 // Generic route parser: "von X nach Y", "from X to Y", "X to Y", "X → Y", "X -> Y".
 // Captures up to 3 words per side; stops at punctuation.
 function extractRouteParts(text: string): { origin: string; destination: string } | null {
@@ -854,32 +886,47 @@ function extractDestination(history: string): string {
       if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
-    // Fallback: Check all comma-separated chunks
+    // Fallback: check all comma/semicolon-separated chunks in this line
     const chunks = line.split(/[,;]+/);
     for (const chunk of chunks) {
       let trimmed = chunk.trim();
       if (!trimmed) continue;
 
+      // Handle labeled fields (e.g. "abflug:frankfurt" → skip, "ziel:sri lanka" → use value)
       if (trimmed.includes(":")) {
-        const parts = trimmed.split(":");
-        const label = parts[0].trim().toLowerCase();
-        const rest = parts.slice(1).join(":").trim();
+        const colonIdx = trimmed.indexOf(":");
+        const label = trimmed.slice(0, colonIdx).trim().toLowerCase();
+        const rest = trimmed.slice(colonIdx + 1).trim();
         if (/^(ziel|reiseziel|destination|nach|to|land|stadt|ort)$/.test(label)) {
-          trimmed = rest;
+          trimmed = rest; // use value as destination
         } else {
-          continue;
+          continue; // skip all other labeled fields (abflug, budget, personen…)
         }
       }
 
+      // Strip leading prepositions
       const cleanedPrep = trimmed.replace(/^(nach|to|in|ab|von)\s+/i, "").trim();
+      if (!cleanedPrep) continue;
+      if (isDateLike(cleanedPrep)) continue;
+      if (isFieldLabelChunk(cleanedPrep)) continue;
+      if (isLikelyFieldOnlyMessage(cleanedPrep)) continue;
+      if (/^\d+$/.test(cleanedPrep)) continue;
+      if (cleanedPrep.length < 2) continue;
 
-      if (cleanedPrep && !isLikelyFieldOnlyMessage(cleanedPrep) && !/^(budget|abflug|abflugort|reisezeit|reisedauer|anzahl|im|am|von|ab|origin|departure|person|personen|reisende|tour|trip)/i.test(cleanedPrep) && !isDateLike(cleanedPrep)) {
-        const cleaned = cleanedPrep.replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "").trim();
-        if (cleaned && !isDateLike(cleaned)) {
-          if (cleaned.length >= 2 && !/^\d+$/.test(cleaned)) {
-            return normalizePlaceName(cleanDestination(cleaned));
-          }
-        }
+      // First try compound "country city" / "city country"
+      const compound = parseCountryCity(cleanedPrep);
+      if (compound) return compound;
+
+      // Plain country alias
+      const plainCountry = COUNTRY_ALIASES[cleanedPrep.toLowerCase()];
+      if (plainCountry) return plainCountry;
+
+      // Generic place — strip prefix phrases
+      const stripped = cleanedPrep
+        .replace(/^(städtetrip|staedtetrip|citytrip|honeymoon|strandurlaub|wellnessurlaub|dein urlaub in|mein urlaub in|urlaub in)\s+/i, "")
+        .trim();
+      if (stripped && !isDateLike(stripped) && stripped.length >= 2) {
+        return normalizePlaceName(cleanDestination(stripped));
       }
     }
   }
