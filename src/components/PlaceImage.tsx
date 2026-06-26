@@ -80,7 +80,11 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
       u.includes("blason") ||
       u.includes("seal_of") ||
       u.includes("logo") ||
-      u.includes(".svg")
+      u.includes(".svg") ||
+      u.includes("map") ||
+      u.includes("locator") ||
+      u.includes("dot.png") ||
+      u.includes("red_dot")
     );
   };
 
@@ -134,10 +138,14 @@ const DESTINATION_ICONIC_QUERIES: Record<string, string[][]> = {
     ["Raja Ampat Indonesia", "Papua Indonesia sea"],
   ],
   "japan": [
-    ["Mount Fuji cherry blossom", "Fuji Japan"],
-    ["Fushimi Inari Shrine Kyoto", "Kyoto Japan torii gates"],
-    ["Shinjuku Tokyo", "Tokyo Japan cityscape"],
-    ["Hiroshima Peace Memorial", "Miyajima Island Japan"],
+    // Slot 0 — Tokyo skyline / city identity
+    ["Tokyo", "Tokyo skyline", "Shinjuku Tokyo night", "Tokyo Tower"],
+    // Slot 1 — Fushimi Inari (most iconic Japan image, reliable Wikipedia thumbnail)
+    ["Fushimi Inari-taisha", "Fushimi Inari Shrine", "Kyoto shrine", "Japan torii gate"],
+    // Slot 2 — Mount Fuji (exact Wikipedia article title gives clean landscape)
+    ["Mount Fuji", "Fuji-san Japan", "Arashiyama bamboo grove", "Bamboo forest Japan"],
+    // Slot 3 — Osaka/Dotonbori or Nara deer
+    ["Dotonbori", "Osaka Japan", "Nara Park deer", "Nara Japan deer"],
   ],
   "griechenland": [
     ["Santorini blue dome church", "Santorini Greece"],
@@ -320,11 +328,38 @@ export function buildPackageCollageQueries(pkg: {
   hotel: string;
   activities?: string[];
   itinerary?: Array<{ title: string; description: string }>;
+  type?: string;
 }): string[][] {
   const dest = normalizeQuery(pkg.destination);
   const destKey = dest.toLowerCase().trim();
 
   // Check for destination-specific iconic queries first.
+  if (destKey === "japan" && pkg.type) {
+    if (pkg.type === "basic") {
+      return [
+        ["Tokyo skyline", "Tokyo", dest],
+        ["Kyoto temple", "Kiyomizu-dera", dest],
+        ["Japanese food", "Sushi Japan", dest],
+        ["Dotonbori", "Osaka Japan", dest]
+      ];
+    } else if (pkg.type === "medium") {
+      return [
+        ["Mount Fuji", "Fuji-san Japan", dest],
+        ["Fushimi Inari-taisha", "Fushimi Inari Shrine", dest],
+        ["Arashiyama bamboo grove", "Bamboo forest Japan", dest],
+        ["Nara Park deer", "Nara Japan deer", dest]
+      ];
+    } else {
+      // premium
+      return [
+        ["Shinjuku Tokyo night", "Tokyo Tower", dest],
+        ["Kinkaku-ji", "Kyoto temple", dest],
+        ["Ryokan (inn)", "Japan traditional inn", dest],
+        ["Mount Fuji", "Fuji-san Japan", dest]
+      ];
+    }
+  }
+
   const iconic = DESTINATION_ICONIC_QUERIES[destKey];
   if (iconic && iconic.length >= 4) {
     // Slot 0 = iconic[0] (e.g. Sigiriya), Slot 1-3 = iconic[1-3]
