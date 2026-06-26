@@ -431,29 +431,31 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               align="center"
               side="top"
               sideOffset={12}
-              className="w-[calc(100vw-1rem)] max-w-[26rem] sm:w-auto sm:min-w-[340px] p-0 overflow-hidden shadow-luxe rounded-3xl sm:rounded-2xl border-white/20 bg-white/95 backdrop-blur-md pointer-events-auto"
+              collisionPadding={12}
+              className="w-[calc(100vw-1rem)] max-w-[26rem] sm:w-auto sm:min-w-[340px] p-0 overflow-hidden shadow-luxe rounded-3xl sm:rounded-2xl border-white/20 bg-white/95 backdrop-blur-md pointer-events-auto flex flex-col max-h-[min(80vh,38rem)]"
               avoidCollisions={true}
             >
-              <div className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">
+              <div className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground shrink-0">
                 {dateRange?.from
                   ? dateRange.to
                     ? `${formatGermanDate(toISO(dateRange.from))} – ${formatGermanDate(toISO(dateRange.to))}`
                     : `Start: ${formatGermanDate(toISO(dateRange.from))} · Enddatum wählen`
                   : "Startdatum wählen"}
               </div>
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={1}
-                min={1}
-                disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
-                defaultMonth={dateRange?.from ?? new Date()}
-                className="pointer-events-auto w-full [--cell-size:2.75rem] sm:[--cell-size:2.25rem] [touch-action:manipulation] [&_button]:[touch-action:manipulation] [&_button]:pointer-events-auto"
-              />
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={1}
+                  min={1}
+                  disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+                  defaultMonth={dateRange?.from ?? new Date()}
+                  className="pointer-events-auto w-full [--cell-size:2.5rem] sm:[--cell-size:2.25rem] [touch-action:manipulation] [&_button]:[touch-action:manipulation] [&_button]:pointer-events-auto"
+                />
+              </div>
 
-
-              <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
+              <div className="flex items-center justify-between gap-2 border-t border-border bg-white/95 px-3 py-2.5 shrink-0 sticky bottom-0">
                 <button
                   type="button"
                   onClick={() => setDateRange(undefined)}
@@ -476,11 +478,12 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
                     setDateOpen(false);
                     requestAnimationFrame(() => inputRef.current?.focus());
                   }}
-                  className="rounded-full bg-[#0d9e4f] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0bb858] disabled:opacity-40"
+                  className="rounded-full bg-[#0d9e4f] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#0bb858] disabled:opacity-40"
                 >
                   Übernehmen
                 </button>
               </div>
+
             </PopoverContent>
           </Popover>
 
