@@ -177,8 +177,10 @@ function getPlanningSignals(text: string, history: string) {
   // Only consider budget "present" if we can parse a realistic amount.
   const hasBudget = parseBudgetValue(combined) !== null;
   // Strict: only a real place / labeled destination counts.
+  const parsedDest = extractDestination(combined);
   const hasDestination =
     hasLabeledDestination ||
+    (parsedDest && parsedDest !== "deinem Reiseziel" && !isDateLike(parsedDest)) ||
     /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     /\b(nach|in|to)\s+[A-ZÄÖÜ][a-zäöüß.'’-]{2,}/.test(combined) ||
     /\b\d+\s+(?:tag|tage|tagen|nacht|nächte|naechte|nächten|naechten|woche|wochen)\s+([A-ZÄÖÜ][a-zäöüß.'’-]{2,})/.test(combined) ||
@@ -1365,13 +1367,14 @@ export const Route = createFileRoute("/api/chat")({
         const has = {
           destination: fieldHas(
             "destination",
-            !!(regexSignals.hasDestination || dialogPreview.destination),
+            !!(regexSignals.hasDestination || dialogPreview.destination || (extracted.destination && extracted.destination !== "deinem Reiseziel")),
           ),
           budget: fieldHas(
             "budget",
             !!(
               (dialogPreview.budget && (parseBudgetValue(dialogPreview.budget) ?? 0) >= MIN_BUDGET_EUR)
               || ((parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR)
+              || (extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR)
             ),
           ),
           duration: fieldHas(
@@ -1379,6 +1382,7 @@ export const Route = createFileRoute("/api/chat")({
             !!(
               regexSignals.hasDuration
               || (dialogPreview.duration && parseAnswerDurationDays(dialogPreview.duration))
+              || extracted.durationDays
             ),
           ),
           travelers: fieldHas(
@@ -1386,15 +1390,16 @@ export const Route = createFileRoute("/api/chat")({
             !!(
               regexSignals.hasTravelers
               || (dialogPreview.travelers && parseAnswerTravelers(dialogPreview.travelers))
+              || extracted.travelers
             ),
           ),
           origin: fieldHas(
             "origin",
-            !!(regexSignals.hasOrigin || dialogPreview.origin),
+            !!(regexSignals.hasOrigin || dialogPreview.origin || extracted.originCity),
           ),
           timeframe: fieldHas(
             "timeframe",
-            !!(regexSignals.hasTimeframe || dialogPreview.timeframe),
+            !!(regexSignals.hasTimeframe || dialogPreview.timeframe || extracted.timeframe),
           ),
           interests: fieldHas(
             "interests",
