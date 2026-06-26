@@ -91,6 +91,140 @@ async function fetchWikipediaThumbnail(query: string, width: number) {
   return null;
 }
 
+/**
+ * Curated iconic search queries per destination.
+ * Keys are lowercase normalized destination names.
+ * Each entry is an array of 4 slot-specific query lists [slot0, slot1, slot2, slot3].
+ */
+const DESTINATION_ICONIC_QUERIES: Record<string, string[][]> = {
+  "sri lanka": [
+    ["Sigiriya Rock Fortress", "Sigiriya Sri Lanka"],
+    ["Temple of the Tooth Kandy", "Kandy Sri Lanka temple"],
+    ["Nine Arches Bridge Ella", "Ella Sri Lanka train bridge"],
+    ["Galle Fort Sri Lanka", "Mirissa beach Sri Lanka"],
+  ],
+  "deutschland": [
+    ["Neuschwanstein Castle", "Bavaria Germany castle"],
+    ["Brandenburg Gate Berlin", "Berlin Germany landmark"],
+    ["Cologne Cathedral", "Köln Germany"],
+    ["Rhine Valley Germany", "Black Forest Germany"],
+  ],
+  "germany": [
+    ["Neuschwanstein Castle", "Bavaria Germany castle"],
+    ["Brandenburg Gate Berlin", "Berlin Germany landmark"],
+    ["Cologne Cathedral", "Köln Germany"],
+    ["Rhine Valley Germany", "Black Forest Germany"],
+  ],
+  "thailand": [
+    ["Wat Pho Bangkok", "Bangkok Thailand temple"],
+    ["Maya Bay Koh Phi Phi", "Phi Phi Island Thailand beach"],
+    ["Chiang Mai Old City", "Chiang Mai Thailand"],
+    ["James Bond Island Khao Phing Kan", "Phang Nga Bay Thailand"],
+  ],
+  "bali": [
+    ["Tanah Lot Bali", "Bali temple ocean"],
+    ["Tegallalang Rice Terraces Bali", "Ubud Bali rice fields"],
+    ["Uluwatu Temple Bali", "Bali cliff temple"],
+    ["Kuta Beach Bali", "Seminyak Beach Bali"],
+  ],
+  "indonesien": [
+    ["Tanah Lot Bali", "Bali Indonesia temple"],
+    ["Borobudur Java", "Borobudur Indonesia"],
+    ["Komodo Island", "Komodo National Park"],
+    ["Raja Ampat Indonesia", "Papua Indonesia sea"],
+  ],
+  "japan": [
+    ["Mount Fuji cherry blossom", "Fuji Japan"],
+    ["Fushimi Inari Shrine Kyoto", "Kyoto Japan torii gates"],
+    ["Shinjuku Tokyo", "Tokyo Japan cityscape"],
+    ["Hiroshima Peace Memorial", "Miyajima Island Japan"],
+  ],
+  "griechenland": [
+    ["Santorini blue dome church", "Santorini Greece"],
+    ["Acropolis Athens", "Athens Greece Parthenon"],
+    ["Mykonos windmill", "Mykonos Greece"],
+    ["Oia Santorini sunset", "Santorini caldera"],
+  ],
+  "greece": [
+    ["Santorini blue dome church", "Santorini Greece"],
+    ["Acropolis Athens", "Athens Greece Parthenon"],
+    ["Mykonos windmill", "Mykonos Greece"],
+    ["Oia Santorini sunset", "Santorini caldera"],
+  ],
+  "spanien": [
+    ["Sagrada Familia Barcelona", "Barcelona Spain"],
+    ["Alhambra Granada Spain", "Granada Spain palace"],
+    ["Park Güell Barcelona", "Barcelona Gaudi"],
+    ["Ibiza beach Spain", "Costa del Sol Spain"],
+  ],
+  "spain": [
+    ["Sagrada Familia Barcelona", "Barcelona Spain"],
+    ["Alhambra Granada Spain", "Granada Spain palace"],
+    ["Park Güell Barcelona", "Barcelona Gaudi"],
+    ["Ibiza beach Spain", "Costa del Sol Spain"],
+  ],
+  "marokko": [
+    ["Chefchaouen blue city Morocco", "Chefchaouen Morocco"],
+    ["Marrakech medina", "Marrakech Morocco souks"],
+    ["Sahara Desert Morocco dunes", "Erg Chebbi Morocco"],
+    ["Hassan II Mosque Casablanca", "Morocco ocean mosque"],
+  ],
+  "morocco": [
+    ["Chefchaouen blue city Morocco", "Chefchaouen Morocco"],
+    ["Marrakech medina", "Marrakech Morocco souks"],
+    ["Sahara Desert Morocco dunes", "Erg Chebbi Morocco"],
+    ["Hassan II Mosque Casablanca", "Morocco ocean mosque"],
+  ],
+  "italien": [
+    ["Colosseum Rome", "Rome Italy"],
+    ["Venice Grand Canal gondola", "Venice Italy"],
+    ["Amalfi Coast Italy", "Positano Italy"],
+    ["Florence Duomo", "Tuscany Italy hills"],
+  ],
+  "italy": [
+    ["Colosseum Rome", "Rome Italy"],
+    ["Venice Grand Canal gondola", "Venice Italy"],
+    ["Amalfi Coast Italy", "Positano Italy"],
+    ["Florence Duomo", "Tuscany Italy hills"],
+  ],
+  "indien": [
+    ["Taj Mahal Agra India", "Taj Mahal India"],
+    ["Jaipur City Palace India", "Rajasthan India"],
+    ["Kerala backwaters India", "Kerala India houseboats"],
+    ["Varanasi Ganges India", "Varanasi ghats"],
+  ],
+  "india": [
+    ["Taj Mahal Agra India", "Taj Mahal India"],
+    ["Jaipur City Palace India", "Rajasthan India"],
+    ["Kerala backwaters India", "Kerala India houseboats"],
+    ["Varanasi Ganges India", "Varanasi ghats"],
+  ],
+  "ägypten": [
+    ["Great Pyramids of Giza Egypt", "Giza pyramid Egypt"],
+    ["Abu Simbel Egypt temple", "Abu Simbel Ramesses"],
+    ["Luxor Temple Egypt", "Luxor Karnak"],
+    ["Red Sea Egypt coral reef", "Sharm el-Sheikh Egypt beach"],
+  ],
+  "egypt": [
+    ["Great Pyramids of Giza Egypt", "Giza pyramid Egypt"],
+    ["Abu Simbel Egypt temple", "Abu Simbel Ramesses"],
+    ["Luxor Temple Egypt", "Luxor Karnak"],
+    ["Red Sea Egypt coral reef", "Sharm el-Sheikh Egypt beach"],
+  ],
+  "türkei": [
+    ["Cappadocia hot air balloon Turkey", "Cappadocia rock formations"],
+    ["Hagia Sophia Istanbul", "Istanbul Turkey Bosphorus"],
+    ["Pamukkale thermal pools Turkey", "Pamukkale Turkey"],
+    ["Turquoise Coast Turkey Oludeniz", "Antalya Turkey beach"],
+  ],
+  "turkey": [
+    ["Cappadocia hot air balloon Turkey", "Cappadocia rock formations"],
+    ["Hagia Sophia Istanbul", "Istanbul Turkey Bosphorus"],
+    ["Pamukkale thermal pools Turkey", "Pamukkale Turkey"],
+    ["Turquoise Coast Turkey Oludeniz", "Antalya Turkey beach"],
+  ],
+};
+
 export function buildPackageImageQueries({
   destination,
   hotel,
@@ -188,6 +322,14 @@ export function buildPackageCollageQueries(pkg: {
   itinerary?: Array<{ title: string; description: string }>;
 }): string[][] {
   const dest = normalizeQuery(pkg.destination);
+  const destKey = dest.toLowerCase().trim();
+
+  // Check for destination-specific iconic queries first.
+  const iconic = DESTINATION_ICONIC_QUERIES[destKey];
+  if (iconic && iconic.length >= 4) {
+    // Slot 0 = iconic[0] (e.g. Sigiriya), Slot 1-3 = iconic[1-3]
+    return iconic.map((slotQueries) => [...slotQueries, dest]);
+  }
 
   // 1. Hotel name — first segment before delimiters
   const rawHotel = pkg.hotel || "";
