@@ -11,11 +11,6 @@ export function Footer() {
 
           <div className="flex flex-col sm:flex-col gap-3 sm:gap-4">
             <div>
-              <p className="font-semibold text-xs sm:text-sm">B8 Building Leverkusen</p>
-              <p className="text-[11px] sm:text-sm text-gray-300">Adolf-Kaschny-Straße 19, 51373 Leverkusen</p>
-            </div>
-
-            <div>
               <p className="font-semibold text-xs sm:text-sm">Innovation Park Leverkusen</p>
               <p className="text-[11px] sm:text-sm text-gray-300">Hemmelrather Weg 201, 51377 Leverkusen</p>
             </div>
