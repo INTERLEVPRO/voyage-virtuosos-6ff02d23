@@ -774,18 +774,21 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
               € {currentPkg.price.toLocaleString("de-DE")}
             </div>
           </div>
-          <button
-            type="button"
+          <a
+            href={hotelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => {
-              window.open(flightUrl, "_blank");
-              window.open(hotelUrl, "_blank");
-              window.open(taxiUrl, "_blank");
-              window.open(activitiesUrl, "_blank");
+              void trackClick(currentPkg.id, "hotel", hotelUrl);
+              void trackClick(currentPkg.id, "flight", flightUrl);
+              void trackClick(currentPkg.id, "transfer", taxiUrl);
+              void trackClick(currentPkg.id, "activities", activitiesUrl);
             }}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 sm:px-6 sm:py-4 text-sm font-semibold text-primary-foreground shadow-soft"
           >
             <ShoppingBag className="h-5 w-5" /> Jetzt buchen
-          </button>
+          </a>
+
         </div>
       </div>
     </section>
