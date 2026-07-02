@@ -1396,6 +1396,44 @@ const TRIP_FIELDS_SCHEMA = z.object({
 
 type ExtractedTripFields = z.infer<typeof TRIP_FIELDS_SCHEMA>;
 
+function emptyTripFields(): ExtractedTripFields {
+  return {
+    destination: null,
+    budgetEur: null,
+    durationDays: null,
+    travelers: null,
+    originCity: null,
+    timeframe: null,
+    interests: null,
+  };
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(fallback);
+    }, ms);
+
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        resolve(value);
+      },
+      () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        resolve(fallback);
+      },
+    );
+  });
+}
+
 async function extractTripFieldsLLM(
   model: LanguageModel,
   uiMessages: UIMessage[],
@@ -1410,10 +1448,11 @@ async function extractTripFieldsLLM(
     .join("\n");
 
   try {
-    const { experimental_output } = await generateText({
-      model,
-      experimental_output: Output.object({ schema: TRIP_FIELDS_SCHEMA }),
-      system: `Du extrahierst Reisedaten aus einem Chat zwischen Reiseberater und Nutzer.
+    return await withTimeout(
+      generateText({
+        model,
+        experimental_output: Output.object({ schema: TRIP_FIELDS_SCHEMA }),
+        system: `Du extrahierst Reisedaten aus einem Chat zwischen Reiseberater und Nutzer.
 Berücksichtige den GESAMTEN Verlauf — Antworten können kurz und über mehrere Nachrichten verteilt sein.
 
 KRITISCH — LETZTER WERT GEWINNT (Overwrite-Regel):
@@ -1432,19 +1471,13 @@ EXTRAKTIONS-REGELN:
 
 Verstehe natürliche Sprache, nicht nur strikte Formate. Wenn ein Feld nie genannt wurde, gib null zurück.
 Antworte ausschließlich gemäß Schema.`,
-      prompt: `Chatverlauf (chronologisch, unten = neuer):\n${transcript}\n\nExtrahiere die FINALEN Reisedaten — bei Änderungen zählt die jeweils neueste Angabe.`,
-    });
-    return experimental_output;
+        prompt: `Chatverlauf (chronologisch, unten = neuer):\n${transcript}\n\nExtrahiere die FINALEN Reisedaten — bei Änderungen zählt die jeweils neueste Angabe.`,
+      }).then(({ experimental_output }) => experimental_output),
+      8_000,
+      emptyTripFields(),
+    );
   } catch {
-    return {
-      destination: null,
-      budgetEur: null,
-      durationDays: null,
-      travelers: null,
-      originCity: null,
-      timeframe: null,
-      interests: null,
-    };
+    return emptyTripFields();
   }
 }
 
