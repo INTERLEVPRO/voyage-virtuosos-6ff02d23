@@ -120,7 +120,7 @@ function StarterPrompts({ submit }: { submit: (text: string) => void }) {
       </div>
 
       {/* ── Mobile: horizontally scrollable cards ── */}
-      <div className="flex gap-3 overflow-x-auto pb-4 pt-1 px-1 sm:hidden hide-scrollbar snap-x snap-mandatory">
+      <div className="flex gap-3 overflow-x-auto pb-4 pt-1 px-1 sm:hidden hide-scrollbar snap-x snap-mandatory [overscroll-behavior-x:contain] [touch-action:pan-x]">
         {STARTER_PROMPTS.map((p) => (
           <button
             key={p.title}
