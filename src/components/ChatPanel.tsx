@@ -217,7 +217,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
     if (handedOffRef.current.has(last.id)) return;
     const text = last.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
     const pkgs = extractPackages(text);
-    if (pkgs && onPackagesReady) {
+      if (pkgs && onPackagesReady) {
       handedOffRef.current.add(last.id);
       setIsSuccess(true);
       onPackagesReady(pkgs);
@@ -525,7 +525,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         </p>
       </form>
 
-      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} />}
+      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} isComplete={isSuccess} />}
     </div>
   );
 }
@@ -719,7 +719,7 @@ function buildGenericGuide(query: string): { emoji: string; title: string; secti
   };
 }
 
-function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
+function FullScreenTypingLoader({ userQuery, isComplete }: { userQuery: string; isComplete: boolean }) {
   const [text, setText] = useState("");
   const [sectionIdx, setSectionIdx] = useState(0);
   const [charIdx, setCharIdx] = useState(0);
@@ -753,7 +753,7 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
     if (sectionIdx >= guide.sections.length) return;
 
     const section = guide.sections[sectionIdx];
-    if (charIdx > section.length) {
+    if (charIdx >= section.length) {
       // Move to next section after a brief pause
       const timeout = setTimeout(() => {
         setSectionIdx((i) => i + 1);
@@ -763,11 +763,20 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
     }
 
     const interval = setInterval(() => {
+      const nextChar = section[charIdx];
+      if (nextChar === undefined) return;
       setCharIdx((i) => i + 1);
-      setText((prev) => prev + section[charIdx]);
+      setText((prev) => prev + nextChar);
     }, 22);
     return () => clearInterval(interval);
   }, [sectionIdx, charIdx, guide.sections]);
+
+  const currentSectionLength = guide.sections[sectionIdx]?.length || 1;
+  const rawProgress = Math.min(
+    ((sectionIdx + (charIdx / currentSectionLength)) / guide.sections.length) * 100,
+    100,
+  );
+  const progress = isComplete ? 100 : Math.min(rawProgress, 96);
 
   // Auto-scroll as text grows
   useEffect(() => {
@@ -814,11 +823,11 @@ function FullScreenTypingLoader({ userQuery }: { userQuery: string }) {
           <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full bg-gradient-to-r from-[#0d9e4f] to-[#2196f3] transition-all duration-1000 ease-out rounded-full"
-              style={{ width: `${Math.min(((sectionIdx + (charIdx / (guide.sections[sectionIdx]?.length || 1))) / guide.sections.length) * 100, 100)}%` }}
+              style={{ width: `${progress}%` }}
             />
           </div>
           <span className="text-[11px] text-white/40 tabular-nums shrink-0">
-            {Math.min(Math.round(((sectionIdx + (charIdx / (guide.sections[sectionIdx]?.length || 1))) / guide.sections.length) * 100), 100)}%
+            {Math.round(progress)}%
           </span>
         </div>
       </div>
