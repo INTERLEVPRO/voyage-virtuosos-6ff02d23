@@ -139,8 +139,14 @@
   }
   html,
   body {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
+    width: 100%;
+    overscroll-behavior-x: none;
+  }
+  body {
+    position: relative;
+    touch-action: pan-y;
   }
   html {
     font-family: var(--font-sans);
