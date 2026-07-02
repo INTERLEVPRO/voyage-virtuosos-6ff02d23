@@ -220,8 +220,10 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
       if (pkgs && onPackagesReady) {
       handedOffRef.current.add(last.id);
       setIsSuccess(true);
-      onPackagesReady(pkgs);
+      // Let the progress bar visibly reach 100% before switching to results.
+      setTimeout(() => onPackagesReady(pkgs), 900);
     }
+
   }, [messages, status, onPackagesReady]);
 
   const lastUserMessage = useMemo(() => {
