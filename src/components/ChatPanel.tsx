@@ -217,11 +217,11 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
     if (handedOffRef.current.has(last.id)) return;
     const text = last.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
     const pkgs = extractPackages(text);
-      if (pkgs && onPackagesReady) {
+    if (pkgs && onPackagesReady) {
       handedOffRef.current.add(last.id);
       setIsSuccess(true);
-      // Let the progress bar visibly reach 100%, then hold 2s before showing packages.
-      setTimeout(() => onPackagesReady(pkgs), 2800);
+      // Let the progress bar visibly reach 100%, then hold 5s before showing packages.
+      setTimeout(() => onPackagesReady(pkgs), 5000);
     }
 
 
