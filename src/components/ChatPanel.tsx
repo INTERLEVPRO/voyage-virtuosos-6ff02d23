@@ -220,9 +220,10 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
       if (pkgs && onPackagesReady) {
       handedOffRef.current.add(last.id);
       setIsSuccess(true);
-      // Let the progress bar visibly reach 100% before switching to results.
-      setTimeout(() => onPackagesReady(pkgs), 900);
+      // Let the progress bar visibly reach 100%, then hold 2s before showing packages.
+      setTimeout(() => onPackagesReady(pkgs), 2800);
     }
+
 
   }, [messages, status, onPackagesReady]);
 
