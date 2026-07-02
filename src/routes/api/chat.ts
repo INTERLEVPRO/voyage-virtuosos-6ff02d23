@@ -1803,25 +1803,35 @@ export const Route = createFileRoute("/api/chat")({
         );
 
         if (requestedDurationDays <= 14) {
-          const [research, itinerary] = await Promise.all([
-            generateText({
-              model,
-              system: RESEARCH_SYSTEM,
-              prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
-            }),
-            generateText({
-              model,
-              system: ITINERARY_SYSTEM,
-              prompt: `Brief:\n${brief}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days in ${destination}. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
-            }),
+          const [researchResult, itineraryResult] = await Promise.all([
+            withTimeout(
+              generateText({
+                model,
+                system: RESEARCH_SYSTEM,
+                prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
+              }).then((result) => result.text),
+              12_000,
+              "",
+            ),
+            withTimeout(
+              generateText({
+                model,
+                system: ITINERARY_SYSTEM,
+                prompt: `Brief:\n${brief}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days in ${destination}. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
+              }).then((result) => result.text),
+              12_000,
+              "",
+            ),
           ]);
-          researchText = research.text;
+          researchText = researchResult;
 
-          itineraryTemplate = parseItineraryDraft(
-            itinerary.text,
-            requestedDurationDays,
-            destination,
-          );
+          if (itineraryResult) {
+            itineraryTemplate = parseItineraryDraft(
+              itineraryResult,
+              requestedDurationDays,
+              destination,
+            );
+          }
         }
 
         const researchData = researchText ? parseResearchData(researchText) : buildFallbackResearchData(destination);
@@ -1872,8 +1882,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         // Hard timeout: ratings scraping can be very slow (multiple Firecrawl
-        // searches per package). Cap the whole batch at 20s so we don't hit
-        // Cloudflare's 100s gateway timeout. Fall back to empty ratings.
+        // searches per package). Keep it short so package results render quickly.
         const ratingsPerPackage = await Promise.race([
           Promise.all(
             normalized.map((p) =>
@@ -1882,7 +1891,7 @@ export const Route = createFileRoute("/api/chat")({
             ),
           ),
           new Promise<Awaited<ReturnType<typeof fetchPackageRatings>>[]>((resolve) =>
-            setTimeout(() => resolve(normalized.map(() => [])), 20_000),
+            setTimeout(() => resolve(normalized.map(() => [])), 5_000),
           ),
         ]);
 
