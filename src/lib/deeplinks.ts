@@ -290,7 +290,7 @@ export const AVIASALES_AFFILIATE_URL = "https://aviasales.tpm.li/o8SBry1n";
 export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
 
 /** KiwiTaxi affiliate deeplink (tracked redirect). */
-export const KIWI_TAXI_AFFILIATE_URL = "https://kiwitaxi.tpm.li/RgYDJiUT";
+export const KIWI_TAXI_AFFILIATE_URL = "https://kiwi.tpm.li/LxfkqIsk";
 
 /** Travelpayouts API token (public affiliate marker). */
 export const TRAVELPAYOUTS_TOKEN = "bdf35dd22b712ff287b1a4eecb16882f";
