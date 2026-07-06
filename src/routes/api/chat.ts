@@ -1342,14 +1342,17 @@ function buildPackagesFromResearch(params: {
     const extracted = extractActivitiesFromItinerary(itineraryTemplate, destination);
     const activities = extracted.length > 0 ? extracted : [`Highlights in ${destination}`];
 
+    // Extract city name for title if format is "City, Country"
+    const displayTitleBase = destination.includes(",") ? destination.split(",")[0].trim() : destination;
+
     return {
       type,
       title:
         type === "basic"
-          ? `${destination} Smart Paket`
+          ? `${displayTitleBase} Smart Paket`
           : type === "medium"
-            ? `${destination} Komfort Paket`
-            : `${destination} Premium Paket`,
+            ? `${displayTitleBase} Komfort Paket`
+            : `${displayTitleBase} Premium Paket`,
       destination,
       price: Math.round(budget * multiplier),
       requestedBudget: budget,
@@ -1795,6 +1798,25 @@ export const Route = createFileRoute("/api/chat")({
 
 
 
+        // Deduplicate country if it's already part of the destination name
+        // e.g. "Jaffna, Sri Lanka, Sri Lanka" -> "Jaffna, Sri Lanka"
+        // e.g. "Mallorca, Spanien, Spanien" -> "Mallorca, Spanien"
+        if (destination) {
+          const parts = destination.split(",").map(p => p.trim());
+          if (parts.length >= 2) {
+            const uniqueParts: string[] = [];
+            const seenParts = new Set<string>();
+            for (const part of parts) {
+              const lower = part.toLowerCase();
+              if (!seenParts.has(lower)) {
+                seenParts.add(lower);
+                uniqueParts.push(part);
+              }
+            }
+            destination = uniqueParts.join(", ");
+          }
+        }
+
         let researchText = "";
         let itineraryTemplate: ParsedPackage["itinerary"] = buildDeterministicItinerary(
           destination,
@@ -1807,8 +1829,8 @@ export const Route = createFileRoute("/api/chat")({
             withTimeout(
               generateText({
                 model,
-                system: RESEARCH_SYSTEM,
-                prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels.`,
+                system: RESEARCH_SYSTEM + "\n\nCRITICAL FLIGHT RULE: For Jaffna (JAF), direct international flights do not exist. You MUST route flights via Colombo (CMB) (e.g. 'Flight to CMB + local transfer to Jaffna') or Chennai (MAA) to Jaffna if realistic, NEVER write 'Direktflug nach Jaffna'.\n\nCRITICAL TIER DIFFERENTIATION RULE:\n- Basic: Budget/economy flights (e.g. budget airlines, longer layovers) and 3-star standard hotels.\n- Medium: Comfort flights (e.g. premium airlines, 1 short layover) and 4-star comfort hotels.\n- Premium: Premium/business flights (e.g. best airlines, shortest duration) and 5-star luxury/boutique hotels.",
+                prompt: `Travel brief:\n"""${brief}"""\nProduce flights & hotels. Target destination is ${destination}.`,
               }).then((result) => result.text),
               12_000,
               "",
@@ -1816,7 +1838,7 @@ export const Route = createFileRoute("/api/chat")({
             withTimeout(
               generateText({
                 model,
-                system: ITINERARY_SYSTEM,
+                system: ITINERARY_SYSTEM + "\n\nCRITICAL SPACING/JOINING RULE: Ensure all words, prepositions, and conjunctions (like 'in', 'und', 'nach') are separated by spaces. Never output joined words like 'Jaffnaund', 'SriLankain', 'Thailandin' or 'Sri Lankain'. Proper German spacing is mandatory.\n\nCRITICAL TIER DIFFERENTIATION RULE:\n- Basic: Focuses on free or low-cost sights, walking tours, public beaches, and self-guided exploration (budget friendly).\n- Medium: Adds active tours, standard museum entries, comfort transfers, and popular local dining experiences (comfort/balanced).\n- Premium: Exclusive private guides, luxury private boat charters, spa treatments, private cooking classes, and fine-dining/exclusive experiences (luxury/exclusive).",
                 prompt: `Brief:\n${brief}\n\nBuild the itinerary in German for EXACTLY ${requestedDurationDays} days in ${destination}. Include every day from Tag 1 to Tag ${requestedDurationDays}.`,
               }).then((result) => result.text),
               12_000,

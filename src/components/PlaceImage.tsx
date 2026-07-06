@@ -346,8 +346,8 @@ export function buildPackageCollageQueries(pkg: {
   const destKey = dest.toLowerCase().trim();
 
   // Check for destination-specific iconic queries first.
-  // For Jaffna (with or without country suffix), use dedicated per-tier queries.
-  if (destKey === "jaffna, sri lanka" || destKey === "jaffna") {
+  // For Jaffna (with or without country suffix, e.g. "Jaffna, Sri Lanka", "Jaffna Sri Lanka", "Jaffna"), use dedicated per-tier queries.
+  if (destKey.includes("jaffna")) {
     const label = "Jaffna Sri Lanka";
     if (pkg.type === "basic") {
       return [
