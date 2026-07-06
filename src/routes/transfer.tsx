@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { KIWI_TAXI_AFFILIATE_URL } from "@/lib/deeplinks";
 
 const KIWITAXI_PAP_MARKER = "728432";
@@ -66,12 +66,8 @@ export const Route = createFileRoute("/transfer")({
 
 function TransferPage() {
   const search = Route.useSearch();
-  const mountedRef = useRef(false);
 
   useEffect(() => {
-    if (mountedRef.current) return;
-    mountedRef.current = true;
-
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
     // Normalize the date to ISO (YYYY-MM-DD) and pick a default pickup time so
@@ -125,14 +121,28 @@ function TransferPage() {
       },
     };
 
-    // Inject the widget script once.
-    if (!document.querySelector(`script[src="${WIDGET_SCRIPT_SRC}"]`)) {
-      const s = document.createElement("script");
-      s.src = WIDGET_SCRIPT_SRC;
-      s.async = true;
-      document.body.appendChild(s);
+    // Remove any existing script to force script execution
+    const existingScripts = document.querySelectorAll(`script[src*="widget-white-label.kiwitaxi.com"]`);
+    existingScripts.forEach((s) => s.remove());
+
+    // Clear the container content
+    const container = document.querySelector("[data-kiwitaxi-white-label]");
+    if (container) {
+      container.innerHTML = "";
     }
-  }, [search.country, search.from, search.to]);
+
+    // Inject the widget script
+    const s = document.createElement("script");
+    s.src = `${WIDGET_SCRIPT_SRC}?t=${Date.now()}`;
+    s.async = true;
+    document.body.appendChild(s);
+
+    return () => {
+      // Cleanup on unmount or dependency update
+      const addedScripts = document.querySelectorAll(`script[src*="widget-white-label.kiwitaxi.com"]`);
+      addedScripts.forEach((scr) => scr.remove());
+    };
+  }, [search.country, search.from, search.to, search.date, search.pax]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
