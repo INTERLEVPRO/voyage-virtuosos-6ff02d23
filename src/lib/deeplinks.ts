@@ -521,54 +521,5 @@ export function buildTransferUrl(opts?: {
   month?: string;
   durationDays?: number;
 }): string {
-  if (!opts) return "/transfer";
-  const cleanDestVal = cleanDestination(opts.destination);
-  const cleanOrigVal = cleanDestination(opts.origin);
-
-  const destCity = extractCityName(cleanDestVal);
-
-  // Pre-fill route logic for Transfer:
-  // For destinations like Jaffna — flights usually land at Colombo (CMB),
-  // so the transfer FROM should be "Colombo Airport" rather than the origin city.
-  let fromLabel: string;
-  if (cleanDestVal.toLowerCase().includes("jaffna")) {
-    fromLabel = "Colombo Airport (CMB)";
-  } else {
-    const originIata = lookupOriginIata(cleanOrigVal);
-    // Use destination's own airport if the user is flying internationally
-    // (e.g., flying to Bali → transfer from DPS airport to hotel).
-    const destIata = lookupDestIata(cleanDestVal);
-    if (destIata) {
-      fromLabel = `${destCity} Airport (${destIata})`;
-    } else if (originIata) {
-      fromLabel = `${cleanOrigVal.split(",")[0].trim()} Airport (${originIata})`;
-    } else {
-      fromLabel = `${cleanOrigVal.split(",")[0].trim() || destCity} Airport`;
-    }
-  }
-
-  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
-  const dateStr = dates ? dates[0] : "";
-
-  const params = new URLSearchParams({
-    from: fromLabel,
-    to: destCity || "Hotel",
-    pax: String(opts.travelers ?? 2),
-    date: dateStr,
-  });
-
-  const finalUrl = `/transfer?${params.toString()}`;
-
-  console.log("deeplink context", {
-    provider: "kiwitaxi_internal",
-    origin: cleanOrigVal,
-    destination: cleanDestVal,
-    from: fromLabel,
-    to: destCity,
-    dates,
-    travelers: opts.travelers,
-    url: finalUrl,
-  });
-
-  return finalUrl;
+  return "https://kiwitaxi.tpm.li/RgYDJiUT";
 }
