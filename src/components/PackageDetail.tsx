@@ -231,9 +231,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     startDate: currentPkg.travelStartDate,
     durationDays: currentPkg.durationDays,
   });
+  const displayHotelName = currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
   const hotelUrl = buildKlookSearchUrl({
     destination: dest,
-    hotel: currentPkg.hotel,
+    hotel: displayHotelName,
     travelers: currentPkg.travelers,
     month: currentPkg.travelMonth,
     startDate: currentPkg.travelStartDate,
@@ -484,7 +485,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         <ProviderRow
           icon={Hotel}
           title="Hotel"
-          subtitle={currentPkg.hotel}
+          subtitle={displayHotelName}
           ratingLabel="Klook"
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
@@ -493,6 +494,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           url={hotelUrl}
           packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
+          isHotelSuggestion={displayHotelName.toLowerCase().includes("vorschlag")}
         />
         <ProviderRow
           icon={Compass}
@@ -808,6 +810,7 @@ function ProviderRow({
   url,
   packageId,
   ctaCls,
+  isHotelSuggestion,
 }: {
   icon: typeof Plane;
   title: string;
@@ -821,9 +824,8 @@ function ProviderRow({
   url?: string;
   packageId: string;
   ctaCls: string;
+  isHotelSuggestion?: boolean;
 }) {
-  const isHotelProvider = provider === "hotel";
-
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:flex-row sm:items-center">
       <div className="flex flex-1 items-start gap-4">
@@ -838,7 +840,10 @@ function ProviderRow({
               {rating ? <> <span className="font-semibold text-foreground">{rating}</span></> : null}
             </span>
           </div>
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">{subtitle}</p>
+          {isHotelSuggestion && (
+            <p className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">Hotelvorschlag · Verfügbarkeit bei Klook prüfen</p>
+          )}
           {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
         </div>
       </div>

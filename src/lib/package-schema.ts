@@ -31,6 +31,7 @@ export const packageSchema = z.object({
   matchScore: z.number().min(0).max(100),
   duration: z.string(),
   hotel: z.string(),
+  hotelName: z.string().optional(),
   flight: z.string(),
   mealPlan: z.string().optional(),
   summary: z.string(),

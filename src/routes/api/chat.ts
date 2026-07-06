@@ -21,8 +21,13 @@ FLIGHTS:
 (2-3 options across price tiers)
 
 HOTELS:
-- <name> · <neighborhood> · <€/night> · <one-line vibe> · <star rating>
-(3 options: budget / mid / luxury)`;
+- <name> · <neighborhood/area> · <€/night> · <one-line vibe> · <star rating or rating out of 10 like "8.5/10">
+(3 options: budget / mid / luxury)
+
+CRITICAL HOTEL RULES:
+1. NEVER output generic descriptions like "Mittelklassehotel" or "Sorgfältig ausgewähltes Hotel" as the hotel name. You MUST suggest a REAL, realistic hotel that physically exists in or is highly relevant to the destination city/country.
+2. For Sri Lanka trips, do not suggest hotels in unrelated cities. Match the local area/city of the itinerary.
+3. If real-time availability is unknown, suggest a highly plausible hotel for the location and tier (3* for Basic, 4* for Medium, 5* for Premium) and label it with its real name.`;
 
 const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a realistic day-by-day plan in GERMAN with REAL, NAMED places/attractions for the destination — no generic filler.
 
@@ -1245,6 +1250,118 @@ function buildDeterministicItinerary(destination: string, days: number, interest
   });
 }
 
+function getFallbackHotelsForDestination(destination: string): string[] {
+  const destLower = destination.toLowerCase();
+  
+  if (destLower.includes("jaffna")) {
+    return [
+      "Jaffna Heritage Hotel · Jaffna · €60 · Traditional local stay · 3* · 8.2/10",
+      "Jetwing Mahesa Bhawan · Jaffna · €110 · Heritage luxury & culture · 4* · 8.7/10",
+      "Fox Resorts Jaffna · Jaffna · €180 · Luxury boutique villa resort · 5* · 9.2/10"
+    ];
+  }
+  
+  if (destLower.includes("sri lanka") || destLower.includes("colombo") || destLower.includes("negombo")) {
+    return [
+      "Cinnamon Red Colombo · Colombo · €85 · Modern rooftop pool & city view · 3* · 8.4/10",
+      "Jetwing Blue · Negombo · €150 · Beachfront comfort & large pools · 4* · 8.6/10",
+      "Shangri-La Colombo · Colombo · €260 · Five-star luxury seafront hotel · 5* · 9.1/10"
+    ];
+  }
+  
+  if (destLower.includes("bali") || destLower.includes("ubud") || destLower.includes("seminyak")) {
+    return [
+      "Jati Cottage · Ubud · €45 · Cozy tropical gardens · 3* · 8.5/10",
+      "Alaya Resort Ubud · Ubud · €120 · Luxury rice field views · 4* · 8.8/10",
+      "Maya Ubud Resort & Spa · Ubud · €280 · Five-star private pool valley resort · 5* · 9.3/10"
+    ];
+  }
+  
+  if (destLower.includes("mallorca") || destLower.includes("palma")) {
+    return [
+      "Hotel Araxa · Palma de Mallorca · €90 · Charming garden hotel · 3* · 8.3/10",
+      "Hotel Saratoga · Palma de Mallorca · €180 · Rooftop pool & jazz bar · 4* · 8.6/10",
+      "Castillo Hotel Son Vida · Palma · €420 · Historic luxury castle hotel · 5* · 9.4/10"
+    ];
+  }
+
+  if (destLower.includes("thailand") || destLower.includes("phuket") || destLower.includes("bangkok")) {
+    return [
+      "ibis Styles Bangkok Khaosan · Bangkok · €40 · Colorful modern rooms · 3* · 8.1/10",
+      "OZO Phuket · Phuket · €95 · Close to Kata beach with pools · 4* · 8.5/10",
+      "The Peninsula Bangkok · Bangkok · €320 · Ultra-luxury riverside palace · 5* · 9.2/10"
+    ];
+  }
+
+  const city = destination.split(",")[0].trim();
+  return [
+    `Beach Guesthouse ${city} · ${city} · €50 · Gemütliche Pension · 3* · 8.0/10`,
+    `Comfort Hotel ${city} · ${city} · €110 · Zentrale Lage & Komfort · 4* · 8.5/10`,
+    `Grand Luxury Resort & Spa ${city} · ${city} · €250 · Exklusives Premium-Erlebnis · 5* · 9.1/10`
+  ];
+}
+
+export type HotelDetails = {
+  hotelName: string;
+  cityOrArea: string;
+  boardType: string;
+  rating: string;
+};
+
+export function parseHotelDetails(hotelRaw: string, destination: string, tier: "basic" | "medium" | "premium"): HotelDetails {
+  const rawClean = hotelRaw.trim();
+  const isGeneric = !rawClean || 
+                    /sorgfältig/i.test(rawClean) || 
+                    /solides/i.test(rawClean) || 
+                    /komforthotel/i.test(rawClean) || 
+                    /premium resort/i.test(rawClean);
+
+  const cleanDest = destination.split(",")[0].trim();
+
+  if (isGeneric) {
+    const fallbackNames = {
+      basic: `Gästehaus/Hotelvorschlag in ${cleanDest}`,
+      medium: `Komforthotel-Vorschlag in ${cleanDest}`,
+      premium: `Luxus-Resortvorschlag in ${cleanDest}`,
+    };
+    return {
+      hotelName: fallbackNames[tier],
+      cityOrArea: cleanDest,
+      boardType: tier === "basic" ? "Frühstück" : tier === "medium" ? "Frühstück inklusive" : "Frühstück & Extras",
+      rating: tier === "basic" ? "8.1/10" : tier === "medium" ? "8.6/10" : "9.2/10",
+    };
+  }
+
+  const parts = rawClean.split(/·|•/g).map((p) => p.trim());
+  let hotelName = parts[0] || `Hotelvorschlag in ${cleanDest}`;
+  const cityOrArea = parts[1] || cleanDest;
+  
+  // Make sure hotelName is clean and doesn't contain generic garbage
+  if (/^[-•\s]+/.test(hotelName)) {
+    hotelName = hotelName.replace(/^[-•\s]+/, "");
+  }
+
+  let rating = tier === "basic" ? "8.2/10" : tier === "medium" ? "8.7/10" : "9.3/10";
+  for (const part of parts) {
+    if (/\b\d+(\.\d+)?\s*\/\s*10\b/.test(part)) {
+      rating = part;
+    } else if (/\b\d+(\.\d+)?\s*(Sterne|Stars|\*)\b/i.test(part)) {
+      const numStars = part.match(/\b\d+(\.\d+)?/)?.[0];
+      if (numStars) {
+        const starNum = parseFloat(numStars);
+        rating = `${(starNum * 2).toFixed(1)}/10`;
+      }
+    }
+  }
+
+  return {
+    hotelName,
+    cityOrArea,
+    boardType: tier === "basic" ? "Frühstück" : tier === "medium" ? "Frühstück inklusive" : "Frühstück & Extras",
+    rating,
+  };
+}
+
 function buildFallbackResearchData(destination: string): ResearchData {
   return {
     flights: [
@@ -1252,11 +1369,7 @@ function buildFallbackResearchData(destination: string): ResearchData {
       `Linienflug nach ${destination} · Komfort Tarif · ca. 11h`,
       `Premium Linienflug nach ${destination} · flexible Zeiten · ca. 11h`,
     ],
-    hotels: [
-      `Solides Mittelklassehotel in ${destination} · gute Lage · Frühstück`,
-      `Komforthotel in ${destination} · zentrale Lage · Frühstück inklusive`,
-      `Premium Resort in ${destination} · hochwertige Ausstattung · Extras inklusive`,
-    ],
+    hotels: getFallbackHotelsForDestination(destination),
   };
 }
 
@@ -1280,7 +1393,6 @@ function cleanHotelDescription(raw: string, destination: string): string {
   const dest = destination.trim();
   if (!dest) return raw.trim();
   const escaped = dest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // Strip patterns like " in Indien", " in der Region Indien", trailing "(Indien)", etc.
   let out = raw
     .replace(new RegExp(`\\s*\\(\\s*${escaped}\\s*\\)`, "gi"), "")
     .replace(new RegExp(`\\s+in\\s+(?:der\\s+Region\\s+|den\\s+|dem\\s+|der\\s+)?${escaped}\\b`, "gi"), "")
@@ -1300,7 +1412,6 @@ function extractActivitiesFromItinerary(
   const out: string[] = [];
   const seen = new Set<string>();
   for (const day of itinerary) {
-    // Split description by "·" and pull each segment (Vormittag/Nachmittag/Abend).
     const segments = (day.description || "").split(/·|•/g);
     for (const seg of segments) {
       const cleaned = seg
@@ -1308,11 +1419,8 @@ function extractActivitiesFromItinerary(
         .trim()
         .replace(/[.;]+$/, "");
       if (!cleaned) continue;
-      // Skip pure arrival/departure filler
       if (/^(Anreise|Heimreise|Rückreise|Transfer|Heimflug|Abflug|Ankunft|Einchecken|Heim)/i.test(cleaned)) continue;
-      // Skip if it's just the destination name
       if (cleaned.toLowerCase() === dest) continue;
-      // Keep short, activity-sounding phrases
       const short = cleaned.length > 90 ? cleaned.slice(0, 87).trim() + "…" : cleaned;
       const key = short.toLowerCase();
       if (seen.has(key)) continue;
@@ -1335,14 +1443,15 @@ function buildPackagesFromResearch(params: {
 
   return TIER_ORDER.map((type, index) => {
     const multiplier = type === "basic" ? 0.85 : type === "medium" ? 1 : 1.15;
-    const hotelRaw = research.hotels[index] ?? research.hotels.at(-1) ?? `Sorgfältig ausgewähltes Hotel`;
-    const hotel = cleanHotelDescription(hotelRaw, destination);
+    const hotelRaw = research.hotels[index] ?? research.hotels.at(-1) ?? `Hotelvorschlag in ${destination}`;
+    const hotelDetails = parseHotelDetails(hotelRaw, destination, type);
+    const hotelName = hotelDetails.hotelName;
+    const hotel = hotelName;
     const flight = research.flights[index] ?? research.flights.at(-1) ?? `Passender Flug nach ${destination}`;
     const badges = buildPackageBadges(type, research);
     const extracted = extractActivitiesFromItinerary(itineraryTemplate, destination);
     const activities = extracted.length > 0 ? extracted : [`Highlights in ${destination}`];
 
-    // Extract city name for title if format is "City, Country"
     const displayTitleBase = destination.includes(",") ? destination.split(",")[0].trim() : destination;
 
     return {
@@ -1362,8 +1471,9 @@ function buildPackagesFromResearch(params: {
       matchScore: type === "basic" ? 86 : type === "medium" ? 92 : 97,
       duration: `${durationDays} Tage`,
       hotel,
+      hotelName,
       flight,
-      mealPlan: type === "basic" ? "Frühstück" : type === "medium" ? "Frühstück inklusive" : "Frühstück & ausgewählte Extras",
+      mealPlan: hotelDetails.boardType || (type === "basic" ? "Frühstück" : type === "medium" ? "Frühstück inklusive" : "Frühstück & ausgewählte Extras"),
       summary: buildPackageSummary(type, destination, durationDays),
       whyItFits:
         type === "basic"

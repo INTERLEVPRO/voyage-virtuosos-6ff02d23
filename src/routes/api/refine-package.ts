@@ -34,13 +34,14 @@ const REFINER_SYSTEM = `You are the Package Refiner for Weltweit Urlaub.
 You receive ONE existing travel package and a German change request from the user.
 Return the FULL refined package as a single JSON object that strictly matches the schema.
 Rules:
-- All user-facing strings (title, destination, summary, whyItFits, hotel, flight, mealPlan, badges, activities, itinerary titles & descriptions) MUST be in GERMAN.
+- All user-facing strings (title, destination, summary, whyItFits, hotel, hotelName, flight, mealPlan, badges, activities, itinerary titles & descriptions) MUST be in GERMAN.
 - Keep the same destination unless the user explicitly asks to change it.
 - Keep the same package "type" (basic/medium/premium).
 - Update price realistically based on the change (cheaper hotel → lower, more luxury → higher).
 - itinerary length must equal the duration in days.
 - matchScore: integer 80–98. rating: 4.0–4.9. reviews: 200–3000.
 - Do NOT include bookingLinks — they are added separately.
+- "hotel" and "hotelName" MUST be a REAL, specific hotel name (e.g. "Cinnamon Red Colombo", "Jetwing Blue"). NEVER use generic text like "Sorgfältig ausgewähltes Hotel" or "Mittelklassehotel". If the user changes the hotel, provide a realistic hotel name for the destination and tier. If no specific hotel is known, use "Hotelvorschlag in [City]".
 Also produce a short German "changeSummary" (1–2 sentences) describing what changed compared to the original.
 
 Return ONLY a valid JSON object with this exact shape, no prose, no markdown, no code fences:

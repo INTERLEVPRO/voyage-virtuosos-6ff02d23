@@ -33,6 +33,7 @@ export type TravelPackage = {
   duration: string;
   durationDays?: number;
   hotel: string;
+  hotelName?: string;
   flight: string;
   mealPlan?: string;
   summary: string;
