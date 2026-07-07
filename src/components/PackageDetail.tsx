@@ -874,9 +874,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             type="button"
             onClick={() => {
               setActiveTab("book");
-              setTimeout(() => {
-                document.getElementById("pkg-tab-book")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }, 50);
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 sm:px-6 sm:py-4 text-sm font-semibold text-primary-foreground shadow-soft"
           >
