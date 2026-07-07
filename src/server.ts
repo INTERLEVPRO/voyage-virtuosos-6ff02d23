@@ -7,6 +7,10 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
+type ProcessLike = {
+  env?: Record<string, string | undefined>;
+};
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -16,6 +20,20 @@ async function getServerEntry(): Promise<ServerEntry> {
     );
   }
   return serverEntryPromise;
+}
+
+function hydrateProcessEnv(env: unknown): void {
+  if (!env || typeof env !== "object") return;
+
+  const processLike = (globalThis as typeof globalThis & { process?: ProcessLike }).process;
+  if (!processLike) return;
+  processLike.env ??= {};
+
+  for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
+    if (typeof value === "string") {
+      processLike.env[key] = value;
+    }
+  }
 }
 
 function brandedErrorResponse(): Response {
@@ -69,6 +87,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      hydrateProcessEnv(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
