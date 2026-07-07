@@ -128,6 +128,38 @@ function mapsRouteUrl(destination: string, place?: string, origin?: string) {
   return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${dest}&travelmode=driving`;
 }
 
+function buildWholeItineraryRouteUrl(pkg: TravelPackage): string {
+  let places = pkg.itinerary.map((d) => cleanPlaceQuery(d.title, pkg.destination));
+  
+  // Clean consecutive duplicate places
+  const uniquePlaces: string[] = [];
+  for (const p of places) {
+    if (uniquePlaces.length === 0 || uniquePlaces[uniquePlaces.length - 1] !== p) {
+      uniquePlaces.push(p);
+    }
+  }
+  
+  places = uniquePlaces;
+
+  if (places.length === 0) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pkg.destination)}&travelmode=driving`;
+  }
+  
+  if (places.length === 1) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(places[0])}&travelmode=driving`;
+  }
+  
+  const origin = encodeURIComponent(places[0]);
+  const destination = encodeURIComponent(places[places.length - 1]);
+  
+  const intermediate = places.slice(1, -1);
+  const waypointsParam = intermediate.length > 0
+    ? `&waypoints=${intermediate.map(p => encodeURIComponent(p)).join("%7C")}`
+    : "";
+    
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointsParam}&travelmode=driving`;
+}
+
 function openRouteInMaps(destination: string, place?: string) {
   const openWith = (origin?: string) => {
     const url = mapsRouteUrl(destination, place, origin);
@@ -442,7 +474,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Top actions: Maps + Email */}
       <div className={cn("mt-4 flex flex-wrap gap-2", activeTab !== "overview" && "max-sm:hidden")}>
         <a
-          href={mapsRouteUrl(currentPkg.destination)}
+          href={buildWholeItineraryRouteUrl(currentPkg)}
           target="_blank"
           rel="noopener"
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
