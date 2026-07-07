@@ -457,7 +457,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
-      <div className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
+      <div id="pkg-tab-book" className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
         <ProviderRow
           icon={Plane}
           title="Flüge"
@@ -776,20 +776,18 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
               € {currentPkg.price.toLocaleString("de-DE")}
             </div>
           </div>
-          <a
-            href={hotelUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             onClick={() => {
-              void trackClick(currentPkg.id, "hotel", hotelUrl);
-              void trackClick(currentPkg.id, "flight", flightUrl);
-              void trackClick(currentPkg.id, "transfer", taxiUrl);
-              void trackClick(currentPkg.id, "activities", activitiesUrl);
+              setActiveTab("book");
+              setTimeout(() => {
+                document.getElementById("pkg-tab-book")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 50);
             }}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 sm:px-6 sm:py-4 text-sm font-semibold text-primary-foreground shadow-soft"
           >
             <ShoppingBag className="h-5 w-5" /> Jetzt buchen
-          </a>
+          </button>
 
         </div>
       </div>
