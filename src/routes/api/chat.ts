@@ -27,7 +27,8 @@ HOTELS:
 CRITICAL HOTEL RULES:
 1. NEVER output generic descriptions like "Mittelklassehotel" or "Sorgfältig ausgewähltes Hotel" as the hotel name. You MUST suggest a REAL, realistic hotel that physically exists in or is highly relevant to the destination city/country.
 2. For Sri Lanka trips, do not suggest hotels in unrelated cities. Match the local area/city of the itinerary.
-3. If real-time availability is unknown, suggest a highly plausible hotel for the location and tier (3* for Basic, 4* for Medium, 5* for Premium) and label it with its real name.`;
+3. NEVER concatenate itinerary text or destinations into the hotel name (e.g. NEVER write "Hotel Hilltop - Sri Lanka Kultur 3"). Keep the hotel name strictly to the actual establishment name.
+4. If real-time availability is unknown, suggest a highly plausible hotel for the location and tier (3* for Basic, 4* for Medium, 5* for Premium) and label it with its real name.`;
 
 const ITINERARY_SYSTEM = `You are the Itinerary Architect. Build a realistic day-by-day plan in GERMAN with REAL, NAMED places/attractions for the destination — no generic filler.
 
@@ -1218,11 +1219,36 @@ function parsePreviousConfirmation(text: string): ConfirmedFields | null {
 }
 
 function buildDeterministicItinerary(destination: string, days: number, interests: string[]) {
-  const titles = [
-    "Ankunft und Orientierung",
-    ...Array.from({ length: Math.max(days - 2, 0) }, (_, index) => interests[index % interests.length]),
-    ...(days > 1 ? ["Abschluss und Rückreise"] : []),
-  ].slice(0, days);
+  const destLower = destination.toLowerCase();
+  let places: string[] = [];
+  
+  if (destLower.includes("sri lanka")) {
+    places = ["Colombo", "Negombo Strand", "Sigiriya Felsenfestung", "Kandy Zahntempel", "Nuwara Eliya Teeplantagen", "Ella Zugfahrt & Nine Arch Bridge", "Yala Nationalpark Safari", "Mirissa Strand", "Galle Fort", "Hikkaduwa", "Bentota", "Polonnaruwa", "Dambulla", "Trincomalee"];
+  } else if (destLower.includes("mallorca") || destLower.includes("palma")) {
+    places = ["Palma Altstadt & Kathedrale", "Valldemossa & Bergdörfer", "Port de Sóller", "Cap de Formentor", "Alcúdia & Playa de Muro", "Cala d'Or & Südostküste", "Santanyí & Buchten", "Drachenhöhlen Porto Cristo", "Es Trenc Strand", "Andratx & Südwesten", "Deià Küstenstraße"];
+  } else if (destLower.includes("bali")) {
+    places = ["Ubud Reisterrassen & Tempel", "Monkey Forest & Kunst", "Seminyak Strand & Beach Clubs", "Canggu Surfen & Cafés", "Uluwatu Klippentempel", "Nusa Penida Ausflug", "Mount Batur Vulkan", "Lovina Delfine", "Sekumpul Wasserfälle", "Sanur Erholung", "Jimbaran Seafood"];
+  } else if (destLower.includes("thailand")) {
+    places = ["Bangkok Tempel & Palast", "Ayutthaya Ruinen", "Chiang Mai Altstadt", "Doi Inthanon Natur", "Phuket Strände", "Phi Phi Islands", "Krabi Inselhopping", "Khao Sok Nationalpark", "Koh Samui Relaxen", "Koh Phangan", "Similan Islands"];
+  } else if (destLower.includes("jaffna")) {
+    places = ["Jaffna Fort & Bibliothek", "Nallur Kandaswamy Tempel", "Casuarina Beach & Inseln", "Delft Island", "Point Pedro", "Keerimalai Quellen", "Dambakola Patuna", "Nainativu Tempel", "Jaffna Markt", "Lokale Kultur & Küche"];
+  }
+
+  const titles: string[] = [];
+  titles.push(places.length > 0 ? `Ankunft in ${places[0].split(" ")[0]}` : "Ankunft und Orientierung");
+  
+  const midDays = Math.max(days - 2, 0);
+  for (let i = 0; i < midDays; i++) {
+    if (places.length > i + 1) {
+      titles.push(places[i + 1]);
+    } else {
+      titles.push(`${interests[i % interests.length]} Erlebnis`);
+    }
+  }
+
+  if (days > 1) {
+    titles.push(`Rückreise ab ${places.length > 0 ? places[0].split(" ")[0] : destination}`);
+  }
 
   return titles.map((title, index) => {
     const day = index + 1;
@@ -1244,8 +1270,8 @@ function buildDeterministicItinerary(destination: string, days: number, interest
 
     return {
       day,
-      title: `${title} ${day}`,
-      description: `Vormittag: entspannter Start in ${destination} · Nachmittag: ${title.toLowerCase()} mit passendem Tagesprogramm · Abend: ruhiger Ausklang mit lokalen Eindrücken.`,
+      title,
+      description: `Vormittag: Erkundung von ${title.split(" ")[0]} · Nachmittag: tiefere Einblicke und Aktivitäten vor Ort · Abend: lokales Essen und Entspannung.`,
     };
   });
 }
@@ -1332,7 +1358,7 @@ export function parseHotelDetails(hotelRaw: string, destination: string, tier: "
     };
   }
 
-  const parts = rawClean.split(/·|•/g).map((p) => p.trim());
+  const parts = rawClean.split(/\s*·\s*|\s*•\s*|\s*-\s*|\s*–\s*|\s*\|\s*|\s*,\s*/g).map((p) => p.trim());
   let hotelName = parts[0] || `Hotelvorschlag in ${cleanDest}`;
   const cityOrArea = parts[1] || cleanDest;
   
@@ -1340,7 +1366,9 @@ export function parseHotelDetails(hotelRaw: string, destination: string, tier: "
   if (/^[-•\s]+/.test(hotelName)) {
     hotelName = hotelName.replace(/^[-•\s]+/, "");
   }
-
+  // Remove any concatenated destination from the hotel name itself
+  hotelName = hotelName.replace(new RegExp(`${cleanDest}.*`, "i"), "").trim() || `Hotelvorschlag in ${cleanDest}`;
+  
   let rating = tier === "basic" ? "8.2/10" : tier === "medium" ? "8.7/10" : "9.3/10";
   for (const part of parts) {
     if (/\b\d+(\.\d+)?\s*\/\s*10\b/.test(part)) {
