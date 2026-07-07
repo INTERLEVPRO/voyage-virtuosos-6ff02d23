@@ -59,8 +59,70 @@ async function trackClick(packageId: string, provider: string, url: string) {
   }
 }
 
+function cleanPlaceQuery(place: string, destination: string): string {
+  let cleaned = place.trim();
+  
+  // Remove Day prefixes like "Tag 1:", "Tag 1 —", etc.
+  cleaned = cleaned.replace(/^Tag\s+\d+\s*[-—:]\s*/i, "");
+  
+  // Clean common German prefixes/suffixes/fillers
+  const patterns = [
+    /^(?:Ankunft(?:\s+und\s+Orientierung)?\s+in\s+)(.+)$/i,
+    /^(?:Ankunft\s+am\s+)(.+)$/i,
+    /^(?:Ankunft\s+an\s+der\s+)(.+)$/i,
+    /^(?:Anreise\s+nach\s+)(.+)$/i,
+    /^(?:Fahrt\s+nach\s+)(.+)$/i,
+    /^(?:Ausflug\s+nach\s+)(.+)$/i,
+    /^(?:Tag\s+in\s+)(.+)$/i,
+    /^(?:Freizeit\s+in\s+)(.+)$/i,
+    /^(?:Stadtführung\s+in\s+)(.+)$/i,
+    /^(?:Stadtbesichtigung\s+in\s+)(.+)$/i,
+    /^(?:Entspannung\s+(?:am|in|an\s+der)\s+)(.+)$/i,
+    /^(?:Transfer\s+nach\s+)(.+)$/i,
+    /^(?:Flug\s+nach\s+)(.+)$/i,
+    /^(?:Bootstour\s+nach\s+)(.+)$/i,
+    /^(?:Rückreise\s+(?:von|nach)\s+)(.+)$/i,
+    /^(?:Abreise\s+(?:aus|von)\s+)(.+)$/i,
+    /^(?:Rückflug\s+(?:aus|von)\s+)(.+)$/i,
+    /^(?:Orientierung\s+in\s+)(.+)$/i,
+    /^(?:Erkundung\s+von\s+)(.+)$/i,
+    /^(?:Besuch\s+(?:der|des|von)\s+)(.+)$/i,
+    /^(?:Erkunden\s+Sie\s+)(.+)$/i,
+    /^(?:Entdecke\s+)(.+)$/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = cleaned.match(pattern);
+    if (match && match[1]) {
+      cleaned = match[1].trim();
+      break;
+    }
+  }
+
+  // Handle generic phrases that don't specify a place
+  if (
+    /^(Ankunft\s+und\s+Orientierung|Abschluss\s+und\s+Rückreise|Freizeit\s+und\s+Erholung|Rückreise|Heimreise)$/i.test(cleaned)
+  ) {
+    return destination;
+  }
+
+  // Remove quotes
+  cleaned = cleaned.replace(/^["'„“](.*)["'“”]$/, "$1").trim();
+
+  // Deduplicate: If cleaned place is already part of destination, or vice versa
+  const destParts = destination.split(",").map(s => s.trim().toLowerCase());
+  const cleanLower = cleaned.toLowerCase();
+  
+  if (destParts.includes(cleanLower) || destination.toLowerCase().includes(cleanLower)) {
+    return destination;
+  }
+  
+  return `${cleaned}, ${destination}`;
+}
+
 function mapsRouteUrl(destination: string, place?: string, origin?: string) {
-  const dest = encodeURIComponent(place ? `${place}, ${destination}` : destination);
+  const finalDest = place ? cleanPlaceQuery(place, destination) : destination;
+  const dest = encodeURIComponent(finalDest);
   // Note: origin is intentionally NOT url-encoded so the comma stays literal — Google Maps requires "lat,lng".
   const originParam = origin ? `&origin=${origin}` : "";
   return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${dest}&travelmode=driving`;
