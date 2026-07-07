@@ -65,9 +65,15 @@ function cleanPlaceQuery(place: string, destination: string): string {
   // Remove Day prefixes like "Tag 1:", "Tag 1 —", etc.
   cleaned = cleaned.replace(/^Tag\s+\d+\s*[-—:]\s*/i, "");
   
+  // Handle "Rückreise ab X" / "Ankunft in X" patterns first
+  const arrivalMatch = cleaned.match(/^(?:Ankunft(?:\s+und\s+Orientierung)?\s+in\s+)(.+)$/i);
+  if (arrivalMatch?.[1]) cleaned = arrivalMatch[1].trim();
+
+  const departureMatch = cleaned.match(/^(?:Rückreise\s+ab\s+)(.+)$/i);
+  if (departureMatch?.[1]) cleaned = departureMatch[1].trim();
+
   // Clean common German prefixes/suffixes/fillers
   const patterns = [
-    /^(?:Ankunft(?:\s+und\s+Orientierung)?\s+in\s+)(.+)$/i,
     /^(?:Ankunft\s+am\s+)(.+)$/i,
     /^(?:Ankunft\s+an\s+der\s+)(.+)$/i,
     /^(?:Anreise\s+nach\s+)(.+)$/i,
@@ -93,7 +99,7 @@ function cleanPlaceQuery(place: string, destination: string): string {
 
   for (const pattern of patterns) {
     const match = cleaned.match(pattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       cleaned = match[1].trim();
       break;
     }
@@ -106,8 +112,31 @@ function cleanPlaceQuery(place: string, destination: string): string {
     return destination;
   }
 
+  // Strip German descriptive words that Google Maps cannot understand.
+  // For compound titles like "Ella Zugfahrt & Nine Arch Bridge", split on "&" and clean each part.
+  const GERMAN_DESCRIPTORS = /\b(Strand|Felsenfestung|Zahntempel|Teeplantagen|Zugfahrt|Nationalpark|Safari|Altstadt|Kathedrale|Bergdörfer|Küstenstraße|Klippentempel|Reisterrassen|Tempel|Beach\s*Clubs?|Surfen|Cafés|Ausflug|Vulkan|Delfine|Wasserfälle|Erholung|Seafood|Ruinen|Strände|Inselhopping|Relaxen|Erlebnis|Markt|Quellen|Küche|Kultur|Inseln|Bibliothek)\b/gi;
+
+  // If title contains "&", try to pick the most map-friendly segment
+  if (cleaned.includes("&")) {
+    const segments = cleaned.split(/\s*&\s*/);
+    // Pick the segment that looks most like a real place name (has a proper noun)
+    const bestSegment = segments
+      .map(s => s.replace(GERMAN_DESCRIPTORS, "").trim())
+      .filter(s => s.length > 1)
+      .sort((a, b) => b.length - a.length)[0];
+    if (bestSegment) cleaned = bestSegment;
+  } else {
+    cleaned = cleaned.replace(GERMAN_DESCRIPTORS, "").trim();
+  }
+
+  // Clean up leftover punctuation and extra spaces
+  cleaned = cleaned.replace(/\s{2,}/g, " ").replace(/^[\s,·&-]+|[\s,·&-]+$/g, "").trim();
+
+  // If cleaning left nothing, fall back to destination
+  if (!cleaned) return destination;
+
   // Remove quotes
-  cleaned = cleaned.replace(/^["'„“](.*)["'“”]$/, "$1").trim();
+  cleaned = cleaned.replace(/^["'„"](.*)[\"'""]$/, "$1").trim();
 
   // Deduplicate: If cleaned place is already part of destination, or vice versa
   const destParts = destination.split(",").map(s => s.trim().toLowerCase());
