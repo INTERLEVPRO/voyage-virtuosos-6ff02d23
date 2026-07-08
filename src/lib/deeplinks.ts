@@ -433,34 +433,38 @@ export function buildKlookSearchUrl(opts: {
   const city = extractCityName(opts.destination);
   if (!city) return KLOOK_ACTIVITIES_AFFILIATE_URL;
 
-  // For hotels: use hotel name + city if available, otherwise "hotel in {city}"
-  const targetKeyword = opts.hotel
-    ? `${opts.hotel} ${city}`
-    : `hotel ${city}`;
+  // Strip generic "Hotelvorschlag" fallback text — only use real hotel names as keywords
+  const isGenericHotel = !opts.hotel ||
+    /vorschlag|mittelklasse|komforthotel|luxus-resort|gästehaus/i.test(opts.hotel);
 
-  const params = new URLSearchParams({
-    aid: TRAVELPAYOUTS_TOKEN,
-    keyword: targetKeyword,
-    room_num: "1",
-    adult_num: String(Math.max(1, opts.travelers ?? 2)),
-    child_num: "0",
-  });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  const adults = Math.max(1, opts.travelers ?? 2);
+
+  // Build Klook Hotels deeplink with affiliate tracking
+  // URL: https://www.klook.com/hotels/?keyword=HOTEL_NAME&city=CITY&check_in=...&check_out=...&adult_num=N
+  const params = new URLSearchParams({
+    aff_pid: "728432",
+    aff_sid: "weltweit",
+    keyword: isGenericHotel ? city : opts.hotel!,
+    city: city,
+    adult_num: String(adults),
+    room_num: "1",
+  });
+
   if (dates) {
     params.set("check_in", dates[0]);
     params.set("check_out", dates[1]);
-    params.set("start_time", dates[0]);
-    params.set("end_time", dates[1]);
   }
-  const finalUrl = `https://www.klook.com/search/result/?${params.toString()}`;
+
+  const finalUrl = `https://www.klook.com/hotels/?${params.toString()}`;
 
   console.log("deeplink context", {
     provider: "klook_hotel",
     destination: city,
     hotel: opts.hotel,
-    keyword: targetKeyword,
+    keyword: isGenericHotel ? city : opts.hotel,
     dates,
-    travelers: opts.travelers,
+    travelers: adults,
     url: finalUrl,
   });
 
