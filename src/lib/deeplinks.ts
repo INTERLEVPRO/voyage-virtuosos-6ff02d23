@@ -289,9 +289,6 @@ export const AVIASALES_AFFILIATE_URL = "https://aviasales.tpm.li/o8SBry1n";
 /** Klook affiliate deeplink (tracked redirect). */
 export const KLOOK_ACTIVITIES_AFFILIATE_URL = "https://klook.tpm.li/WzC9L2in/";
 
-/** Booking.com hotel search deeplink base. */
-export const BOOKING_COM_SEARCH_URL = "https://www.booking.com/search.html";
-
 /** KiwiTaxi affiliate deeplink (tracked redirect). */
 export const KIWI_TAXI_AFFILIATE_URL = "https://kiwi.tpm.li/LxfkqIsk";
 
@@ -412,8 +409,7 @@ export function buildAviasalesSearchUrl(opts: {
 
 // ─── Klook (Hotels) ──────────────────────────────────────────────────────────
 
-/** Hotel deeplink — uses Booking.com for named hotels (full deeplink support),
- *  falls back to Klook Hotels affiliate for generic/unknown hotels. */
+/** Hotel deeplink — fully pre-filled Klook search URL with affiliate marker. */
 export function buildKlookHotelUrl(opts: {
   destination: string;
   hotel?: string;
@@ -425,14 +421,7 @@ export function buildKlookHotelUrl(opts: {
   return buildKlookSearchUrl(opts);
 }
 
-/**
- * Hotel booking deeplink.
- * - Named hotel → Booking.com (supports hotel name deeplinks perfectly).
- * - Generic fallback → Klook Hotels affiliate page.
- *
- * Note: Klook's /hotels/ page ignores all URL search parameters (keyword, city, etc.)
- * and always shows Singapore defaults. Booking.com fully supports ss= hotel name search.
- */
+/** Direct Klook hotel search URL with pre-filled fields (incl. affiliate marker). */
 export function buildKlookSearchUrl(opts: {
   destination: string;
   hotel?: string;
@@ -442,44 +431,38 @@ export function buildKlookSearchUrl(opts: {
   durationDays?: number;
 }): string {
   const city = extractCityName(opts.destination);
-  const cleanDest = cleanDestination(opts.destination);
-  const adults = Math.max(1, opts.travelers ?? 2);
-  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  if (!city) return KLOOK_ACTIVITIES_AFFILIATE_URL;
 
-  // Detect generic "Hotelvorschlag" placeholders
+  // Strip generic "Hotelvorschlag" fallback text — only use real hotel names as keywords
   const isGenericHotel = !opts.hotel ||
     /vorschlag|mittelklasse|komforthotel|luxus-resort|gästehaus/i.test(opts.hotel);
 
-  if (isGenericHotel) {
-    // For generic hotels: open Klook Hotels affiliate page (city context only)
-    const finalUrl = KLOOK_ACTIVITIES_AFFILIATE_URL;
-    console.log("deeplink context", { provider: "klook_hotel_generic", destination: cleanDest, url: finalUrl });
-    return finalUrl;
-  }
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  const adults = Math.max(1, opts.travelers ?? 2);
 
-  // For named hotels: use Booking.com which fully supports hotel name deeplinks
-  const searchQuery = city ? `${opts.hotel} ${city}` : opts.hotel!;
+  // Build Klook Hotels deeplink with affiliate tracking
+  // URL: https://www.klook.com/hotels/?keyword=HOTEL_NAME&city=CITY&check_in=...&check_out=...&adult_num=N
   const params = new URLSearchParams({
-    ss: searchQuery,
-    no_rooms: "1",
-    group_adults: String(adults),
-    group_children: "0",
-    lang: "de",
-    selected_currency: "EUR",
+    aff_pid: "728432",
+    aff_sid: "weltweit",
+    keyword: isGenericHotel ? city : opts.hotel!,
+    city: city,
+    adult_num: String(adults),
+    room_num: "1",
   });
 
   if (dates) {
-    params.set("checkin", dates[0]);
-    params.set("checkout", dates[1]);
+    params.set("check_in", dates[0]);
+    params.set("check_out", dates[1]);
   }
 
-  const finalUrl = `${BOOKING_COM_SEARCH_URL}?${params.toString()}`;
+  const finalUrl = `https://www.klook.com/hotels/?${params.toString()}`;
 
   console.log("deeplink context", {
-    provider: "booking_com_hotel",
-    destination: cleanDest,
+    provider: "klook_hotel",
+    destination: city,
     hotel: opts.hotel,
-    searchQuery,
+    keyword: isGenericHotel ? city : opts.hotel,
     dates,
     travelers: adults,
     url: finalUrl,
