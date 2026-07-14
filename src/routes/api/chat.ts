@@ -1916,7 +1916,6 @@ export const Route = createFileRoute("/api/chat")({
         }
         if (!travelMonth && !travelStartDate) validationMissing.push("timeframe");
         if (interests.length === 0) validationMissing.push("interests");
-        console.log("DEBUG_VALIDATION", JSON.stringify({ validationMissing, origin, destination, budget, travelers, requestedDurationDays, travelMonth, travelStartDate, interests, originIsCountryOnly }));
         if (validationMissing.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
           return createTextStreamResponse(
