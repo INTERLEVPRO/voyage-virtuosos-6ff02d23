@@ -355,6 +355,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     durationDays: currentPkg.durationDays,
   });
   const displayHotelName = currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
+  const isRealHotel = !/vorschlag|mittelklasse|komforthotel|luxus-resort|g\u00e4stehaus/i.test(displayHotelName);
   const hotelUrl = buildKlookSearchUrl({
     destination: dest,
     hotel: displayHotelName,
@@ -609,15 +610,15 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Hotel}
           title="Hotel"
           subtitle={displayHotelName}
-          ratingLabel="Klook"
+          ratingLabel={isRealHotel ? "Booking.com" : "Klook"}
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Klook ansehen"
+          ctaLabel={isRealHotel ? "Bei Booking.com ansehen" : "Bei Klook ansehen"}
           provider="hotel"
           url={hotelUrl}
           packageId={currentPkg.id}
           ctaCls="bg-primary text-primary-foreground hover:bg-primary/90"
-          isHotelSuggestion={displayHotelName.toLowerCase().includes("vorschlag")}
+          isHotelSuggestion={!isRealHotel}
         />
         <ProviderRow
           icon={Compass}
