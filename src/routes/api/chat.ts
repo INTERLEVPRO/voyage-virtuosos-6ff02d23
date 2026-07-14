@@ -1805,8 +1805,9 @@ export const Route = createFileRoute("/api/chat")({
           const originLc = cleanPlace(origin).toLowerCase();
           const destLc = cleanPlace(destination).toLowerCase();
           if (originLc === destLc) {
-            for (const line of userHistory.split(/\n+/)) {
-              const parts = extractRouteParts(line);
+            const candidates = userHistory.split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+            for (const chunk of candidates) {
+              const parts = extractRouteParts(chunk);
               if (parts) {
                 const partsDestLc = cleanPlace(parts.destination).toLowerCase();
                 if (partsDestLc && partsDestLc !== originLc) {
