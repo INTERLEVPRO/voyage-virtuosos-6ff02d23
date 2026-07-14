@@ -1798,6 +1798,27 @@ export const Route = createFileRoute("/api/chat")({
           ?? (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null)
           ?? extractTravelers(userHistory);
 
+        // Guard: destination must differ from origin. If a later short user reply
+        // (e.g. "Chennai" answering the origin question) leaked into destination
+        // extraction, recover the real destination from the route pattern
+        // ("Chennai to Jaffna", "von Frankfurt nach Bali") in the user history.
+        if (origin && destination) {
+          const originLc = cleanPlace(origin).toLowerCase();
+          const destLc = cleanPlace(destination).toLowerCase();
+          if (originLc === destLc) {
+            for (const line of userHistory.split(/\n+/)) {
+              const parts = extractRouteParts(line);
+              if (parts) {
+                const partsDestLc = cleanPlace(parts.destination).toLowerCase();
+                if (partsDestLc && partsDestLc !== originLc) {
+                  destination = cleanPlace(parts.destination);
+                  break;
+                }
+              }
+            }
+          }
+        }
+
         const historyDateRange = extractDateRangeString(userHistory);
         let travelStartDate = historyDateRange ?? extracted.timeframe ?? dialog.timeframe ?? undefined;
         let travelMonth = travelStartDate
