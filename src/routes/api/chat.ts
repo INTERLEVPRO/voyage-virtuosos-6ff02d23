@@ -1733,6 +1733,7 @@ export const Route = createFileRoute("/api/chat")({
         if (!has.timeframe) missingFields.push("timeframe");
         if (!has.interests) missingFields.push("interests");
 
+        console.log("DEBUG_MISSING", JSON.stringify({ missingFields, askedFields: [...askedFields], answeredInDialog: [...answeredInDialog], answeredInUserMessages: [...answeredInUserMessages], dialogPreview, extractedOrigin: extracted.originCity, extractedInterests: extracted.interests }));
         // Concierge mode
         if (missingFields.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
