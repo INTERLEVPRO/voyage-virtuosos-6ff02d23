@@ -61,10 +61,10 @@ async function trackClick(packageId: string, provider: string, url: string) {
 
 function cleanPlaceQuery(place: string, destination: string): string {
   let cleaned = place.trim();
-  
+
   // Remove Day prefixes like "Tag 1:", "Tag 1 —", etc.
   cleaned = cleaned.replace(/^Tag\s+\d+\s*[-—:]\s*/i, "");
-  
+
   // Handle "Rückreise ab X" / "Ankunft in X" patterns first
   const arrivalMatch = cleaned.match(/^(?:Ankunft(?:\s+und\s+Orientierung)?\s+in\s+)(.+)$/i);
   if (arrivalMatch?.[1]) cleaned = arrivalMatch[1].trim();
@@ -107,22 +107,25 @@ function cleanPlaceQuery(place: string, destination: string): string {
 
   // Handle generic phrases that don't specify a place
   if (
-    /^(Ankunft\s+und\s+Orientierung|Abschluss\s+und\s+Rückreise|Freizeit\s+und\s+Erholung|Rückreise|Heimreise)$/i.test(cleaned)
+    /^(Ankunft\s+und\s+Orientierung|Abschluss\s+und\s+Rückreise|Freizeit\s+und\s+Erholung|Rückreise|Heimreise)$/i.test(
+      cleaned,
+    )
   ) {
     return destination;
   }
 
   // Strip German descriptive words that Google Maps cannot understand.
   // For compound titles like "Ella Zugfahrt & Nine Arch Bridge", split on "&" and clean each part.
-  const GERMAN_DESCRIPTORS = /\b(Strand|Felsenfestung|Zahntempel|Teeplantagen|Zugfahrt|Nationalpark|Safari|Altstadt|Kathedrale|Bergdörfer|Küstenstraße|Klippentempel|Reisterrassen|Tempel|Beach\s*Clubs?|Surfen|Cafés|Ausflug|Vulkan|Delfine|Wasserfälle|Erholung|Seafood|Ruinen|Strände|Inselhopping|Relaxen|Erlebnis|Markt|Quellen|Küche|Kultur|Inseln|Bibliothek)\b/gi;
+  const GERMAN_DESCRIPTORS =
+    /\b(Strand|Felsenfestung|Zahntempel|Teeplantagen|Zugfahrt|Nationalpark|Safari|Altstadt|Kathedrale|Bergdörfer|Küstenstraße|Klippentempel|Reisterrassen|Tempel|Beach\s*Clubs?|Surfen|Cafés|Ausflug|Vulkan|Delfine|Wasserfälle|Erholung|Seafood|Ruinen|Strände|Inselhopping|Relaxen|Erlebnis|Markt|Quellen|Küche|Kultur|Inseln|Bibliothek)\b/gi;
 
   // If title contains "&", try to pick the most map-friendly segment
   if (cleaned.includes("&")) {
     const segments = cleaned.split(/\s*&\s*/);
     // Pick the segment that looks most like a real place name (has a proper noun)
     const bestSegment = segments
-      .map(s => s.replace(GERMAN_DESCRIPTORS, "").trim())
-      .filter(s => s.length > 1)
+      .map((s) => s.replace(GERMAN_DESCRIPTORS, "").trim())
+      .filter((s) => s.length > 1)
       .sort((a, b) => b.length - a.length)[0];
     if (bestSegment) cleaned = bestSegment;
   } else {
@@ -130,22 +133,25 @@ function cleanPlaceQuery(place: string, destination: string): string {
   }
 
   // Clean up leftover punctuation and extra spaces
-  cleaned = cleaned.replace(/\s{2,}/g, " ").replace(/^[\s,·&-]+|[\s,·&-]+$/g, "").trim();
+  cleaned = cleaned
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[\s,·&-]+|[\s,·&-]+$/g, "")
+    .trim();
 
   // If cleaning left nothing, fall back to destination
   if (!cleaned) return destination;
 
   // Remove quotes
-  cleaned = cleaned.replace(/^["'„"](.*)[\"'""]$/, "$1").trim();
+  cleaned = cleaned.replace(/^["'„"](.*)["'”]$/, "$1").trim();
 
   // Deduplicate: If cleaned place is already part of destination, or vice versa
-  const destParts = destination.split(",").map(s => s.trim().toLowerCase());
+  const destParts = destination.split(",").map((s) => s.trim().toLowerCase());
   const cleanLower = cleaned.toLowerCase();
-  
+
   if (destParts.includes(cleanLower) || destination.toLowerCase().includes(cleanLower)) {
     return destination;
   }
-  
+
   return `${cleaned}, ${destination}`;
 }
 
@@ -158,8 +164,19 @@ function mapsRouteUrl(destination: string, place?: string, origin?: string) {
 }
 
 function buildWholeItineraryRouteUrl(pkg: TravelPackage): string {
-  let places = pkg.itinerary.map((d) => cleanPlaceQuery(d.title, pkg.destination));
-  
+  const destinationCountry = pkg.destination;
+  const expandTitle = (title: string): string[] => {
+    const cleaned = title
+      .replace(/^(?:Ankunft|Abreise|Rückreise|Heimreise|Abschluss)\s+(?:in|aus|ab)\s+/i, "")
+      .trim();
+    const parts = cleaned
+      .split(/\s+(?:und|&)\s+/i)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return parts.map((part) => cleanPlaceQuery(part, destinationCountry));
+  };
+  let places = pkg.itinerary.flatMap((d) => expandTitle(d.title));
+
   // Clean consecutive duplicate places
   const uniquePlaces: string[] = [];
   for (const p of places) {
@@ -167,25 +184,26 @@ function buildWholeItineraryRouteUrl(pkg: TravelPackage): string {
       uniquePlaces.push(p);
     }
   }
-  
+
   places = uniquePlaces;
 
   if (places.length === 0) {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pkg.destination)}&travelmode=driving`;
   }
-  
+
   if (places.length === 1) {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(places[0])}&travelmode=driving`;
   }
-  
+
   const origin = encodeURIComponent(places[0]);
   const destination = encodeURIComponent(places[places.length - 1]);
-  
+
   const intermediate = places.slice(1, -1);
-  const waypointsParam = intermediate.length > 0
-    ? `&waypoints=${intermediate.map(p => encodeURIComponent(p)).join("%7C")}`
-    : "";
-    
+  const waypointsParam =
+    intermediate.length > 0
+      ? `&waypoints=${intermediate.map((p) => encodeURIComponent(p)).join("%7C")}`
+      : "";
+
   return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointsParam}&travelmode=driving`;
 }
 
@@ -252,7 +270,10 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
     lines.push(d.description);
     const w = weatherByDay.get(d.day);
     if (w) {
-      const src = w.weather.source === "seasonal" ? "Saisonale Schätzung, keine exakte Vorhersage" : w.weather.label;
+      const src =
+        w.weather.source === "seasonal"
+          ? "Saisonale Schätzung, keine exakte Vorhersage"
+          : w.weather.label;
       lines.push(
         `Wetter: ca. ${w.weather.temperatureMin}–${w.weather.temperatureMax}°C, ${w.weather.condition}, Regen ${w.weather.rainChance}%. Quelle: ${src}.`,
       );
@@ -288,7 +309,11 @@ function transferUrl(pkg: TravelPackage) {
 const TIER_BADGE: Record<TravelPackage["type"], { label: string; cls: string; image: string }> = {
   basic: { label: "BASIC PAKET", cls: "bg-tier-basic-soft text-tier-basic", image: beachImg },
   medium: { label: "MEDIUM PAKET", cls: "bg-tier-medium-soft text-tier-medium", image: townImg },
-  premium: { label: "PREMIUM PAKET", cls: "bg-tier-premium-soft text-tier-premium", image: resortImg },
+  premium: {
+    label: "PREMIUM PAKET",
+    cls: "bg-tier-premium-soft text-tier-premium",
+    image: resortImg,
+  },
 };
 
 const DAY_ICONS = [Plane, Waves, Building2, Camera, Sun, Palmtree, Compass, Utensils];
@@ -354,7 +379,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     startDate: currentPkg.travelStartDate,
     durationDays: currentPkg.durationDays,
   });
-  const displayHotelName = currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
+  const displayHotelName =
+    currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
   const hotelUrl = buildKlookSearchUrl({
     destination: dest,
     hotel: displayHotelName,
@@ -440,11 +466,17 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     <section className="mx-auto max-w-5xl px-4 pb-28 pt-4 sm:px-6 sm:py-10 sm:pb-10">
       {/* Back + tier */}
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={onBack} className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80">
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Zurück zu den Paketen</span>
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80"
+        >
+          <ArrowLeft className="h-4 w-4" />{" "}
+          <span className="hidden sm:inline">Zurück zu den Paketen</span>
           <span className="sm:hidden">Zurück</span>
         </button>
-        <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}>
+        <span
+          className={`rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider sm:text-xs ${tier.cls}`}
+        >
           {tier.label}
         </span>
       </div>
@@ -491,9 +523,14 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       {/* Meta strip */}
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span>📅 {currentPkg.duration}</span>
-        <span>👥 {currentPkg.travelers ?? 2} {(currentPkg.travelers ?? 2) === 1 ? "Person" : "Personen"}</span>
+        <span>
+          👥 {currentPkg.travelers ?? 2} {(currentPkg.travelers ?? 2) === 1 ? "Person" : "Personen"}
+        </span>
         {currentPkg.origin && (
-          <span>✈️ Ab {currentPkg.origin}{lookupOriginIata(currentPkg.origin) ? ` (${lookupOriginIata(currentPkg.origin)})` : ""}</span>
+          <span>
+            ✈️ Ab {currentPkg.origin}
+            {lookupOriginIata(currentPkg.origin) ? ` (${lookupOriginIata(currentPkg.origin)})` : ""}
+          </span>
         )}
         <span className="ml-auto font-semibold text-foreground">
           Gesamtpreis: € {currentPkg.price.toLocaleString("de-DE")}
@@ -519,7 +556,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       </div>
 
       {/* Hero image collage — images are tied to itinerary places */}
-      <div className={cn("mt-5 overflow-hidden rounded-2xl shadow-card grid grid-cols-2 grid-rows-2 sm:grid-cols-4 sm:grid-rows-1 gap-0.5", activeTab !== "overview" && "max-sm:hidden")}>
+      <div
+        className={cn(
+          "mt-5 overflow-hidden rounded-2xl shadow-card grid grid-cols-2 grid-rows-2 sm:grid-cols-4 sm:grid-rows-1 gap-0.5",
+          activeTab !== "overview" && "max-sm:hidden",
+        )}
+      >
         <PlaceImage
           fallbackSrc={tier.image}
           queryCandidates={collageQueries[0]}
@@ -554,7 +596,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
         />
       </div>
 
-
       {/* Itinerary overview strip */}
       <div
         className={cn(
@@ -572,7 +613,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="mt-2 text-xs font-semibold text-foreground">Tag {d.day}</div>
-                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">{d.title}</div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
+                  {d.title}
+                </div>
               </div>
             );
           })}
@@ -580,7 +623,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       </div>
 
       {/* Provider rows: Flight / Hotel / Activities */}
-      <div id="pkg-tab-book" className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}>
+      <div
+        id="pkg-tab-book"
+        className={cn("mt-5 space-y-3", activeTab !== "book" && "max-sm:hidden")}
+      >
         <ProviderRow
           icon={Plane}
           title="Flüge"
@@ -624,7 +670,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
           ratingLabel="Klook"
-          price={Math.round(currentPkg.price * 0.18)}
+          price={Math.round(currentPkg.price * 0.13)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
           url={activitiesUrl}
@@ -642,7 +688,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
       >
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
-          <div className="text-2xl font-extrabold text-foreground">€ {currentPkg.price.toLocaleString("de-DE")}</div>
+          <div className="text-2xl font-extrabold text-foreground">
+            € {currentPkg.price.toLocaleString("de-DE")}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -728,10 +776,12 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           activeTab !== "days" && "max-sm:hidden",
         )}
       >
-        <h2 className="text-lg font-semibold text-foreground">Tag für Tag — mit Karte & Buchungs-Hilfe</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Tag für Tag — mit Karte & Buchungs-Hilfe
+        </h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir haben sie für dich
-          vorbereitet.
+          Klicke auf eine Aktivität, um die Route zu sehen, oder nutze die Buchungs-Links — wir
+          haben sie für dich vorbereitet.
         </p>
         <ol className="mt-4 space-y-5">
           {currentPkg.itinerary.map((d) => (
@@ -834,7 +884,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
             <div>
               <h2 className="text-lg font-semibold text-foreground">Verifizierte Bewertungen</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Bewertungen direkt von den verlinkten Quellen. Klicke auf eine Quelle, um die Original-Reviews zu lesen.
+                Bewertungen direkt von den verlinkten Quellen. Klicke auf eine Quelle, um die
+                Original-Reviews zu lesen.
               </p>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm font-bold text-amber-600">
@@ -881,20 +932,32 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           activeTab !== "overview" && "max-sm:hidden",
         )}
       >
-        <TrustItem icon={Star} title="Verifizierte Quellen" body="Bewertungen direkt von den Anbietern" />
+        <TrustItem
+          icon={Star}
+          title="Verifizierte Quellen"
+          body="Bewertungen direkt von den Anbietern"
+        />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
         <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
       </div>
 
-      <p className={cn("mt-4 text-center text-xs text-muted-foreground", activeTab !== "overview" && "max-sm:hidden")}>
-        Preise und Verfügbarkeiten werden bei den jeweiligen Partnern in Echtzeit geprüft. Bewertungen werden nur angezeigt, wenn die Originalquelle verlinkt ist.
+      <p
+        className={cn(
+          "mt-4 text-center text-xs text-muted-foreground",
+          activeTab !== "overview" && "max-sm:hidden",
+        )}
+      >
+        Preise und Verfügbarkeiten werden bei den jeweiligen Partnern in Echtzeit geprüft.
+        Bewertungen werden nur angezeigt, wenn die Originalquelle verlinkt ist.
       </p>
 
       {/* Mobile sticky bottom action bar — app-like CTA */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 shadow-luxe backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gesamtpreis</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Gesamtpreis
+            </div>
             <div className="truncate text-lg font-extrabold text-foreground">
               € {currentPkg.price.toLocaleString("de-DE")}
             </div>
@@ -909,7 +972,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           >
             <ShoppingBag className="h-5 w-5" /> Jetzt buchen
           </button>
-
         </div>
       </div>
     </section>
@@ -956,12 +1018,19 @@ function ProviderRow({
             <h3 className="text-base font-semibold text-foreground">{title}</h3>
             <span className="text-xs text-muted-foreground">
               {ratingLabel}
-              {rating ? <> <span className="font-semibold text-foreground">{rating}</span></> : null}
+              {rating ? (
+                <>
+                  {" "}
+                  <span className="font-semibold text-foreground">{rating}</span>
+                </>
+              ) : null}
             </span>
           </div>
           <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">{subtitle}</p>
           {isHotelSuggestion && (
-            <p className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">Hotelvorschlag · Verfügbarkeit bei Klook prüfen</p>
+            <p className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+              Hotelvorschlag · Verfügbarkeit bei Klook prüfen
+            </p>
           )}
           {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
         </div>
@@ -986,7 +1055,15 @@ function ProviderRow({
   );
 }
 
-function TrustItem({ icon: Icon, title, body }: { icon: typeof Star; title: string; body: string }) {
+function TrustItem({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Star;
+  title: string;
+  body: string;
+}) {
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -1042,7 +1119,12 @@ function ReviewCard({
       </p>
       <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
         {linkUrl ? (
-          <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+          <a
+            href={linkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+          >
             <MessageSquare className="h-3 w-3" /> {source}
             <ExternalLink className="h-3 w-3 ml-0.5" />
           </a>
