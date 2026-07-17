@@ -326,6 +326,8 @@ function isoDatesFromStartOrMonth(
   month?: string,
   durationDays = 7,
 ): [string, string] | null {
+  const explicitRange = parseExplicitDateRange(startDate);
+  if (explicitRange) return [isoDate(explicitRange[0]), isoDate(explicitRange[1])];
   const parsed = parseStartDate(startDate);
   if (parsed) {
     const ret = new Date(parsed);
@@ -333,6 +335,21 @@ function isoDatesFromStartOrMonth(
     return [isoDate(parsed), isoDate(ret)];
   }
   return isoDatesFromMonth(month, durationDays);
+}
+
+function parseExplicitDateRange(input?: string): [Date, Date] | null {
+  if (!input) return null;
+  const tokens = input.match(
+    /\d{1,2}\.\s*[a-zäöüß]+(?:\s+\d{4})?|\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{1,2}-\d{1,2}/gi,
+  );
+  if (!tokens || tokens.length < 2) return null;
+  const departure = parseStartDate(tokens[0]);
+  let returnToken = tokens[1];
+  const firstYear = tokens[0].match(/\b(\d{4})\b/)?.[1];
+  if (firstYear && !/\b\d{4}\b/.test(returnToken)) returnToken += ` ${firstYear}`;
+  const returning = parseStartDate(returnToken);
+  if (!departure || !returning || returning < departure) return null;
+  return [departure, returning];
 }
 
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
@@ -422,13 +439,14 @@ export function buildAviasalesSearchUrl(opts: {
   const duration = Math.max(1, opts.durationDays ?? 7);
 
   const dep = departureDateFromOpts(opts.startDate, opts.month);
+  const explicitRange = parseExplicitDateRange(opts.startDate);
 
   let finalUrl = AVIASALES_AFFILIATE_URL;
 
   if (originIata && destIata && dep) {
     // Strategy 1: Path-based compact search URL — auto-runs the query.
-    const ret = new Date(dep);
-    ret.setDate(ret.getDate() + duration);
+    const ret = explicitRange?.[1] ?? new Date(dep);
+    if (!explicitRange) ret.setDate(ret.getDate() + duration);
     const code = `${originIata}${ddmm(dep)}${destIata}${ddmm(ret)}${adults}`;
     const params = new URLSearchParams({
       marker: AFFILIATE_MARKER,
@@ -437,8 +455,8 @@ export function buildAviasalesSearchUrl(opts: {
     finalUrl = `https://www.aviasales.com/search/${code}?${params.toString()}`;
   } else if (destIata && dep) {
     // Strategy 2: Query-param search — pre-fills the form even without origin.
-    const ret = new Date(dep);
-    ret.setDate(ret.getDate() + duration);
+    const ret = explicitRange?.[1] ?? new Date(dep);
+    if (!explicitRange) ret.setDate(ret.getDate() + duration);
     const params = new URLSearchParams({
       marker: AFFILIATE_MARKER,
       currency: "eur",
