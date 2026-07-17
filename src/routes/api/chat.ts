@@ -227,7 +227,17 @@ function extractDateRangeString(text: string): string | null {
   const textPattern =
     /\b\d{1,2}\.\s*(?:januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)\b[^.\n]*?\s*(?:–|—|-|bis(?:\s+zum)?|to|until)\s*\d{1,2}\.\s*(?:januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)\b[^,\n]*/i;
   const match1 = text.match(textPattern);
-  if (match1) return match1[0].trim();
+  if (match1) {
+    const value = match1[0].trim();
+    const dateToken =
+      /\b\d{1,2}\.\s*(?:januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)(?:\s+\d{4})?/gi;
+    const dates = Array.from(value.matchAll(dateToken));
+    const lastDate = dates.at(-1);
+    if (lastDate?.index !== undefined) {
+      return value.slice(0, lastDate.index + lastDate[0].length).trim();
+    }
+    return value;
+  }
 
   // 2. Numeric date ranges: "DD.MM.YYYY bis DD.MM.YYYY"
   const numericPattern =
@@ -1465,11 +1475,17 @@ function extractInterests(history: string): string[] {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i];
     if (isGenerationCommand(line)) continue;
-    // Skip lines that are pure route text — they're not interests.
-    if (extractRouteParts(line) || /^[a-zäöüß\s]+\s+(to|nach|bis|→|->)\s+[a-zäöüß\s]+$/i.test(line))
-      continue;
-    // Try to extract raw interest clauses from user message first.
-    // Look for specific pattern phrases the user writes.
+    // Skip only messages that consist solely of a route. A complete request can
+    // contain both a route and explicit interests in the same sentence.
+    if (/^[a-zäöüß\s]+\s+(to|nach|bis|→|->)\s+[a-zäöüß\s]+$/i.test(line)) continue;
+    // Known interests take precedence. Generic verbs such as "möchte" often
+    // begin the whole travel request rather than an interest clause.
+    const matched = Array.from(
+      new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)),
+    );
+    if (matched.length > 0) return matched;
+
+    // Fall back to a free-form interest clause only if no known interests match.
     const interestClause = line.match(
       /\b(?:möchte|suche|wichtig|interessiert?|erleben|besichtigen|anschauen|besuchen)\b([^.;!?\n]{3,60})/i,
     );
@@ -1477,10 +1493,6 @@ function extractInterests(history: string): string[] {
       const raw = interestClause[1].trim().replace(/^[,:\s]+/, "");
       if (raw.length > 2) return [raw];
     }
-    const matched = Array.from(
-      new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)),
-    );
-    if (matched.length > 0) return matched;
   }
   return [];
 }
