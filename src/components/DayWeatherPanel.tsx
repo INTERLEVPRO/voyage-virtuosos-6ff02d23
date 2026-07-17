@@ -41,7 +41,13 @@ export function useItineraryWeather(
   });
 }
 
-function ConditionIcon({ condition, className = "h-5 w-5" }: { condition: string; className?: string }) {
+function ConditionIcon({
+  condition,
+  className = "h-5 w-5",
+}: {
+  condition: string;
+  className?: string;
+}) {
   if (/Schnee/.test(condition)) return <CloudSnow className={className} />;
   if (/Regen|Niesel|Gewitter/.test(condition)) return <CloudRain className={className} />;
   if (/Klar|Sonnig/i.test(condition)) return <Sun className={className} />;
@@ -52,7 +58,11 @@ function ConditionIcon({ condition, className = "h-5 w-5" }: { condition: string
 
 function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "short" });
+    return new Date(iso).toLocaleDateString("de-DE", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    });
   } catch {
     return iso;
   }
@@ -103,7 +113,7 @@ export function DayWeatherToggle({
         onClick={onRefresh}
         className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-primary/40"
       >
-        <RefreshCw className="h-3 w-3" /> Wetter erneut laden
+        <RefreshCw className="h-3 w-3" /> Wetter aktuell nicht verfügbar
       </button>
     );
   }
@@ -172,9 +182,17 @@ export function DayWeatherToggle({
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat icon={Thermometer} label="Temp." value={`${w.temperatureMin}° – ${w.temperatureMax}°C`} />
+            <Stat
+              icon={Thermometer}
+              label="Temp."
+              value={`${w.temperatureMin}° – ${w.temperatureMax}°C`}
+            />
             <Stat icon={Droplets} label="Regen" value={`${w.rainChance}%`} />
-            <Stat icon={Wind} label="Wind" value={w.windSpeed != null ? `${w.windSpeed} km/h` : "–"} />
+            <Stat
+              icon={Wind}
+              label="Wind"
+              value={w.windSpeed != null ? `${w.windSpeed} km/h` : "–"}
+            />
             <Stat icon={Sparkles} label="Quelle" value={isEstimate ? "Saisonal" : "Live"} />
           </div>
 
@@ -198,15 +216,23 @@ export function DayWeatherToggle({
               isEstimate ? "bg-amber-50 text-amber-900" : "bg-sky-50 text-sky-900"
             }`}
           >
-            {isEstimate ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <Info className="mt-0.5 h-4 w-4 shrink-0" />}
+            {isEstimate ? (
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : (
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
             <div>
               <div className="font-semibold">
-                {isEstimate ? "Saisonale Schätzung für diesen Reisetag" : "Live-Vorhersage für diesen Reisetag"}
+                {isEstimate
+                  ? "Saisonale Schätzung für diesen Reisetag"
+                  : "Live-Vorhersage für diesen Reisetag"}
               </div>
               <div>{w.disclaimer}</div>
               <div className="mt-1 text-[11px] opacity-80">
                 Quelle: {w.reference}
-                {!isEstimate && generatedAt ? ` · Zuletzt aktualisiert: ${formatTime(generatedAt)}` : ""}
+                {!isEstimate && generatedAt
+                  ? ` · Zuletzt aktualisiert: ${formatTime(generatedAt)}`
+                  : ""}
                 {isEstimate ? " · Hinweis: keine exakte Vorhersage" : ""}
               </div>
             </div>
@@ -219,7 +245,8 @@ export function DayWeatherToggle({
               disabled={isRefreshing}
               className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40 disabled:opacity-50"
             >
-              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} /> Aktualisieren
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />{" "}
+              Aktualisieren
             </button>
           </div>
         </div>
@@ -228,15 +255,7 @@ export function DayWeatherToggle({
   );
 }
 
-function Stat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Wind;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon: Icon, label, value }: { icon: typeof Wind; label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-background p-2.5">
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
