@@ -320,6 +320,10 @@ function getPlanningSignals(text: string, history: string) {
     /(münchen|muenchen|berlin|hamburg|frankfurt|köln|koeln|stuttgart|düsseldorf|duesseldorf|wien|zürich|zuerich|basel|genf|geneva|hannover|nürnberg|nuernberg|leipzig|dresden|bremen|dortmund|salzburg|innsbruck|graz|linz|bern)/i;
   const hasOrigin =
     hasLabeledOrigin ||
+    (() => {
+      const explicit = extractOrigin(combined);
+      return Boolean(explicit && !isCountryOnly(explicit));
+    })() ||
     /\b(india|indien|indya)\s*(?:→|->|to|bis|nach)\s*(sri\s*lanka|srilanka)\b/i.test(combined) ||
     new RegExp(
       `\\b(abflug|abflughafen|abflugort|flughafen|start(?:en)?\\s+in)\\s+[a-zäöüß]{3,}`,
@@ -347,7 +351,7 @@ function getPlanningSignals(text: string, history: string) {
     ) ||
     /\b(flexibel|egal)\b/i.test(all);
   const hasInterests =
-    /\b(strand|kultur|wellness|essen|kulinarik|natur|abenteuer|aktivität|aktivitaet|shopping|kunst|museum|museen|ruhe|entspannung|wandern|safari|nightlife|nachtleben|familie|honeymoon|flitterwochen)\b/i.test(
+    /\b(strand|strände|straende|kultur|wellness|essen|kulinarik|natur|abenteuer|aktivität|aktivitaet|shopping|kunst|museum|museen|ruhe|entspannung|wandern|safari|nightlife|nachtleben|familie|honeymoon|flitterwochen|sehenswürdigkeiten|sehenswuerdigkeiten|touristisch)\b/i.test(
       all,
     );
 
@@ -798,6 +802,20 @@ function normalizePlaceName(value: string): string {
     .join(" ");
 }
 
+function dedupePlaceParts(value: string): string {
+  const seen = new Set<string>();
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => {
+      const key = part.toLowerCase();
+      if (!part || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(", ");
+}
+
 /**
  * Detect "country city" or "city country" patterns.
  * e.g. "srilanka jaffna" → "Jaffna, Sri Lanka"
@@ -812,7 +830,7 @@ function parseCountryCity(value: string): string | null {
     const countryKey = words.slice(0, cnt).join(" ").toLowerCase();
     const cityPart = words.slice(cnt).join(" ");
     if (COUNTRY_ALIASES[countryKey] && cityPart) {
-      return `${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`;
+      return dedupePlaceParts(`${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`);
     }
   }
   // Try: last N words = country alias, preceding = city
@@ -823,7 +841,7 @@ function parseCountryCity(value: string): string | null {
       .toLowerCase();
     const cityPart = words.slice(0, words.length - cnt).join(" ");
     if (COUNTRY_ALIASES[countryKey] && cityPart) {
-      return `${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`;
+      return dedupePlaceParts(`${normalizePlaceName(cityPart)}, ${COUNTRY_ALIASES[countryKey]}`);
     }
   }
   return null;
@@ -980,9 +998,7 @@ function isConfirmPackageReply(text: string): boolean {
     /\b(ja.*paket|pakete.*erstellen|package.*create|pakeg.*create|create.*pakeg|mach.*pakete|passt.*pakete)\b/i.test(
       t,
     ) ||
-    /\b(pro\s+person|p\.?\s*p\.?|per\s+person|je\s+person|pro\s+kopf|insgesamt|total|für alle|for all|für\s+\d|for\s+\d|to\s+\d)\b/i.test(
-      t,
-    )
+    false
   );
 }
 
@@ -996,6 +1012,10 @@ function buildTripConfirmationReply(params: {
   timeframe: string;
   interests: string[];
 }) {
+  const exactRangeDays = parseDateRangeDays(params.timeframe);
+  const durationLabel = exactRangeDays
+    ? `${params.durationDays} Tage / ${Math.max(1, params.durationDays - 1)} Nächte`
+    : `${params.durationDays} Tage`;
   const budgetLabel =
     params.budgetType === "perPerson"
       ? `${params.budget.toLocaleString("de-DE")} € pro Person`
@@ -1009,7 +1029,7 @@ function buildTripConfirmationReply(params: {
     "",
     `- **Reiseziel:** ${params.destination}`,
     `- **Budget:** ${budgetLabel}`,
-    `- **Reisedauer:** ${params.durationDays} Tage`,
+    `- **Reisedauer:** ${durationLabel}`,
     `- **Personen:** ${params.travelers}`,
     `- **Abflug:** ${params.origin}`,
     `- **Reisezeit:** ${params.timeframe}`,
@@ -1343,7 +1363,7 @@ function extractOrigin(history: string): string | undefined {
       /\b(?:abflug|abflughafen|abflugort|origin|departure|von|ab)\s*:\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i,
     );
     const direct = line.match(
-      /\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i,
+      /\b(?:ab|von|abflug(?:ort|hafen)?|start(?:en)?\s+in|flughafen)\s+(?:ist\s+)?([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß\- ]{2,30})/i,
     );
     const value = labeled?.[1] ?? direct?.[1];
     if (value) {
@@ -1450,26 +1470,18 @@ function extractInterests(history: string): string[] {
     .split(/\n+/)
     .map((line) => line.toLowerCase().trim())
     .filter(Boolean);
-  const pool = [
-    ["strand", "Strand"],
-    ["kultur", "Kultur"],
-    ["kultu", "Kultur"],
-    ["wellness", "Wellness"],
-    ["wellnes", "Wellness"],
-    ["essen", "Kulinarik"],
-    ["kulinarik", "Kulinarik"],
-    ["natur", "Natur"],
-    ["entspannung", "Entspannung"],
-    ["abenteuer", "Abenteuer"],
-    ["shopping", "Shopping"],
-    ["einkauf", "Shopping"],
-    ["kunst", "Kunst & Museen"],
-    ["museum", "Kunst & Museen"],
-    ["museen", "Kunst & Museen"],
-    ["tempel", "Tempel"],
-    ["sehenswürdig", "Sehenswürdigkeiten"],
-    ["sehenswuerdig", "Sehenswürdigkeiten"],
-    ["touristisch", "Sehenswürdigkeiten"],
+  const pool: Array<[RegExp, string]> = [
+    [/\b(?:strand|strände|straende)\b/i, "Strand"],
+    [/\bkultur\b/i, "Kultur"],
+    [/\bwellness\b/i, "Wellness"],
+    [/\b(?:essen|kulinarik)\b/i, "Kulinarik"],
+    [/\bnatur\b/i, "Natur"],
+    [/\bentspannung\b/i, "Entspannung"],
+    [/\babenteuer\b/i, "Abenteuer"],
+    [/\bshopping\b|\beinkauf/i, "Shopping"],
+    [/\bkunst\b|\bmuseum\b|\bmuseen\b/i, "Kunst & Museen"],
+    [/\btempel\b/i, "Tempel"],
+    [/\bsehenswürdig|\bsehenswuerdig|\btouristisch/i, "Sehenswürdigkeiten"],
   ] as const;
 
   for (let i = lines.length - 1; i >= 0; i -= 1) {
@@ -1481,7 +1493,7 @@ function extractInterests(history: string): string[] {
     // Known interests take precedence. Generic verbs such as "möchte" often
     // begin the whole travel request rather than an interest clause.
     const matched = Array.from(
-      new Set(pool.filter(([key]) => line.includes(key)).map(([, label]) => label)),
+      new Set(pool.filter(([pattern]) => pattern.test(line)).map(([, label]) => label)),
     );
     if (matched.length > 0) return matched;
 
@@ -1587,7 +1599,20 @@ function buildDeterministicItinerary(destination: string, days: number, interest
   const destLower = destination.toLowerCase();
   let places: string[] = [];
 
-  if (destLower.includes("sri lanka")) {
+  if (destLower.includes("jaffna")) {
+    places = [
+      "Jaffna Fort",
+      "Nallur Kandaswamy Tempel",
+      "Casuarina Beach",
+      "Nagadeepa Insel",
+      "Keerimalai Quellen",
+      "Delft Island",
+      "Point Pedro",
+      "Dambakola Patuna",
+      "Jaffna Markt",
+      "Jaffna Bibliothek",
+    ];
+  } else if (destLower.includes("sri lanka")) {
     places = [
       "Colombo",
       "Negombo Strand",
@@ -1645,19 +1670,6 @@ function buildDeterministicItinerary(destination: string, days: number, interest
       "Koh Samui Relaxen",
       "Koh Phangan",
       "Similan Islands",
-    ];
-  } else if (destLower.includes("jaffna")) {
-    places = [
-      "Jaffna Fort & Bibliothek",
-      "Nallur Kandaswamy Tempel",
-      "Casuarina Beach & Inseln",
-      "Delft Island",
-      "Point Pedro",
-      "Keerimalai Quellen",
-      "Dambakola Patuna",
-      "Nainativu Tempel",
-      "Jaffna Markt",
-      "Lokale Kultur & Küche",
     ];
   }
 
@@ -1824,9 +1836,10 @@ export function parseHotelDetails(
   if (/^[-•\s]+/.test(hotelName)) {
     hotelName = hotelName.replace(/^[-•\s]+/, "");
   }
-  // Remove any concatenated destination from the hotel name itself
+  // Keep legitimate destination words in real hotel names (e.g. "Jaffna
+  // Heritage Hotel"). Only remove a trailing "in <destination>" suffix.
   hotelName =
-    hotelName.replace(new RegExp(`${cleanDest}.*`, "i"), "").trim() ||
+    hotelName.replace(new RegExp(`\\s+in\\s+${cleanDest}$`, "i"), "").trim() ||
     `Hotelvorschlag in ${cleanDest}`;
 
   let rating = tier === "basic" ? "8.2/10" : tier === "medium" ? "8.7/10" : "9.3/10";
@@ -2269,7 +2282,10 @@ export const Route = createFileRoute("/api/chat")({
         // Concierge mode
         if (missingFields.length > 0) {
           const userMessageCount = uiMessages.filter((m) => m.role === "user").length;
-          let reply = buildConciergeReply(missingFields, userMessageCount);
+          const explicitOrigin = extractOrigin(userHistory);
+          let reply = buildConciergeReply(missingFields, userMessageCount, {
+            originCountry: explicitOrigin && isCountryOnly(explicitOrigin) ? explicitOrigin : null,
+          });
           if (
             missingFields.includes("budget") &&
             (mentionedBudget(userHistory) ||
@@ -2303,6 +2319,7 @@ export const Route = createFileRoute("/api/chat")({
             : historyDestination !== "deinem Reiseziel"
               ? cleanPlace(historyDestination)
               : historyDestination;
+        destination = dedupePlaceParts(destination);
 
         let budget =
           extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR
@@ -2342,6 +2359,7 @@ export const Route = createFileRoute("/api/chat")({
           : extracted.originCity
             ? cleanPlace(extracted.originCity)
             : extractOrigin(userHistory);
+        if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
         let travelers =
           extracted.travelers ??
           (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null) ??
@@ -2371,6 +2389,8 @@ export const Route = createFileRoute("/api/chat")({
             }
           }
         }
+
+        destination = dedupePlaceParts(destination);
 
         const historyDateRange = extractDateRangeString(userHistory);
         const explicitTimeframe = extractTravelMonth(userHistory);
@@ -2468,6 +2488,9 @@ export const Route = createFileRoute("/api/chat")({
             }
           }
         }
+
+        destination = dedupePlaceParts(destination);
+        if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
 
         // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
         const validationMissing: MissingField[] = [];
@@ -2590,6 +2613,16 @@ export const Route = createFileRoute("/api/chat")({
           }
         }
 
+        // Jaffna must always use the dedicated local itinerary. Generic Sri
+        // Lanka model output (Colombo/Sigiriya/Kandy) is not valid for this plan.
+        if (destination.toLowerCase().includes("jaffna")) {
+          itineraryTemplate = buildDeterministicItinerary(
+            destination,
+            requestedDurationDays,
+            interests,
+          );
+        }
+
         const researchData = researchText
           ? parseResearchData(researchText)
           : buildFallbackResearchData(destination);
@@ -2615,11 +2648,21 @@ export const Route = createFileRoute("/api/chat")({
         while (trimmed.length < 3 && trimmed.length > 0) {
           trimmed.push(trimmed[trimmed.length - 1]);
         }
-        const normalized = trimmed.map((p, i) => ({
-          ...p,
-          type: TIER_ORDER[i],
-          currency: p.currency ?? "EUR",
-        }));
+        const normalized = trimmed.map((p, i) => {
+          const tier = TIER_ORDER[i];
+          const isJaffna = destination.toLowerCase().includes("jaffna");
+          const jaffnaFlights = [
+            "Flug Chennai (MAA) → Colombo (CMB) · Economy + Transfer nach Jaffna",
+            "Flug Chennai (MAA) → Colombo (CMB) · Komforttarif + Transfer nach Jaffna",
+            "Premium-Flug Chennai (MAA) → Colombo (CMB) + privater Transfer nach Jaffna",
+          ];
+          return {
+            ...p,
+            type: tier,
+            currency: p.currency ?? "EUR",
+            flight: isJaffna ? jaffnaFlights[i] : p.flight,
+          };
+        });
 
         const [{ supabaseAdmin }, { fetchPackageRatings }] = await Promise.all([
           import("@/integrations/supabase/client.server"),
