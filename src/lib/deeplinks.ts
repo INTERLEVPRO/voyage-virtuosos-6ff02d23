@@ -622,5 +622,16 @@ export function buildTransferUrl(opts?: {
   month?: string;
   durationDays?: number;
 }): string {
-  return "https://kiwitaxi.tpm.li/RgYDJiUT";
+  if (!opts) return "/transfer";
+  const params = new URLSearchParams();
+  const from = cleanDestination(opts.origin);
+  const to = cleanDestination(opts.destination);
+  const pickup = parseStartDate(opts.startDate);
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  if (to.includes(",")) params.set("country", to.split(",").at(-1)?.trim() ?? "");
+  if (opts.travelers) params.set("pax", String(Math.max(1, Math.round(opts.travelers))));
+  if (pickup) params.set("date", isoDate(pickup));
+  const query = params.toString();
+  return query ? `/transfer?${query}` : "/transfer";
 }
