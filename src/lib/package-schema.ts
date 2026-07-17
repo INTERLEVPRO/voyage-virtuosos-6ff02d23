@@ -30,6 +30,7 @@ export const packageSchema = z.object({
   reviews: z.number().int().min(0),
   matchScore: z.number().min(0).max(100),
   duration: z.string(),
+  durationDays: z.number().int().positive().optional(),
   hotel: z.string(),
   hotelName: z.string().optional(),
   flight: z.string(),
@@ -40,6 +41,10 @@ export const packageSchema = z.object({
   activities: z.array(z.string()).min(1),
   itinerary: z.array(itineraryDaySchema).min(1),
   ratings: z.array(packageRatingSchema).optional(),
+  origin: z.string().optional(),
+  travelers: z.number().int().positive().optional(),
+  travelMonth: z.string().optional(),
+  travelStartDate: z.string().optional(),
 });
 
 export type ParsedPackage = z.infer<typeof packageSchema>;
