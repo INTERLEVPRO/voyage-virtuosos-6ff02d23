@@ -73,10 +73,7 @@ export const Route = createFileRoute("/api/refine-package")({
 
         const parsed = requestSchema.safeParse(body);
         if (!parsed.success) {
-          return Response.json(
-            { status: "error", message: "Ungültige Anfrage." },
-            { status: 400 },
-          );
+          return Response.json({ status: "error", message: "Ungültige Anfrage." }, { status: 400 });
         }
         const { selectedPackage, changeRequest, userConfirmedBudget, tripBrief } = parsed.data;
 
@@ -150,6 +147,12 @@ export const Route = createFileRoute("/api/refine-package")({
           ...proposed,
           type: selectedPackage.type ?? proposed.type,
           currency: proposed.currency ?? selectedPackage.currency ?? "EUR",
+          requestedBudget: selectedPackage.requestedBudget,
+          durationDays: selectedPackage.durationDays,
+          origin: selectedPackage.origin,
+          travelers: selectedPackage.travelers,
+          travelMonth: selectedPackage.travelMonth,
+          travelStartDate: selectedPackage.travelStartDate,
           bookingLinks: placeholderLinks(proposed.destination),
         };
 
@@ -167,7 +170,7 @@ export const Route = createFileRoute("/api/refine-package")({
         }
 
         // Apply update — persist if we have a real DB id
-        let savedId: string | undefined = selectedPackage.id;
+        const savedId: string | undefined = selectedPackage.id;
         if (isUuid(selectedPackage.id)) {
           try {
             const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
