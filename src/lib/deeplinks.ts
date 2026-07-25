@@ -506,7 +506,10 @@ export function buildAviasalesSearchUrl(opts: {
 
 // ─── Klook (Hotels) ──────────────────────────────────────────────────────────
 
-/** Hotel deeplink — fully pre-filled Klook search URL with affiliate marker. */
+/** Tracked Aviasales Hotels affiliate link used by every hotel booking CTA. */
+export const AVIASALES_HOTELS_AFFILIATE_URL = "https://aviasales.tpm.li/o8SBry1n";
+
+/** Hotel deeplink — kept under the existing export name for backwards compatibility. */
 export function buildKlookHotelUrl(opts: {
   destination: string;
   hotel?: string;
@@ -518,7 +521,7 @@ export function buildKlookHotelUrl(opts: {
   return buildKlookSearchUrl(opts);
 }
 
-/** Direct Klook hotel search URL with pre-filled fields (incl. affiliate marker). */
+/** Hotel booking URL. The partner shortlink handles the final Aviasales Hotels redirect. */
 export function buildKlookSearchUrl(opts: {
   destination: string;
   hotel?: string;
@@ -527,45 +530,16 @@ export function buildKlookSearchUrl(opts: {
   startDate?: string;
   durationDays?: number;
 }): string {
-  const city = extractCityName(opts.destination);
-  if (!city) return KLOOK_ACTIVITIES_AFFILIATE_URL;
-
-  // Strip generic "Hotelvorschlag" fallback text — only use real hotel names as keywords
-  const isGenericHotel =
-    !opts.hotel || /vorschlag|mittelklasse|komforthotel|luxus-resort|gästehaus/i.test(opts.hotel);
-
-  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
-  const adults = Math.max(1, opts.travelers ?? 2);
-
-  // Build Klook Hotels deeplink with affiliate tracking
-  // URL: https://www.klook.com/hotels/?keyword=HOTEL_NAME&city=CITY&check_in=...&check_out=...&adult_num=N
-  const params = new URLSearchParams({
-    aff_pid: "728432",
-    aff_sid: "weltweit",
-    keyword: isGenericHotel ? city : opts.hotel!,
-    city: city,
-    adult_num: String(adults),
-    room_num: "1",
-  });
-
-  if (dates) {
-    params.set("check_in", dates[0]);
-    params.set("check_out", dates[1]);
-  }
-
-  const finalUrl = `https://www.klook.com/hotels/?${params.toString()}`;
-
-  console.log("deeplink context", {
-    provider: "klook_hotel",
-    destination: city,
+  console.log("Aviasales Hotels deeplink:", AVIASALES_HOTELS_AFFILIATE_URL, {
+    destination: opts.destination,
     hotel: opts.hotel,
-    keyword: isGenericHotel ? city : opts.hotel,
-    dates,
-    travelers: adults,
-    url: finalUrl,
+    travelers: opts.travelers,
+    month: opts.month,
+    startDate: opts.startDate,
+    durationDays: opts.durationDays,
   });
 
-  return finalUrl;
+  return AVIASALES_HOTELS_AFFILIATE_URL;
 }
 
 // ─── Klook (Activities) ──────────────────────────────────────────────────────
