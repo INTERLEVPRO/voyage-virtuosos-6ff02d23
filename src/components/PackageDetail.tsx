@@ -385,6 +385,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     destination: dest,
     hotel: displayHotelName,
     travelers: currentPkg.travelers,
+    rooms: Math.max(1, Math.ceil(currentPkg.travelers / 2)),
     month: currentPkg.travelMonth,
     startDate: currentPkg.travelStartDate,
     durationDays: currentPkg.durationDays,
