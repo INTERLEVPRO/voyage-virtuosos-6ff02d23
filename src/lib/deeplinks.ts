@@ -224,6 +224,24 @@ function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Resolve inputs such as "August", "August 2026" or "Ende August 2026". */
+function dateFromMonthDescription(input?: string): Date | null {
+  if (!input) return null;
+  const normalized = normalizeLookupKey(input);
+  const monthEntry = Object.entries(MONTHS).find(([name]) =>
+    new RegExp(`(^|\\s)${normalizeLookupKey(name)}(\\s|$)`).test(normalized),
+  );
+  if (!monthEntry) return null;
+
+  const now = new Date();
+  const month = monthEntry[1];
+  const explicitYear = normalized.match(/\b(20\d{2})\b/)?.[1];
+  let year = explicitYear ? Number(explicitYear) : now.getFullYear();
+  const day = /\bende\b/.test(normalized) ? 24 : /\banfang\b/.test(normalized) ? 3 : 15;
+  if (!explicitYear && new Date(year, month - 1, day) < now) year += 1;
+  return new Date(year, month - 1, day);
+}
+
 /** Returns [depYYMMDD, retYYMMDD] for a month name + duration in days. */
 export function travelDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
   if (!month) return null;
@@ -353,13 +371,8 @@ function parseExplicitDateRange(input?: string): [Date, Date] | null {
 }
 
 function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] | null {
-  if (!month) return null;
-  const m = MONTHS[month.toLowerCase().trim()];
-  if (!m) return null;
-  const now = new Date();
-  let year = now.getFullYear();
-  if (m < now.getMonth() + 1) year += 1;
-  const dep = new Date(year, m - 1, 15);
+  const dep = dateFromMonthDescription(month);
+  if (!dep) return null;
   const ret = new Date(dep);
   ret.setDate(ret.getDate() + Math.max(1, durationDays));
   return [isoDate(dep), isoDate(ret)];
@@ -368,13 +381,7 @@ function isoDatesFromMonth(month?: string, durationDays = 7): [string, string] |
 function departureDateFromOpts(startDate?: string, month?: string): Date | null {
   const dep = parseStartDate(startDate);
   if (dep) return dep;
-  if (!month) return null;
-  const m = MONTHS[month.toLowerCase().trim()];
-  if (!m) return null;
-  const now = new Date();
-  let year = now.getFullYear();
-  if (m < now.getMonth() + 1) year += 1;
-  return new Date(year, m - 1, 15);
+  return dateFromMonthDescription(month);
 }
 
 // ─── Affiliate base URLs ────────────────────────────────────────────────────
@@ -514,6 +521,8 @@ export function buildKlookHotelUrl(opts: {
   destination: string;
   hotel?: string;
   travelers?: number;
+  rooms?: number;
+  aid?: string;
   month?: string;
   startDate?: string;
   durationDays?: number;
@@ -526,20 +535,31 @@ export function buildKlookSearchUrl(opts: {
   destination: string;
   hotel?: string;
   travelers?: number;
+  rooms?: number;
+  aid?: string;
   month?: string;
   startDate?: string;
   durationDays?: number;
 }): string {
-  console.log("Aviasales Hotels deeplink:", AVIASALES_HOTELS_AFFILIATE_URL, {
-    destination: opts.destination,
-    hotel: opts.hotel,
-    travelers: opts.travelers,
-    month: opts.month,
-    startDate: opts.startDate,
-    durationDays: opts.durationDays,
+  const city = extractCityName(opts.destination);
+  const hotel = opts.hotel?.trim();
+  const keyword = hotel || (city ? `${city} hotel` : "hotel");
+  const params = new URLSearchParams({
+    aid: opts.aid || AFFILIATE_MARKER,
+    keyword,
+    adults: String(Math.max(1, Math.round(opts.travelers ?? 1))),
+    rooms: String(Math.max(1, Math.round(opts.rooms ?? 1))),
   });
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  if (dates) {
+    params.set("check_in", dates[0]);
+    params.set("check_out", dates[1]);
+  }
+  if (city) params.set("destination", city);
 
-  return AVIASALES_HOTELS_AFFILIATE_URL;
+  const finalUrl = `https://www.klook.com/hotels/search/?${params.toString()}`;
+  console.log("Klook hotel deeplink:", finalUrl);
+  return finalUrl;
 }
 
 // ─── Klook (Activities) ──────────────────────────────────────────────────────
