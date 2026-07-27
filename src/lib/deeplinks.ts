@@ -530,7 +530,14 @@ export function buildKlookHotelUrl(opts: {
   return buildKlookSearchUrl(opts);
 }
 
-/** Hotel booking URL. The partner shortlink handles the final Aviasales Hotels redirect. */
+/**
+ * Klook hotel search URL.
+ *
+ * Only values supplied by the traveller are prefilled. Dates stay empty so the
+ * traveller can choose them on Klook. Klook location identifiers and
+ * coordinates are intentionally omitted because they must never be hard-coded
+ * for a different destination.
+ */
 export function buildKlookSearchUrl(opts: {
   destination: string;
   hotel?: string;
@@ -542,22 +549,23 @@ export function buildKlookSearchUrl(opts: {
   durationDays?: number;
 }): string {
   const city = extractCityName(opts.destination);
-  const hotel = opts.hotel?.trim();
-  const keyword = hotel || (city ? `${city} hotel` : "hotel");
   const params = new URLSearchParams({
+    latlng: "",
+    override: city,
+    title: city,
+    stype: "hotel",
+    adult_num: String(Math.max(1, Math.round(opts.travelers ?? 1))),
+    child_num: "0",
+    room_num: String(Math.max(1, Math.round(opts.rooms ?? 1))),
+    age: "",
+    check_in: "",
+    check_out: "",
+    sort_selected: "",
+    currency: "USD",
     aid: opts.aid || AFFILIATE_MARKER,
-    keyword,
-    adults: String(Math.max(1, Math.round(opts.travelers ?? 1))),
-    rooms: String(Math.max(1, Math.round(opts.rooms ?? 1))),
   });
-  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
-  if (dates) {
-    params.set("check_in", dates[0]);
-    params.set("check_out", dates[1]);
-  }
-  if (city) params.set("destination", city);
 
-  const finalUrl = `https://www.klook.com/hotels/search/?${params.toString()}`;
+  const finalUrl = `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
   console.log("Klook hotel deeplink:", finalUrl);
   return finalUrl;
 }
