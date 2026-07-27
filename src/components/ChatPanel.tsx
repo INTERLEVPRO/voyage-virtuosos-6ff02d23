@@ -227,10 +227,12 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
   }, [messages, status, onPackagesReady]);
 
-  const lastUserMessage = useMemo(() => {
-    const m = [...messages].reverse().find(m => m.role === "user");
-    if (!m) return input;
-    return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+  const generationContext = useMemo(() => {
+    const userMessages = messages
+      .filter((message) => message.role === "user")
+      .map((message) => message.parts.map((part) => (part.type === "text" ? part.text : "")).join(""))
+      .filter(Boolean);
+    return userMessages.length ? userMessages.join("\n") : input;
   }, [messages, input]);
 
   const submit = async (text: string) => {
@@ -528,7 +530,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
         </p>
       </form>
 
-      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={lastUserMessage} isComplete={isSuccess} />}
+      {(showGeneratingLoader || isSuccess) && <FullScreenTypingLoader userQuery={generationContext} isComplete={isSuccess} />}
     </div>
   );
 }
