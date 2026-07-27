@@ -516,6 +516,32 @@ export function buildAviasalesSearchUrl(opts: {
 /** Tracked Aviasales Hotels affiliate link used by every hotel booking CTA. */
 export const AVIASALES_HOTELS_AFFILIATE_URL = "https://aviasales.tpm.li/o8SBry1n";
 
+/**
+ * Stable Klook destination pages. Unlike `/hotels/searchresult/`, these URLs do
+ * not need browser-session location data and therefore do not redirect back to
+ * the generic Hotels homepage.
+ */
+const KLOOK_HOTEL_DESTINATIONS: Record<string, string> = {
+  dubai: "c78-dubai",
+  chennai: "c274-chennai",
+  madras: "c274-chennai",
+  kochi: "c151-cochin",
+  cochin: "c151-cochin",
+  colombo: "c202-colombo",
+  mumbai: "c132-mumbai",
+};
+
+function lookupKlookHotelDestination(destination: string): string | null {
+  const city = normalizeLookupKey(extractCityName(destination));
+  if (!city) return null;
+  if (KLOOK_HOTEL_DESTINATIONS[city]) return KLOOK_HOTEL_DESTINATIONS[city];
+
+  const match = Object.entries(KLOOK_HOTEL_DESTINATIONS).find(([alias]) =>
+    new RegExp(`(^|\\s)${alias}(\\s|$)`).test(city),
+  );
+  return match?.[1] ?? null;
+}
+
 /** Hotel deeplink — kept under the existing export name for backwards compatibility. */
 export function buildKlookHotelUrl(opts: {
   destination: string;
@@ -531,12 +557,12 @@ export function buildKlookHotelUrl(opts: {
 }
 
 /**
- * Klook hotel search URL.
+ * Klook hotel destination URL.
  *
- * Only values supplied by the traveller are prefilled. Dates stay empty so the
- * traveller can choose them on Klook. Klook location identifiers and
- * coordinates are intentionally omitted because they must never be hard-coded
- * for a different destination.
+ * Known destinations open a stable Klook hotel-results page. Dates and guest
+ * details are intentionally left for the traveller to fill on Klook because
+ * destination pages do not support those values reliably without Klook's
+ * internal location-selection state.
  */
 export function buildKlookSearchUrl(opts: {
   destination: string;
@@ -549,23 +575,12 @@ export function buildKlookSearchUrl(opts: {
   durationDays?: number;
 }): string {
   const city = extractCityName(opts.destination);
-  const params = new URLSearchParams({
-    latlng: "",
-    override: city,
-    title: city,
-    stype: "hotel",
-    adult_num: String(Math.max(1, Math.round(opts.travelers ?? 1))),
-    child_num: "0",
-    room_num: String(Math.max(1, Math.round(opts.rooms ?? 1))),
-    age: "",
-    check_in: "",
-    check_out: "",
-    sort_selected: "",
-    currency: "USD",
-    aid: opts.aid || AFFILIATE_MARKER,
-  });
+  const destinationSlug = lookupKlookHotelDestination(city);
+  const aid = encodeURIComponent(opts.aid || AFFILIATE_MARKER);
+  const finalUrl = destinationSlug
+    ? `https://www.klook.com/destination/${destinationSlug}/3-hotel/?aid=${aid}`
+    : `https://www.klook.com/hotels/?aid=${aid}`;
 
-  const finalUrl = `https://www.klook.com/hotels/searchresult/?${params.toString()}`;
   console.log("Klook hotel deeplink:", finalUrl);
   return finalUrl;
 }
