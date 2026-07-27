@@ -8,7 +8,7 @@ import {
   type LanguageModel,
 } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { resolveAiBackend } from "@/lib/ai-gateway";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
 type ChatRequestBody = { messages?: unknown };
@@ -2169,11 +2169,10 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages required", { status: 400 });
         }
 
-        const key = process.env.OPENAI_API_KEY;
-        if (!key) return new Response("AI backend key missing", { status: 500 });
+        const backend = resolveAiBackend();
+        if (!backend) return new Response("AI backend key missing", { status: 500 });
 
-        const aiGateway = createLovableAiGatewayProvider(key);
-        const model = aiGateway("gpt-4o-mini");
+        const model = backend.provider(backend.modelId);
         const uiMessages = messages as UIMessage[];
 
         const textOf = (m: UIMessage) =>
