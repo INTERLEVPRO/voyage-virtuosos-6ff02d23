@@ -703,8 +703,14 @@ function detectDestination(query: string): { emoji: string; title: string; secti
 
 /** Build a generic guide when destination isn't in our database */
 function buildGenericGuide(query: string): { emoji: string; title: string; sections: string[] } {
-  // Try to extract the destination name — take the first capitalized word or phrase
-  const destMatch = query.match(/([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*)/);
+  // Prefer an explicit route destination over the first capitalized phrase.
+  // Example: "Von Chennai nach Jaffna, ..." must resolve to Jaffna, not "Von Chennai".
+  const routeDestinationMatch = query.match(
+    /\bnach\s+([A-ZÄÖÜ][\p{L}'’-]*(?:\s+[A-ZÄÖÜ][\p{L}'’-]*)*)/iu,
+  );
+  const destMatch =
+    routeDestinationMatch ??
+    query.match(/([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*)/);
   // hasDest distinguishes "real destination" from generic fallback wording.
   const hasDest = !!destMatch?.[1];
   const dest = destMatch?.[1] || "Traumziel";
