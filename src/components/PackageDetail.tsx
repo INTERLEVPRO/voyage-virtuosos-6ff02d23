@@ -234,11 +234,8 @@ function openRouteInMaps(destination: string, place?: string) {
 function bookingHotelUrl(pkg: TravelPackage) {
   return buildKlookSearchUrl({
     destination: pkg.destination,
-    hotel: pkg.hotel,
     travelers: pkg.travelers,
-    month: pkg.travelMonth,
-    startDate: pkg.travelStartDate,
-    durationDays: pkg.durationDays,
+    rooms: Math.max(1, Math.ceil((pkg.travelers ?? 1) / 2)),
   });
 }
 
@@ -383,12 +380,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
   const hotelUrl = buildKlookSearchUrl({
     destination: dest,
-    hotel: displayHotelName,
     travelers: currentPkg.travelers,
-    rooms: Math.max(1, Math.ceil((currentPkg.travelers ?? 2) / 2)),
-    month: currentPkg.travelMonth,
-    startDate: currentPkg.travelStartDate,
-    durationDays: currentPkg.durationDays,
+    rooms: Math.max(1, Math.ceil((currentPkg.travelers ?? 1) / 2)),
   });
   const taxiUrl = buildTransferUrl({
     destination: dest,
