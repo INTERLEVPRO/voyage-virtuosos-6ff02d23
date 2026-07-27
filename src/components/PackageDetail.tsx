@@ -656,10 +656,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           icon={Hotel}
           title="Hotel"
           subtitle={displayHotelName}
-          ratingLabel="Aviasales Hotels"
+          ratingLabel="Klook Hotels"
           extra={currentPkg.mealPlan}
           price={Math.round(currentPkg.price * 0.5)}
-          ctaLabel="Bei Aviasales Hotels ansehen"
+          ctaLabel="Bei Klook Hotels ansehen"
           provider="hotel"
           url={hotelUrl}
           packageId={currentPkg.id}
@@ -1030,7 +1030,7 @@ function ProviderRow({
           <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">{subtitle}</p>
           {isHotelSuggestion && (
             <p className="mt-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-              Hotelvorschlag · Verfügbarkeit bei Aviasales Hotels prüfen
+              Hotelvorschlag · Verfügbarkeit bei Klook Hotels prüfen
             </p>
           )}
           {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
