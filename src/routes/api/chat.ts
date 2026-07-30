@@ -53,13 +53,7 @@ const TIER_ORDER: Array<"basic" | "medium" | "premium"> = ["basic", "medium", "p
 const MIN_BUDGET_EUR = 100;
 
 type MissingField =
-  | "destination"
-  | "budget"
-  | "duration"
-  | "travelers"
-  | "origin"
-  | "timeframe"
-  | "interests";
+  "destination" | "budget" | "duration" | "travelers" | "origin" | "timeframe" | "interests";
 type ResearchData = {
   flights: string[];
   hotels: string[];
@@ -2189,6 +2183,19 @@ export const Route = createFileRoute("/api/chat")({
           .filter((m) => m.role === "user")
           .map(textOf)
           .join("\n");
+        const previousAssistantAsked = previousAssistant
+          ? detectAskedFields(textOf(previousAssistant))
+          : [];
+        const isOriginOnlyFollowUp =
+          previousAssistantAsked.includes("origin") &&
+          !previousAssistantAsked.includes("destination");
+        const userHistoryBeforeLastReply = isOriginOnlyFollowUp
+          ? uiMessages
+              .filter((m) => m.role === "user")
+              .slice(0, -1)
+              .map(textOf)
+              .join("\n")
+          : userHistory;
 
         // LLM-based extraction — robust to natural language across the dialog.
         const extracted = await extractTripFieldsLLM(model, uiMessages);
@@ -2310,14 +2317,21 @@ export const Route = createFileRoute("/api/chat")({
         // Field-mapping rule: dialog answer to the destination question wins.
         // Never overwrite destination with interest/origin/duration answers,
         // even if the LLM extractor or loose regex re-interprets later text.
+        // An answer to an origin-only question (for example "Frankfurt am Main
+        // (Flughafen FRA)") is not a destination correction. Resolve the
+        // destination from the conversation before that reply so neither the
+        // LLM nor the loose destination fallback can overwrite "Sri Lanka".
+        const protectedHistoryDestination = extractDestination(userHistoryBeforeLastReply);
         const historyDestination = extractDestination(userHistory);
         let destination = dialog.destination
           ? cleanPlace(dialog.destination)
-          : extracted.destination
-            ? cleanPlace(extracted.destination)
-            : historyDestination !== "deinem Reiseziel"
-              ? cleanPlace(historyDestination)
-              : historyDestination;
+          : isOriginOnlyFollowUp && protectedHistoryDestination !== "deinem Reiseziel"
+            ? cleanPlace(protectedHistoryDestination)
+            : extracted.destination
+              ? cleanPlace(extracted.destination)
+              : historyDestination !== "deinem Reiseziel"
+                ? cleanPlace(historyDestination)
+                : historyDestination;
         destination = dedupePlaceParts(destination);
 
         let budget =
