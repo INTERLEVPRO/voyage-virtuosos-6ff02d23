@@ -700,7 +700,14 @@ function cleanPlace(value: string): string {
   const compound = parseCountryCity(value);
   if (compound) return compound;
 
-  const first = value.split(/[.,;:!?\n]/)[0]?.trim() ?? "";
+  const first =
+    value
+      .split(/[.,;:!?\n]/)[0]
+      ?.replace(
+        /\b(?:abfliegen|fliegen|abreisen|reisen|fahren|starten|departure|depart|fly)\b.*$/i,
+        "",
+      )
+      .trim() ?? "";
   // Take up to 3 words
   const words = first.split(/\s+/).slice(0, 3);
   const cleaned = words
@@ -743,6 +750,12 @@ const COUNTRY_ALIASES: Record<string, string> = {
   japan: "Japan",
   china: "China",
   vietnam: "Vietnam",
+  usa: "USA",
+  "u.s.a": "USA",
+  "united states": "USA",
+  "united states of america": "USA",
+  amerika: "USA",
+  "vereinigte staaten": "USA",
 };
 
 // Country names (German/English) used to detect country-only origins.
@@ -753,6 +766,10 @@ const COUNTRY_ONLY_SET = new Set([
   "srilanka",
   "deutschland",
   "germany",
+  "usa",
+  "united states",
+  "united states of america",
+  "vereinigte staaten",
   "türkei",
   "turkei",
   "tuerkei",
@@ -1236,7 +1253,9 @@ function extractDestination(history: string): string {
       if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
     }
 
-    const byPrep = line.match(/(?:nach|to|in)\s+([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i);
+    const byPrep = line.match(
+      /(?:nach|to|in)\s+(?:die\s+|den\s+|das\s+)?([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i,
+    );
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
       if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
@@ -1371,6 +1390,11 @@ function extractOrigin(history: string): string | undefined {
       const cleaned = value
         .split(/[,.;:!?\n]/)[0]
         .trim()
+        .replace(
+          /\b(?:abfliegen|fliegen|abreisen|reisen|fahren|starten|departure|depart|fly)\b.*$/i,
+          "",
+        )
+        .trim()
         .split(/\s+/)
         .slice(0, 3)
         .join(" ");
@@ -1504,7 +1528,16 @@ function extractInterests(history: string): string[] {
     );
     if (interestClause) {
       const raw = interestClause[1].trim().replace(/^[,:\s]+/, "");
-      if (raw.length > 2) return [raw];
+      // A travel-intent sentence such as "Ich möchte in die USA reisen" gives
+      // us a destination, not an interest. Continue scanning older messages for
+      // actual interests instead of displaying "In die USA reisen".
+      if (
+        raw.length > 2 &&
+        !/^(?:in|nach|to)\s+(?:die\s+|den\s+|das\s+)?[a-zäöüß .'-]+\s+(?:reisen|fliegen|fahren|gehen)$/i.test(
+          raw,
+        )
+      )
+        return [raw];
     }
   }
   return [];
@@ -2334,7 +2367,12 @@ export const Route = createFileRoute("/api/chat")({
         // answer such as "Monat", "flexibel" or an airport name can otherwise
         // be hallucinated as a new destination by the model. An explicit answer
         // to a destination question remains the highest-priority correction.
-        let destination = dialog.destination
+        const invalidDestination = (value?: string | null) =>
+          !value ||
+          /^(?:insgesamt|gesamt|pro person|flexibel|monat|budget|ja|nein|okay?|passt)$/i.test(
+            value.trim(),
+          );
+        let destination = dialog.destination && !invalidDestination(dialog.destination)
           ? cleanPlace(dialog.destination)
           : isOriginOnlyFollowUp && protectedHistoryDestination !== "deinem Reiseziel"
             ? cleanPlace(protectedHistoryDestination)
