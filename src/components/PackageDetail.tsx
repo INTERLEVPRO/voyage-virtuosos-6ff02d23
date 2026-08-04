@@ -45,6 +45,8 @@ import {
   buildKlookActivitiesUrl,
   lookupOriginIata,
   buildTransferUrl,
+  KIWI_TAXI_AFFILIATE_URL,
+
 } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
