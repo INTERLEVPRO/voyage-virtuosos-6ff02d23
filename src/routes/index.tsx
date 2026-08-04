@@ -193,8 +193,12 @@ function Index() {
               className="fade-up fade-up-delay-2 mx-auto mt-4 max-w-lg text-white/80"
               style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)" }}
             >
-              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in
-              einem Paket.
+              Ich erstelle dir automatisch unverbindliche Reisevorschläge mit Flug, Hotel und Aktivitäten. Gebucht wird
+              direkt bei externen Drittanbietern.
+            </p>
+            <p className="fade-up fade-up-delay-2 mx-auto mt-2 max-w-lg text-xs text-white/60">
+              Weltweiturlaub.de ist kein Reisebüro und kein Reiseveranstalter — alle Angaben sind unverbindlich und
+              ohne Gewähr.
             </p>
 
             {/* ── 3D Feature Icons ── */}
