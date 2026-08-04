@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
+  <url>
+    <loc>https://weltweiturlaub.de/</loc>
+    <xhtml:link rel="alternate" hreflang="de-DE" href="https://weltweiturlaub.de/" />
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://weltweiturlaub.de/impressum</loc>
+    <xhtml:link rel="alternate" hreflang="de-DE" href="https://weltweiturlaub.de/impressum" />
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
