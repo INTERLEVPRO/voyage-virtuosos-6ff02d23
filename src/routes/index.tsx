@@ -246,24 +246,25 @@ function Index() {
               <div>
                 <h3 className="text-base font-semibold text-foreground">Flüge ab deutschen Flughäfen</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Wir planen deine Reise ab deinem Wunschflughafen: Flüge ab Frankfurt, Flüge ab München, Flüge ab
+                  Die KI berücksichtigt deinen Wunschflughafen: Flüge ab Frankfurt, Flüge ab München, Flüge ab
                   Berlin, Flüge ab Düsseldorf und Flüge ab Hamburg. Auch Abflüge ab Köln/Bonn, Stuttgart und Hannover
-                  sind möglich.
+                  sind möglich. Flüge werden nicht von uns verkauft, sondern bei externen Anbietern gebucht.
                 </p>
               </div>
               <div>
                 <h3 className="text-base font-semibold text-foreground">Beliebte Reiseziele weltweit</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Ob Strandurlaub auf den Malediven, Rundreise durch Sri Lanka, Städtereise nach New York, Safari in
-                  Südafrika oder Inselhopping in Thailand — wir kombinieren Flug, Hotel und Erlebnisse zu einem
-                  stimmigen Reisepaket.
+                  Südafrika oder Inselhopping in Thailand — der KI-Assistent kombiniert Flug, Hotel und Erlebnisse zu
+                  einem unverbindlichen Reisevorschlag.
                 </p>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">Reiseplaner mit echten Bewertungen</h3>
+                <h3 className="text-base font-semibold text-foreground">Reiseideen mit echten Bewertungen</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Jedes Urlaubspaket enthält Hotelbewertungen, einen Tag-für-Tag-Reiseverlauf und direkte Buchungslinks
-                  — transparent und ohne Anmeldung.
+                  Jeder Reisevorschlag enthält Hotelbewertungen, einen Tag-für-Tag-Überblick und weiterführende Links
+                  zu Drittanbietern — transparent und ohne Anmeldung. Vertrag und Buchung kommen ausschließlich mit
+                  dem jeweiligen Drittanbieter zustande.
                 </p>
               </div>
               <div>
