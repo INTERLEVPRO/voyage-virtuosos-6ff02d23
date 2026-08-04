@@ -30,6 +30,7 @@ export const Route = createFileRoute("/transfer")({
           "Buchen Sie Ihren Flughafentransfer bequem online. Festpreis, deutschsprachiger Support, weltweite Verfügbarkeit.",
       },
       { name: "robots", content: "noindex,follow" },
+      { property: "og:url", content: "https://weltweiturlaub.de/transfer" },
     ],
   }),
   component: TransferPage,
