@@ -73,6 +73,55 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
     scripts: [
       {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://weltweiturlaub.de/#organization",
+              name: "INTERLEV GmbH",
+              url: "https://weltweiturlaub.de",
+              legalName: "INTERLEV GmbH",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Hemmelrather Weg 201",
+                postalCode: "51377",
+                addressLocality: "Leverkusen",
+                addressCountry: "DE",
+              },
+            },
+            {
+              "@type": "TravelAgency",
+              "@id": "https://weltweiturlaub.de/#travelagency",
+              name: "Weltweiturlaub.de",
+              url: "https://weltweiturlaub.de",
+              parentOrganization: { "@id": "https://weltweiturlaub.de/#organization" },
+              areaServed: { "@type": "Country", name: "Deutschland" },
+              priceRange: "€€",
+              currenciesAccepted: "EUR",
+              availableLanguage: ["de"],
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Hemmelrather Weg 201",
+                postalCode: "51377",
+                addressLocality: "Leverkusen",
+                addressCountry: "DE",
+              },
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://weltweiturlaub.de/#website",
+              url: "https://weltweiturlaub.de",
+              name: "Weltweiturlaub.de",
+              inLanguage: "de-DE",
+              publisher: { "@id": "https://weltweiturlaub.de/#organization" },
+            },
+          ],
+        }),
+      },
+
+      {
         type: "text/javascript",
         children: `
           (function() {
