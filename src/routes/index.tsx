@@ -234,9 +234,11 @@ function Index() {
                 Urlaub ab Deutschland — weltweite Reisen individuell geplant
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Weltweiturlaub.de ist dein Reiseplaner für Deutschland: Du beschreibst deinen Wunschurlaub, unser
-                KI-Reiseassistent stellt daraus drei komplette Reisepakete zusammen — Basic, Medium und Premium. Alle
-                Preise werden in Euro (EUR) angezeigt, inklusive Flug, Hotel und passenden Aktivitäten am Zielort.
+                Weltweiturlaub.de ist <strong className="font-semibold text-foreground">kein Reisebüro und kein
+                Reiseveranstalter</strong>. Du beschreibst deinen Wunschurlaub und unser KI-Assistent erstellt daraus
+                automatisch drei unverbindliche Reisevorschläge — Basic, Medium und Premium. Alle Angaben und Preise in
+                Euro (EUR) für Flug, Hotel und Aktivitäten sind unverbindliche Beispiele; die Buchung erfolgt
+                ausschließlich bei externen Drittanbietern.
               </p>
             </div>
 
