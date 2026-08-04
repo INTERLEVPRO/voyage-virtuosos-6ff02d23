@@ -668,9 +668,16 @@ function parseAnswerDurationDays(value: string): number | null {
 
 function parseAnswerTravelers(value: string): number | null {
   const t = value.toLowerCase().trim();
-  const bare = t.match(/^(\d{1,2})\b/);
-  if (bare) {
-    const n = Number(bare[1]);
+  // Accept both a short follow-up ("2 Personen") and a complete request where
+  // the traveller count occurs later in the sentence. Do not use an arbitrary
+  // number: it must either be the whole answer or be tied to a traveller word,
+  // otherwise dates, duration and budget could be mistaken for the party size.
+  const numeric =
+    t.match(
+      /\b(\d{1,2})\s*(?:person(?:en)?|reisende|gäste|gaeste|leute|pax|adult(?:s)?|kind(?:er)?)\b/,
+    ) ?? t.match(/^(\d{1,2})$/);
+  if (numeric) {
+    const n = Number(numeric[1]);
     if (n > 0 && n < 30) return n;
   }
   for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
@@ -2323,14 +2330,18 @@ export const Route = createFileRoute("/api/chat")({
         // LLM nor the loose destination fallback can overwrite "Sri Lanka".
         const protectedHistoryDestination = extractDestination(userHistoryBeforeLastReply);
         const historyDestination = extractDestination(userHistory);
+        // Deterministic route/history extraction wins over the LLM. A later
+        // answer such as "Monat", "flexibel" or an airport name can otherwise
+        // be hallucinated as a new destination by the model. An explicit answer
+        // to a destination question remains the highest-priority correction.
         let destination = dialog.destination
           ? cleanPlace(dialog.destination)
           : isOriginOnlyFollowUp && protectedHistoryDestination !== "deinem Reiseziel"
             ? cleanPlace(protectedHistoryDestination)
-            : extracted.destination
-              ? cleanPlace(extracted.destination)
-              : historyDestination !== "deinem Reiseziel"
-                ? cleanPlace(historyDestination)
+            : historyDestination !== "deinem Reiseziel"
+              ? cleanPlace(historyDestination)
+              : extracted.destination
+                ? cleanPlace(extracted.destination)
                 : historyDestination;
         destination = dedupePlaceParts(destination);
 
