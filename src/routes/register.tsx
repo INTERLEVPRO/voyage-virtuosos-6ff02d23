@@ -5,8 +5,40 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
+  head: () => ({
+    meta: [
+      { title: "Konto erstellen — Urlaub ab Deutschland planen | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Erstelle kostenlos ein Konto bei Weltweiturlaub.de und speichere deine individuellen Reisepakete für weltweite Reisen ab Deutschland.",
+      },
+      { property: "og:title", content: "Konto erstellen — Weltweiturlaub.de" },
+      {
+        property: "og:description",
+        content: "Kostenlos registrieren und individuelle Reisepakete ab Deutschland speichern.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/register" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/register" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Startseite", item: "https://weltweiturlaub.de/" },
+            { "@type": "ListItem", position: 2, name: "Registrieren", item: "https://weltweiturlaub.de/register" },
+          ],
+        }),
+      },
+    ],
+  }),
   component: RegisterPage,
 });
+
 
 function RegisterPage() {
   const navigate = useNavigate();
