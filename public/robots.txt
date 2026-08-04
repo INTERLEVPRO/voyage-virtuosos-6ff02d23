@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /transfer
+
+Sitemap: https://weltweiturlaub.de/sitemap.xml

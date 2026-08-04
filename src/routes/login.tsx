@@ -8,8 +8,37 @@ export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
+  head: () => ({
+    meta: [
+      { title: "Anmelden — Reisepakete verwalten | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Melde dich bei Weltweiturlaub.de an, um deine gespeicherten Reisepakete und geplanten Urlaube ab Deutschland zu verwalten.",
+      },
+      { property: "og:title", content: "Anmelden — Weltweiturlaub.de" },
+      { property: "og:description", content: "Melde dich an und verwalte deine geplanten Reisen ab Deutschland." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/login" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Startseite", item: "https://weltweiturlaub.de/" },
+            { "@type": "ListItem", position: 2, name: "Anmelden", item: "https://weltweiturlaub.de/login" },
+          ],
+        }),
+      },
+    ],
+  }),
   component: LoginPage,
 });
+
 
 function LoginPage() {
   const navigate = useNavigate();

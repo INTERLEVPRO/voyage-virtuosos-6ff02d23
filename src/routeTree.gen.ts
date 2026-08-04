@@ -14,6 +14,7 @@ import { Route as BuchenRouteImport } from './routes/buchen'
 import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiItineraryWeatherRouteImport } from './routes/api/itinerary-weather'
@@ -43,6 +44,11 @@ const LoginRoute = LoginRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransferRoute = TransferRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/impressum': typeof ImpressumRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/transfer': typeof TransferRoute
   '/api/chat': typeof ApiChatRoute
   '/api/itinerary-weather': typeof ApiItineraryWeatherRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/login'
     | '/register'
+    | '/sitemap.xml'
     | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/login'
     | '/register'
+    | '/sitemap.xml'
     | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/login'
     | '/register'
+    | '/sitemap.xml'
     | '/transfer'
     | '/api/chat'
     | '/api/itinerary-weather'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   ImpressumRoute: typeof ImpressumRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TransferRoute: typeof TransferRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiItineraryWeatherRoute: typeof ApiItineraryWeatherRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transfer': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImpressumRoute: ImpressumRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TransferRoute: TransferRoute,
   ApiChatRoute: ApiChatRoute,
   ApiItineraryWeatherRoute: ApiItineraryWeatherRoute,

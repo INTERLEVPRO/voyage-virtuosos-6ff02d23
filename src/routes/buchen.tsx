@@ -2,6 +2,37 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/buchen")({
+  head: () => ({
+    meta: [
+      { title: "Reisepaket buchen — Urlaub ab Deutschland | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Buche dein individuelles Reisepaket mit Flug, Hotel und Aktivitäten ab Deutschland. Alle Preise in EUR, transparent und ohne versteckte Kosten.",
+      },
+      { property: "og:title", content: "Reisepaket buchen — Urlaub ab Deutschland | Weltweiturlaub.de" },
+      {
+        property: "og:description",
+        content: "Buche dein individuelles Reisepaket mit Flug, Hotel und Aktivitäten ab Deutschland — Preise in EUR.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/buchen" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/buchen" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Startseite", item: "https://weltweiturlaub.de/" },
+            { "@type": "ListItem", position: 2, name: "Buchung", item: "https://weltweiturlaub.de/buchen" },
+          ],
+        }),
+      },
+    ],
+  }),
   component: BuchenPage,
 });
 
@@ -13,10 +44,11 @@ function BuchenPage() {
           <Link
             to="/"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
+            aria-label="Zurück zur Startseite"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-semibold">Booking</h1>
+          <h1 className="text-lg font-semibold">Buchung</h1>
         </div>
       </header>
 
@@ -25,10 +57,11 @@ function BuchenPage() {
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#0d9e4f]/10 text-[#0d9e4f]">
             <CheckCircle2 className="h-10 w-10" />
           </div>
-          <h2 className="mb-4 text-2xl font-bold text-foreground">Ready to Book</h2>
+          <h2 className="mb-4 text-2xl font-bold text-foreground">Bereit zur Buchung</h2>
           <p className="mb-8 text-muted-foreground">
-            Your booking details will be processed here. Please confirm your travel package.
+            Deine Buchungsdaten werden hier verarbeitet. Bitte bestätige dein Reisepaket.
           </p>
+
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-soft transition-all hover:opacity-90"

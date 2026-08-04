@@ -39,10 +39,29 @@ const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => {
 });
 
 
-export const Route = createFileRoute("/")(
-  {
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Urlaub ab Deutschland planen — KI-Reiseplaner | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Weltweite Reisen ab Deutschland in 2 Minuten planen: 3 individuelle Reisepakete mit Flügen ab Frankfurt, München, Berlin, Düsseldorf & Hamburg, Hotels und Aktivitäten — Preise in EUR.",
+      },
+      { property: "og:title", content: "Urlaub ab Deutschland planen — KI-Reiseplaner | Weltweiturlaub.de" },
+      {
+        property: "og:description",
+        content:
+          "Dein Reiseplaner für Deutschland: individuelle Urlaubspakete mit Flug, Hotel und Aktivitäten — in EUR, in 2 Minuten.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/" }],
+  }),
   component: Index,
 });
+
 
 function Index() {
   const [packages, setPackages] = useState<TravelPackage[]>([]);
@@ -151,6 +170,10 @@ function Index() {
                 src={assistantImg}
                 alt="KI-Reiseassistentin"
                 className="h-24 w-24 select-none object-contain drop-shadow-lg sm:h-28 sm:w-28"
+                width={112}
+                height={112}
+                fetchPriority="high"
+                decoding="async"
               />
               <span className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-[#0d9e4f] ring-3 ring-white/30 shadow-glow-green" />
             </div>
@@ -203,7 +226,67 @@ function Index() {
             <ChatPanel onPackagesReady={setPackages} />
           </div>
         </section>
+        {/* ── SEO-Inhalte: Urlaub ab Deutschland ── */}
+        <section className="w-full max-w-full px-5 pb-16 sm:px-10" aria-labelledby="seo-heading">
+          <div className="mx-auto max-w-[1100px] space-y-8">
+            <div>
+              <h2 id="seo-heading" className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
+                Urlaub ab Deutschland — weltweite Reisen individuell geplant
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Weltweiturlaub.de ist dein Reiseplaner für Deutschland: Du beschreibst deinen Wunschurlaub, unser
+                KI-Reiseassistent stellt daraus drei komplette Reisepakete zusammen — Basic, Medium und Premium. Alle
+                Preise werden in Euro (EUR) angezeigt, inklusive Flug, Hotel und passenden Aktivitäten am Zielort.
+              </p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Flüge ab deutschen Flughäfen</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Wir planen deine Reise ab deinem Wunschflughafen: Flüge ab Frankfurt, Flüge ab München, Flüge ab
+                  Berlin, Flüge ab Düsseldorf und Flüge ab Hamburg. Auch Abflüge ab Köln/Bonn, Stuttgart und Hannover
+                  sind möglich.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Beliebte Reiseziele weltweit</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Ob Strandurlaub auf den Malediven, Rundreise durch Sri Lanka, Städtereise nach New York, Safari in
+                  Südafrika oder Inselhopping in Thailand — wir kombinieren Flug, Hotel und Erlebnisse zu einem
+                  stimmigen Reisepaket.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Reiseplaner mit echten Bewertungen</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Jedes Urlaubspaket enthält Hotelbewertungen, einen Tag-für-Tag-Reiseverlauf und direkte Buchungslinks
+                  — transparent und ohne Anmeldung.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Reise planen &amp; buchen</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Weiter zu{" "}
+                  <Link to="/buchen" className="font-medium text-primary underline underline-offset-2">
+                    Buchung &amp; Reisepakete
+                  </Link>
+                  ,{" "}
+                  <Link to="/register" className="font-medium text-primary underline underline-offset-2">
+                    Konto erstellen
+                  </Link>{" "}
+                  oder{" "}
+                  <Link to="/impressum" className="font-medium text-primary underline underline-offset-2">
+                    Impressum &amp; Kontakt
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+
 
       <Footer />
     </div>
@@ -327,7 +410,7 @@ function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-6 sm:py-3">
         {/* Logo — bigger so it's clearly visible on dark navy */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={logo} alt="Weltweiturlaub.de" className="h-12 w-auto sm:h-14" />
+          <img src={logo} alt="Weltweiturlaub.de — Reiseplaner Deutschland" width={200} height={56} decoding="async" className="h-12 w-auto sm:h-14" />
         </Link>
         <div className="flex items-center gap-2">
           {/* Mobile: icon-only */}

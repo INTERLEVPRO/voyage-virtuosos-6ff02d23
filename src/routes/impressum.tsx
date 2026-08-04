@@ -2,8 +2,40 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Footer } from "@/components/Footer";
 
 export const Route = createFileRoute("/impressum")({
+  head: () => ({
+    meta: [
+      { title: "Impressum — INTERLEV GmbH | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Impressum und Anbieterkennzeichnung von Weltweiturlaub.de, einem Angebot der INTERLEV GmbH aus Leverkusen — Kontaktdaten und rechtliche Angaben.",
+      },
+      { property: "og:title", content: "Impressum — INTERLEV GmbH | Weltweiturlaub.de" },
+      {
+        property: "og:description",
+        content: "Impressum und rechtliche Angaben zu Weltweiturlaub.de, einem Angebot der INTERLEV GmbH.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/impressum" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/impressum" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Startseite", item: "https://weltweiturlaub.de/" },
+            { "@type": "ListItem", position: 2, name: "Impressum", item: "https://weltweiturlaub.de/impressum" },
+          ],
+        }),
+      },
+    ],
+  }),
   component: Impressum,
 });
+
 
 function Impressum() {
   return (
@@ -31,7 +63,7 @@ function Impressum() {
             <div className="aspect-[3/2] overflow-hidden rounded-xl shadow-sm bg-muted relative">
               <img 
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200&h=800" 
-                alt="Office Conference Room" 
+                alt="Büro der INTERLEV GmbH in Leverkusen" loading="lazy" decoding="async" width="1200" height="800" 
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-white/20"></div>
