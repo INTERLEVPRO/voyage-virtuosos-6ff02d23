@@ -57,7 +57,10 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://weltweiturlaub.de/" },
     ],
-    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/" }],
+    links: [
+      { rel: "canonical", href: "https://weltweiturlaub.de/" },
+      { rel: "alternate", hrefLang: "de-DE", href: "https://weltweiturlaub.de/" },
+    ],
   }),
   component: Index,
 });
