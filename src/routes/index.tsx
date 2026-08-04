@@ -39,10 +39,29 @@ const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => {
 });
 
 
-export const Route = createFileRoute("/")(
-  {
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Urlaub ab Deutschland planen — KI-Reiseplaner | Weltweiturlaub.de" },
+      {
+        name: "description",
+        content:
+          "Weltweite Reisen ab Deutschland in 2 Minuten planen: 3 individuelle Reisepakete mit Flügen ab Frankfurt, München, Berlin, Düsseldorf & Hamburg, Hotels und Aktivitäten — Preise in EUR.",
+      },
+      { property: "og:title", content: "Urlaub ab Deutschland planen — KI-Reiseplaner | Weltweiturlaub.de" },
+      {
+        property: "og:description",
+        content:
+          "Dein Reiseplaner für Deutschland: individuelle Urlaubspakete mit Flug, Hotel und Aktivitäten — in EUR, in 2 Minuten.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://weltweiturlaub.de/" },
+    ],
+    links: [{ rel: "canonical", href: "https://weltweiturlaub.de/" }],
+  }),
   component: Index,
 });
+
 
 function Index() {
   const [packages, setPackages] = useState<TravelPackage[]>([]);
