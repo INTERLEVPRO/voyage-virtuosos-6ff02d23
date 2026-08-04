@@ -170,6 +170,10 @@ function Index() {
                 src={assistantImg}
                 alt="KI-Reiseassistentin"
                 className="h-24 w-24 select-none object-contain drop-shadow-lg sm:h-28 sm:w-28"
+                width={112}
+                height={112}
+                fetchPriority="high"
+                decoding="async"
               />
               <span className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-[#0d9e4f] ring-3 ring-white/30 shadow-glow-green" />
             </div>
@@ -406,7 +410,7 @@ function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-6 sm:py-3">
         {/* Logo — bigger so it's clearly visible on dark navy */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={logo} alt="Weltweiturlaub.de" className="h-12 w-auto sm:h-14" />
+          <img src={logo} alt="Weltweiturlaub.de — Reiseplaner Deutschland" width={200} height={56} decoding="async" className="h-12 w-auto sm:h-14" />
         </Link>
         <div className="flex items-center gap-2">
           {/* Mobile: icon-only */}

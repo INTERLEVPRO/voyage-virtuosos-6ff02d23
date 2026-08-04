@@ -63,7 +63,7 @@ function Impressum() {
             <div className="aspect-[3/2] overflow-hidden rounded-xl shadow-sm bg-muted relative">
               <img 
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200&h=800" 
-                alt="Office Conference Room" 
+                alt="Büro der INTERLEV GmbH in Leverkusen" loading="lazy" decoding="async" width="1200" height="800" 
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-white/20"></div>
