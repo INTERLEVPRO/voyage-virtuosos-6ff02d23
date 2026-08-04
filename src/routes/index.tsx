@@ -231,7 +231,7 @@ function Index() {
           <div className="mx-auto max-w-[1100px] space-y-8">
             <div>
               <h2 id="seo-heading" className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
-                Urlaub ab Deutschland — weltweite Reisen individuell geplant
+                Urlaub ab Deutschland — unverbindliche KI-Reisevorschläge, Buchung bei Drittanbietern
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Weltweiturlaub.de ist <strong className="font-semibold text-foreground">kein Reisebüro und kein
