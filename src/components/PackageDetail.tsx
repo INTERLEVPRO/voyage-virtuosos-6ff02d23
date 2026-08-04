@@ -45,6 +45,8 @@ import {
   buildKlookActivitiesUrl,
   lookupOriginIata,
   buildTransferUrl,
+  KIWI_TAXI_AFFILIATE_URL,
+
 } from "@/lib/deeplinks";
 
 async function trackClick(packageId: string, provider: string, url: string) {
@@ -383,14 +385,8 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     travelers: currentPkg.travelers,
     rooms: Math.max(1, Math.ceil((currentPkg.travelers ?? 1) / 2)),
   });
-  const taxiUrl = buildTransferUrl({
-    destination: dest,
-    origin: currentPkg.origin,
-    travelers: currentPkg.travelers,
-    month: currentPkg.travelMonth,
-    startDate: currentPkg.travelStartDate,
-    durationDays: currentPkg.durationDays,
-  });
+  const taxiUrl = KIWI_TAXI_AFFILIATE_URL;
+
   const activitiesUrl = buildKlookActivitiesUrl({
     destination: dest,
     month: currentPkg.travelMonth,
