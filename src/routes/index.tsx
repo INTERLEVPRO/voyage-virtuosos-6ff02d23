@@ -193,8 +193,12 @@ function Index() {
               className="fade-up fade-up-delay-2 mx-auto mt-4 max-w-lg text-white/80"
               style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)" }}
             >
-              Ich helfe dir, deinen perfekten Urlaub in nur wenigen Minuten zu finden — Flüge, Hotels und Aktivitäten in
-              einem Paket.
+              Ich erstelle dir automatisch unverbindliche Reisevorschläge mit Flug, Hotel und Aktivitäten. Gebucht wird
+              direkt bei externen Drittanbietern.
+            </p>
+            <p className="fade-up fade-up-delay-2 mx-auto mt-2 max-w-lg text-xs text-white/60">
+              Weltweiturlaub.de ist kein Reisebüro und kein Reiseveranstalter — alle Angaben sind unverbindlich und
+              ohne Gewähr.
             </p>
 
             {/* ── 3D Feature Icons ── */}
@@ -231,12 +235,14 @@ function Index() {
           <div className="mx-auto max-w-[1100px] space-y-8">
             <div>
               <h2 id="seo-heading" className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
-                Urlaub ab Deutschland — weltweite Reisen individuell geplant
+                Urlaub ab Deutschland — unverbindliche KI-Reisevorschläge, Buchung bei Drittanbietern
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Weltweiturlaub.de ist dein Reiseplaner für Deutschland: Du beschreibst deinen Wunschurlaub, unser
-                KI-Reiseassistent stellt daraus drei komplette Reisepakete zusammen — Basic, Medium und Premium. Alle
-                Preise werden in Euro (EUR) angezeigt, inklusive Flug, Hotel und passenden Aktivitäten am Zielort.
+                Weltweiturlaub.de ist <strong className="font-semibold text-foreground">kein Reisebüro und kein
+                Reiseveranstalter</strong>. Du beschreibst deinen Wunschurlaub und unser KI-Assistent erstellt daraus
+                automatisch drei unverbindliche Reisevorschläge — Basic, Medium und Premium. Alle Angaben und Preise in
+                Euro (EUR) für Flug, Hotel und Aktivitäten sind unverbindliche Beispiele; die Buchung erfolgt
+                ausschließlich bei externen Drittanbietern.
               </p>
             </div>
 
@@ -244,24 +250,25 @@ function Index() {
               <div>
                 <h3 className="text-base font-semibold text-foreground">Flüge ab deutschen Flughäfen</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Wir planen deine Reise ab deinem Wunschflughafen: Flüge ab Frankfurt, Flüge ab München, Flüge ab
+                  Die KI berücksichtigt deinen Wunschflughafen: Flüge ab Frankfurt, Flüge ab München, Flüge ab
                   Berlin, Flüge ab Düsseldorf und Flüge ab Hamburg. Auch Abflüge ab Köln/Bonn, Stuttgart und Hannover
-                  sind möglich.
+                  sind möglich. Flüge werden nicht von uns verkauft, sondern bei externen Anbietern gebucht.
                 </p>
               </div>
               <div>
                 <h3 className="text-base font-semibold text-foreground">Beliebte Reiseziele weltweit</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Ob Strandurlaub auf den Malediven, Rundreise durch Sri Lanka, Städtereise nach New York, Safari in
-                  Südafrika oder Inselhopping in Thailand — wir kombinieren Flug, Hotel und Erlebnisse zu einem
-                  stimmigen Reisepaket.
+                  Südafrika oder Inselhopping in Thailand — der KI-Assistent kombiniert Flug, Hotel und Erlebnisse zu
+                  einem unverbindlichen Reisevorschlag.
                 </p>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">Reiseplaner mit echten Bewertungen</h3>
+                <h3 className="text-base font-semibold text-foreground">Reiseideen mit echten Bewertungen</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Jedes Urlaubspaket enthält Hotelbewertungen, einen Tag-für-Tag-Reiseverlauf und direkte Buchungslinks
-                  — transparent und ohne Anmeldung.
+                  Jeder Reisevorschlag enthält Hotelbewertungen, einen Tag-für-Tag-Überblick und weiterführende Links
+                  zu Drittanbietern — transparent und ohne Anmeldung. Vertrag und Buchung kommen ausschließlich mit
+                  dem jeweiligen Drittanbieter zustande.
                 </p>
               </div>
               <div>
