@@ -53,16 +53,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "google", content: "notranslate" },
-      { title: "Weltweit Urlaub — Reise planen in 2 Minuten" },
-      { name: "description", content: "Dein KI-Reiseberater erstellt in 2 Minuten 3 maßgeschneiderte Reisepakete — Basic, Medium, Premium. Flüge, Hotels und Aktivitäten inklusive." },
-      { property: "og:title", content: "Weltweit Urlaub — Reise planen in 2 Minuten" },
-      { property: "og:description", content: "Dein KI-Reiseberater erstellt in 2 Minuten 3 maßgeschneiderte Reisepakete — Basic, Medium, Premium. Flüge, Hotels und Aktivitäten inklusive." },
+      { title: "Weltweiturlaub.de — Urlaub ab Deutschland individuell planen" },
+      { name: "description", content: "KI-Reiseplaner für weltweite Reisen ab Deutschland: in 2 Minuten 3 Reisepakete mit Flügen ab Frankfurt, München, Berlin, Düsseldorf & Hamburg, Hotels und Aktivitäten." },
+      { property: "og:site_name", content: "Weltweiturlaub.de" },
+      { property: "og:locale", content: "de_DE" },
+      { property: "og:title", content: "Weltweiturlaub.de — Urlaub ab Deutschland individuell planen" },
+      { property: "og:description", content: "KI-Reiseplaner für weltweite Reisen ab Deutschland: in 2 Minuten 3 Reisepakete mit Flügen, Hotels und Aktivitäten — Preise in EUR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Weltweit Urlaub — Reise planen in 2 Minuten" },
-      { name: "twitter:description", content: "Dein KI-Reiseberater erstellt in 2 Minuten 3 maßgeschneiderte Reisepakete — Basic, Medium, Premium. Flüge, Hotels und Aktivitäten inklusive." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb723315-5689-4728-beb8-4894cfff4e1c/id-preview-3c1b37db--147e2305-7bd3-4741-b042-c86a2acf150d.lovable.app-1779176204821.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb723315-5689-4728-beb8-4894cfff4e1c/id-preview-3c1b37db--147e2305-7bd3-4741-b042-c86a2acf150d.lovable.app-1779176204821.png" },
+      { name: "twitter:title", content: "Weltweiturlaub.de — Urlaub ab Deutschland individuell planen" },
+      { name: "twitter:description", content: "KI-Reiseplaner für weltweite Reisen ab Deutschland: in 2 Minuten 3 Reisepakete mit Flügen, Hotels und Aktivitäten — Preise in EUR." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -70,6 +70,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" },
     ],
+
     scripts: [
       {
         type: "text/javascript",
