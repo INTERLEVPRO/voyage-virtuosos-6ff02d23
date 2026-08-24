@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createOpenAIProvider } from "@/lib/openai-provider";
+import { resolveAiBackend } from "@/lib/ai-gateway";
 
 const requestSchema = z.object({
   destination: z.string().min(1).max(200),
