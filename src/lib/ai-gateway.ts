@@ -5,18 +5,6 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
  * Prefers a direct OpenAI key, falls back to the Lovable AI gateway.
  */
 export const resolveAiBackend = () => {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey) {
-    return {
-      provider: createOpenAICompatible({
-        name: "openai",
-        baseURL: "https://api.openai.com/v1",
-        headers: { Authorization: `Bearer ${openaiKey}` },
-      }),
-      modelId: "gpt-4o-mini",
-    };
-  }
-
   const lovableKey = process.env.LOVABLE_API_KEY;
   if (lovableKey) {
     return {
@@ -28,7 +16,19 @@ export const resolveAiBackend = () => {
           "X-Lovable-AIG-SDK": "vercel-ai-sdk",
         },
       }),
-      modelId: "openai/gpt-5.4-mini",
+      modelId: "google/gemini-3.7-flash",
+    };
+  }
+
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    return {
+      provider: createOpenAICompatible({
+        name: "openai",
+        baseURL: "https://api.openai.com/v1",
+        headers: { Authorization: `Bearer ${openaiKey}` },
+      }),
+      modelId: "gpt-4o-mini",
     };
   }
 
