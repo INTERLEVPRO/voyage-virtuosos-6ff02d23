@@ -86,16 +86,15 @@ export const Route = createFileRoute("/api/refine-package")({
           });
         }
 
-        const key = process.env.OPENAI_API_KEY;
-        if (!key) {
+        const backend = resolveAiBackend();
+        if (!backend) {
           return Response.json(
-            { status: "error", message: "OpenAI nicht konfiguriert." },
+            { status: "error", message: "KI-Dienst ist derzeit nicht verfügbar." },
             { status: 500 },
           );
         }
 
-        const openai = createOpenAIProvider(key);
-        const model = openai("gpt-4o-mini");
+        const model = backend.provider(backend.modelId);
 
         const originalForPrompt = JSON.stringify(
           { ...selectedPackage, bookingLinks: undefined, id: undefined },
