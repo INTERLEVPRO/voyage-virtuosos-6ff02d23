@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createOpenAIProvider } from "@/lib/openai-provider";
+import { resolveAiBackend } from "@/lib/ai-gateway";
 import { packageSchema, type ParsedPackage } from "@/lib/package-schema";
 
 const PRICE_THRESHOLD = 30;
