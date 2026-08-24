@@ -1,25 +1,10 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 /**
- * Resolves an AI provider + model id from whatever backend key is available.
- * Prefers a direct OpenAI key, falls back to the Lovable AI gateway.
+ * Resolves an AI provider + model id from the direct OpenAI key.
+ * (No Lovable AI gateway fallback per project requirement.)
  */
 export const resolveAiBackend = () => {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  if (lovableKey) {
-    return {
-      provider: createOpenAICompatible({
-        name: "lovable",
-        baseURL: "https://ai.gateway.lovable.dev/v1",
-        headers: {
-          "Lovable-API-Key": lovableKey,
-          "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-        },
-      }),
-      modelId: "google/gemini-3.7-flash",
-    };
-  }
-
   const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     return {
@@ -43,3 +28,4 @@ export const createLovableAiGatewayProvider = (openaiApiKey: string) =>
       Authorization: `Bearer ${openaiApiKey}`,
     },
   });
+
