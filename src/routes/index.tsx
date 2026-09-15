@@ -275,23 +275,20 @@ function Index() {
                 </p>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">Reise planen &amp; buchen</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Weiter zu{" "}
-                  <Link to="/buchen" className="font-medium text-primary underline underline-offset-2">
-                    Buchung &amp; Reisepakete
-                  </Link>
-                  ,{" "}
-                  <Link to="/register" className="font-medium text-primary underline underline-offset-2">
-                    Konto erstellen
-                  </Link>{" "}
-                  oder{" "}
-                  <Link to="/impressum" className="font-medium text-primary underline underline-offset-2">
-                    Impressum &amp; Kontakt
-                  </Link>
-                  .
-                </p>
-              </div>
+  <div>
+  <h3 className="text-base font-semibold text-foreground">Reise planen</h3>
+  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+    Erstelle deinen individuellen Reisevorschlag, entdecke deine Reisepakete,
+    <Link to="/register" className="font-medium text-primary underline underline-offset-2">
+      Konto erstellen
+    </Link>{" "}
+    oder erfahre mehr über uns unter{" "}
+    <Link to="/impressum" className="font-medium text-primary underline underline-offset-2">
+      Impressum &amp; Kontakt
+    </Link>
+    .
+  </p>
+</div>
             </div>
           </div>
         </section>
