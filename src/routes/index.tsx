@@ -277,7 +277,11 @@ function Index() {
               <div>
   <h3 className="text-base font-semibold text-foreground">Reise planen</h3>
   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-    Erstelle deinen individuellen Reisevorschlag, entdecke deine Reisepakete,
+    Erstelle deinen individuellen Reisevorschlag,{" "}
+    <Link to="/buchen" className="font-medium text-primary underline underline-offset-2">
+      Buchung &amp; Reisepakete
+    </Link>{" "}
+    entdecken,
     <Link to="/register" className="font-medium text-primary underline underline-offset-2">
       Konto erstellen
     </Link>{" "}
