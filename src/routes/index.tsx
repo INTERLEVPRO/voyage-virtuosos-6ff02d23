@@ -216,7 +216,7 @@ function Index() {
             <div className="fade-up fade-up-delay-3 mt-10 flex w-full max-w-full justify-center gap-6 pb-2 sm:gap-4 sm:pb-0">
               <FeatureChip icon={Sparkles} iconColor="text-yellow-300 bg-yellow-400/20" title="Einfach" body="Wenige Fragen — sofort Ergebnisse" />
               <FeatureChip icon={ShieldCheck} iconColor="text-pink-300 bg-pink-400/20" title="Persönlich" body="Maßgeschneidert für dich" />
-              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Top bewertet" body="Echte Bewertungen & Ratings" />
+              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Transparent" body="Preise & Verfügbarkeit beim Anbieter" />
             </div>
 
             {/* ── Animated stats bar ── */}
