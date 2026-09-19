@@ -27,8 +27,9 @@ export type TravelPackage = {
   price: number;
   requestedBudget?: number;
   currency: string;
-  rating: number;
-  reviews: number;
+  /** Nur belegte Bewertungen; ohne Quelle undefined. */
+  rating?: number;
+  reviews?: number;
   matchScore: number;
   duration: string;
   durationDays?: number;
