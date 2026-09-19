@@ -374,8 +374,23 @@ type Mode =
       lastChangeRequest: string;
     };
 
-export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () => void }) {
+export function PackageDetail({
+  pkg,
+  onBack,
+  onPackageUpdated,
+}: {
+  pkg: TravelPackage;
+  onBack: () => void;
+  /** Angepasstes Paket nach oben melden, damit die Änderung beim Zurückgehen erhalten bleibt. */
+  onPackageUpdated?: (updated: TravelPackage) => void;
+}) {
   const [currentPkg, setCurrentPkg] = useState<TravelPackage>(pkg);
+
+  /** Paket lokal setzen und gleichzeitig an die Ergebnisliste melden. */
+  function applyPackage(updated: TravelPackage) {
+    setCurrentPkg(updated);
+    onPackageUpdated?.(updated);
+  }
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
