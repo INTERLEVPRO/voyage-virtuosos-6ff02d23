@@ -321,7 +321,8 @@ function transferUrl(pkg: TravelPackage) {
   return buildTransferUrl({
     destination: pkg.destination,
     hotel: pkg.hotelName || undefined,
-    travelers: pkg.travelers,
+    // Personenzahl geht immer mit zur Transferseite (Standard wie im Rest der Seite).
+    travelers: pkg.travelers && pkg.travelers > 0 ? pkg.travelers : 2,
     startDate: pkg.travelStartDate,
     month: pkg.travelMonth,
     durationDays: pkg.durationDays,
