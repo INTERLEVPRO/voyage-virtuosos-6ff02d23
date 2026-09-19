@@ -328,31 +328,48 @@ function extractCityName(destination: string): string {
   return city || cleaned;
 }
 
+/**
+ * Build a Date only when year/month/day form a real calendar date.
+ * Rejects rollovers such as 31.02.2027 -> 03.03.2027 or month 13.
+ */
+function safeDate(year: number, month1: number, day: number): Date | null {
+  if (!Number.isInteger(year) || !Number.isInteger(month1) || !Number.isInteger(day)) return null;
+  if (year < 1900 || year > 2200) return null;
+  if (month1 < 1 || month1 > 12) return null;
+  if (day < 1 || day > 31) return null;
+  const d = new Date(year, month1 - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month1 - 1 || d.getDate() !== day) return null;
+  return d;
+}
+
+/** True when the string contains a calendar date that cannot exist. */
+export function isValidCalendarDate(year: number, month1: number, day: number): boolean {
+  return safeDate(year, month1, day) !== null;
+}
+
 /** Parse a user-provided start date ("10. Juni 2026", "10.06.2026", "2026-06-10") to a Date. */
 export function parseStartDate(input?: string): Date | null {
   if (!input) return null;
   const s = input.trim();
   // ISO YYYY-MM-DD
   let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (m) return safeDate(Number(m[1]), Number(m[2]), Number(m[3]));
   // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
   m = s.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
   if (m) {
     const yr = Number(m[3]);
-    return new Date(yr < 100 ? 2000 + yr : yr, Number(m[2]) - 1, Number(m[1]));
+    return safeDate(yr < 100 ? 2000 + yr : yr, Number(m[2]), Number(m[1]));
   }
   // DD.MM or DD/MM, including ranges like "15.06 - 22.06".
   m = s.match(/(\d{1,2})[./-](\d{1,2})(?![./-]\d)/);
   if (m) {
     const day = Number(m[1]);
     const monthIdx = Number(m[2]);
-    if (monthIdx >= 1 && monthIdx <= 12 && day >= 1 && day <= 31) {
-      const now = new Date();
-      let year = now.getFullYear();
-      const candidate = new Date(year, monthIdx - 1, day);
-      if (candidate < now) year += 1;
-      return new Date(year, monthIdx - 1, day);
-    }
+    const now = new Date();
+    const thisYear = safeDate(now.getFullYear(), monthIdx, day);
+    if (!thisYear) return null;
+    if (thisYear < now) return safeDate(now.getFullYear() + 1, monthIdx, day) ?? thisYear;
+    return thisYear;
   }
   // "10. Juni 2026" or "10. Juni"
   m = s.match(/(\d{1,2})\.\s*([a-zäöüß]+)(?:\s+(\d{4}))?/i);
