@@ -54,7 +54,8 @@ async function trackClick(packageId: string, provider: string, url: string) {
     const res = await fetch("/api/track-click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, provider, url }),
+      // Interne Pfade (z. B. /transfer?…) als vollständige URL melden.
+      body: JSON.stringify({ packageId, provider, url: absoluteUrl(url) }),
     });
     if (!res.ok) {
       console.error(`Klick-Tracking fehlgeschlagen [${res.status}]`, await res.text());
