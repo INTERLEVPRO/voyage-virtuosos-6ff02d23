@@ -102,8 +102,6 @@ function TransferPage() {
       date_pickup: isoDate,
       transfer_date: isoDate,
       date: isoDate,
-      time_pickup: "12:00",
-      transfer_time: "12:00",
       passengers: pax,
       passengers_count: pax,
       adults: pax,
