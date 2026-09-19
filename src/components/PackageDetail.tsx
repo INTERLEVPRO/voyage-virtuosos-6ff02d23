@@ -453,7 +453,7 @@ export function PackageDetail({
           lastChangeRequest: changeRequest,
         });
       } else if (data.status === "updated") {
-        setCurrentPkg(data.updatedPackage);
+        applyPackage(data.updatedPackage);
         setMode({ kind: "idle" });
         setNotice(`Alles klar, ich habe dein Paket angepasst. ${data.changeSummary}`);
       } else if (data.status === "rejected") {
@@ -474,9 +474,19 @@ export function PackageDetail({
     callRefine(req, false);
   }
 
+  /**
+   * Bestätigt exakt das zuvor angezeigte Angebot. Es wird NICHT erneut bei der KI
+   * angefragt, damit der bestätigte Preis auch der übernommene Preis ist.
+   */
   function handleAcceptPrice() {
     if (mode.kind !== "confirming") return;
-    callRefine(mode.lastChangeRequest, true);
+    const confirmed = mode.proposal;
+    const summary = mode.changeSummary;
+    applyPackage(confirmed);
+    setMode({ kind: "idle" });
+    setNotice(
+      `Bestätigt — dein Paket kostet jetzt € ${confirmed.price.toLocaleString("de-DE")}. ${summary}`,
+    );
   }
 
   function handleCancelPrice() {
