@@ -71,9 +71,9 @@ function TransferPage() {
   useEffect(() => {
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
-    // Normalize the date to ISO (YYYY-MM-DD) and pick a default pickup time so
-    // the booking form is filled as far as possible — only the final payment
-    // step should remain for the user.
+    // Normalize the date to ISO (YYYY-MM-DD). The pickup TIME is deliberately
+    // left empty: it depends on the traveller's actual flight arrival and must
+    // never be silently assumed.
     const isoDate = (() => {
       const raw = search.date?.trim();
       if (!raw) return undefined;
