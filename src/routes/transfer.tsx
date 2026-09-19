@@ -77,6 +77,7 @@ function TransferPage() {
     search.pax && search.pax > 0 ? String(Math.min(8, Math.max(1, Math.round(search.pax)))) : null;
 
   useEffect(() => {
+    setWidgetFailed(false);
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
     // Normalize the date to ISO (YYYY-MM-DD). The pickup TIME is deliberately
