@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { KIWI_TAXI_AFFILIATE_URL, parseStartDate } from "@/lib/deeplinks";
 
 const KIWITAXI_PAP_MARKER = "728432";
