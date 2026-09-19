@@ -708,6 +708,26 @@ export function PackageDetail({
           packageId={currentPkg.id}
           ctaCls="bg-tier-premium text-white hover:bg-tier-premium/90"
         />
+
+        {/* Alle Buchungslinks gebündelt auf der Buchungsseite */}
+        <Link
+          to="/buchen"
+          search={{
+            id: currentPkg.id,
+            titel: currentPkg.title,
+            ziel: currentPkg.destination,
+            hotel: currentPkg.hotelName || undefined,
+            ab: currentPkg.origin,
+            tage: currentPkg.durationDays,
+            personen: currentPkg.travelers,
+            preis: Math.round(currentPkg.price),
+            datum: currentPkg.travelStartDate,
+            monat: currentPkg.travelMonth,
+          }}
+          className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-card transition-colors hover:bg-secondary/60"
+        >
+          <ShoppingBag className="h-4 w-4 text-primary" /> Alle Buchungslinks auf einer Seite
+        </Link>
       </div>
 
       {/* Total price strip */}
