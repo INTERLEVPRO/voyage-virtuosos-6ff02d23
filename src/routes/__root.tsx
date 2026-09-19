@@ -11,6 +11,7 @@ import {
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { FloatingIcons } from "@/components/FloatingIcons";
+import { ConsentBanner } from "@/components/ConsentBanner";
 
 import appCss from "../styles.css?url";
 
