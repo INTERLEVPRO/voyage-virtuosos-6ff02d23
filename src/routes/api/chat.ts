@@ -2573,7 +2573,12 @@ export const Route = createFileRoute("/api/chat")({
           if (!confirmedFinalTripState) {
             // 1. Destination correction
             const newDest = extractDestination(lastUserText);
-            if (newDest && newDest !== "deinem Reiseziel" && !isDateLike(newDest)) {
+            if (
+              newDest &&
+              newDest !== "deinem Reiseziel" &&
+              !isDateLike(newDest) &&
+              !isStopDestination(newDest)
+            ) {
               destination = cleanPlace(newDest);
             } else {
               const compound = parseCountryCity(lastUserText);
