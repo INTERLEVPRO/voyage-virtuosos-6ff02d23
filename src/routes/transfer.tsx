@@ -149,8 +149,14 @@ function TransferPage() {
         <h1 className="text-2xl font-semibold">Flughafentransfer buchen</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Festpreis · deutschsprachiger Support · Bezahlung direkt bei Kiwitaxi
+          {search.from ? ` · Abholung: ${search.from}` : ""}
+          {search.to ? ` · Ziel: ${search.to}` : ""}
           {search.date ? ` · Reisedatum: ${search.date}` : ""}
           {search.pax ? ` · Personen: ${search.pax}` : ""}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Bitte trage die Abholzeit passend zu deiner tatsächlichen Flugankunft ein — wir geben
+          keine Uhrzeit vor.
         </p>
       </header>
 
