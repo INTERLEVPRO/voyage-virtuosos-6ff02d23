@@ -527,9 +527,10 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-slate-500" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
-        <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground sm:text-[11px]">
-          <ShieldCheck className="h-3 w-3 text-[#0d9e4f]" />
-          Deine Daten sind sicher und werden nicht weitergegeben.
+        <p className="mt-3 flex items-center justify-center gap-1.5 px-4 text-center text-[10px] text-muted-foreground sm:text-[11px]">
+          <ShieldCheck className="h-3 w-3 shrink-0 text-[#0d9e4f]" />
+          Deine Reiseangaben werden zur Erstellung der Vorschläge von unserem KI-Dienstleister
+          verarbeitet. Details im Datenschutzhinweis.
         </p>
       </form>
 
