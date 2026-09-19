@@ -39,7 +39,8 @@ Rules:
 - Keep the same package "type" (basic/medium/premium).
 - Update price realistically based on the change (cheaper hotel → lower, more luxury → higher).
 - itinerary length must equal the duration in days.
-- matchScore: integer 80–98. rating: 4.0–4.9. reviews: 200–3000.
+- matchScore: integer 80–98 (how well the package matches the user's wishes).
+- Keep "rating" and "reviews" EXACTLY as in the original package. NEVER invent, raise or lower rating or review counts — unverified review data must not be produced.
 - Do NOT include bookingLinks — they are added separately.
 - "hotel" and "hotelName" MUST be a REAL, specific hotel name (e.g. "Cinnamon Red Colombo", "Jetwing Blue"). NEVER use generic text like "Sorgfältig ausgewähltes Hotel" or "Mittelklassehotel". If the user changes the hotel, provide a realistic hotel name for the destination and tier. If no specific hotel is known, use "Hotelvorschlag in [City]".
 Also produce a short German "changeSummary" (1–2 sentences) describing what changed compared to the original.

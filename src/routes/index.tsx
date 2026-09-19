@@ -122,7 +122,15 @@ function Index() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <PackageDetail pkg={selected} onBack={() => setSelected(null)} />
+        <PackageDetail
+          pkg={selected}
+          onBack={() => setSelected(null)}
+          onPackageUpdated={(updated) => {
+            // Anpassungen bleiben erhalten, auch wenn man zur Ergebnisliste zurückgeht.
+            setSelected(updated);
+            setPackages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+          }}
+        />
         <Footer />
       </div>
     );
@@ -208,14 +216,14 @@ function Index() {
             <div className="fade-up fade-up-delay-3 mt-10 flex w-full max-w-full justify-center gap-6 pb-2 sm:gap-4 sm:pb-0">
               <FeatureChip icon={Sparkles} iconColor="text-yellow-300 bg-yellow-400/20" title="Einfach" body="Wenige Fragen — sofort Ergebnisse" />
               <FeatureChip icon={ShieldCheck} iconColor="text-pink-300 bg-pink-400/20" title="Persönlich" body="Maßgeschneidert für dich" />
-              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Top bewertet" body="Echte Bewertungen & Ratings" />
+              <FeatureChip icon={Check} iconColor="text-emerald-300 bg-emerald-400/20" title="Transparent" body="Preise & Verfügbarkeit beim Anbieter" />
             </div>
 
             {/* ── Animated stats bar ── */}
             <div className="fade-up fade-up-delay-4 mt-8 flex justify-center gap-6 sm:gap-10">
-              <StatPill icon={Globe} value="120+" label="Reiseziele" />
-              <StatPill icon={Plane} value="50K+" label="Pakete erstellt" />
-              <StatPill icon={MapPin} value="4.9★" label="Bewertung" />
+              <StatPill icon={Globe} value="Weltweit" label="Reiseziele" />
+              <StatPill icon={Plane} value="Flug + Hotel" label="inkl. Aktivitäten" />
+              <StatPill icon={MapPin} value="Kostenlos" label="& unverbindlich" />
             </div>
           </div>
 

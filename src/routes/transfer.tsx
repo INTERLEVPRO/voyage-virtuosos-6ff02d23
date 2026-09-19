@@ -71,9 +71,9 @@ function TransferPage() {
   useEffect(() => {
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
-    // Normalize the date to ISO (YYYY-MM-DD) and pick a default pickup time so
-    // the booking form is filled as far as possible — only the final payment
-    // step should remain for the user.
+    // Normalize the date to ISO (YYYY-MM-DD). The pickup TIME is deliberately
+    // left empty: it depends on the traveller's actual flight arrival and must
+    // never be silently assumed.
     const isoDate = (() => {
       const raw = search.date?.trim();
       if (!raw) return undefined;
@@ -102,8 +102,6 @@ function TransferPage() {
       date_pickup: isoDate,
       transfer_date: isoDate,
       date: isoDate,
-      time_pickup: "12:00",
-      transfer_time: "12:00",
       passengers: pax,
       passengers_count: pax,
       adults: pax,
@@ -151,8 +149,14 @@ function TransferPage() {
         <h1 className="text-2xl font-semibold">Flughafentransfer buchen</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Festpreis · deutschsprachiger Support · Bezahlung direkt bei Kiwitaxi
+          {search.from ? ` · Abholung: ${search.from}` : ""}
+          {search.to ? ` · Ziel: ${search.to}` : ""}
           {search.date ? ` · Reisedatum: ${search.date}` : ""}
           {search.pax ? ` · Personen: ${search.pax}` : ""}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Bitte trage die Abholzeit passend zu deiner tatsächlichen Flugankunft ein — wir geben
+          keine Uhrzeit vor.
         </p>
       </header>
 

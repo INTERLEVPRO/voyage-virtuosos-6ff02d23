@@ -227,11 +227,14 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
   }, [messages, status, onPackagesReady]);
 
+  // Neueste Nutzernachricht zuerst: ein später geändertes Reiseziel gewinnt
+  // gegenüber einem früher genannten Ziel.
   const generationContext = useMemo(() => {
     const userMessages = messages
       .filter((message) => message.role === "user")
       .map((message) => message.parts.map((part) => (part.type === "text" ? part.text : "")).join(""))
-      .filter(Boolean);
+      .filter(Boolean)
+      .reverse();
     return userMessages.length ? userMessages.join("\n") : input;
   }, [messages, input]);
 
@@ -524,9 +527,10 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-slate-500" /> : <Send className="h-5 w-5" />}
           </button>
         </div>
-        <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground sm:text-[11px]">
-          <ShieldCheck className="h-3 w-3 text-[#0d9e4f]" />
-          Deine Daten sind sicher und werden nicht weitergegeben.
+        <p className="mt-3 flex items-center justify-center gap-1.5 px-4 text-center text-[10px] text-muted-foreground sm:text-[11px]">
+          <ShieldCheck className="h-3 w-3 shrink-0 text-[#0d9e4f]" />
+          Deine Reiseangaben werden zur Erstellung der Vorschläge von unserem KI-Dienstleister
+          verarbeitet. Details im Datenschutzhinweis.
         </p>
       </form>
 
@@ -690,13 +694,16 @@ function detectDestination(query: string): { emoji: string; title: string; secti
     palma: "mallorca", majorca: "mallorca",
   };
 
-  // Direct match
-  for (const key of Object.keys(DESTINATION_GUIDES)) {
-    if (q.includes(key)) return DESTINATION_GUIDES[key];
-  }
-  // Alias match
-  for (const [alias, canonical] of Object.entries(ALIASES)) {
-    if (q.includes(alias) && DESTINATION_GUIDES[canonical]) return DESTINATION_GUIDES[canonical];
+  // Zeile für Zeile prüfen — die Zeilen kommen in Reihenfolge "neueste zuerst",
+  // damit ein nachträglich geändertes Reiseziel gewinnt.
+  const lines = q.split("\n").filter((l) => l.trim());
+  for (const line of lines.length ? lines : [q]) {
+    for (const key of Object.keys(DESTINATION_GUIDES)) {
+      if (line.includes(key)) return DESTINATION_GUIDES[key];
+    }
+    for (const [alias, canonical] of Object.entries(ALIASES)) {
+      if (line.includes(alias) && DESTINATION_GUIDES[canonical]) return DESTINATION_GUIDES[canonical];
+    }
   }
   return null;
 }

@@ -115,6 +115,60 @@ function Impressum() {
             </div>
           </div>
         </div>
+
+        {/* Datenschutz-Abschnitt — Ziel des Footer-Links "Datenschutz" */}
+        <section id="datenschutz" className="mt-16 max-w-3xl space-y-6 text-sm text-foreground/80 leading-relaxed scroll-mt-24">
+          <h2 className="text-2xl font-semibold text-foreground">Datenschutz</h2>
+
+          <div>
+            <p className="font-semibold text-foreground">Verantwortlich</p>
+            <p>INTERLEV GmbH, Hemmelrather Weg 201, 51377 Leverkusen, contact@interlev.com</p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-foreground">Reiseplanung mit KI</p>
+            <p>
+              Deine Angaben im Reise-Chat (z. B. Reiseziel, Zeitraum, Budget, Personenzahl und dein
+              freier Text) werden zur Erstellung der Vorschläge an unseren KI-Dienstleister OpenAI
+              übermittelt und dort verarbeitet. Bitte gib im Chat keine sensiblen personenbezogenen
+              Daten ein.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-foreground">Anfragen und Buchungswünsche</p>
+            <p>
+              Wenn du eine Anfrage sendest, speichern wir die übermittelten Angaben (Name, E-Mail,
+              Telefon, Nachricht und die Reisedaten), um deine Anfrage zu bearbeiten.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-foreground">Partner-Links</p>
+            <p>
+              Buchungen erfolgen bei Partneranbietern (u. a. Kiwi.com, KiwiTaxi, Klook). Beim Klick
+              auf einen Buchungs-Button speichern wir anonym, welches Angebot geöffnet wurde, und du
+              wirst zum jeweiligen Anbieter weitergeleitet. Dort gelten dessen Datenschutzhinweise.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-foreground">Analyse (Google Analytics)</p>
+            <p>
+              Google Analytics wird ausschließlich nach deiner ausdrücklichen Einwilligung geladen.
+              Ohne Einwilligung werden keine Analyse-Cookies gesetzt. Du kannst deine Entscheidung
+              jederzeit über „Cookie-Einstellungen“ im Fußbereich ändern oder widerrufen.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-foreground">Deine Rechte</p>
+            <p>
+              Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
+              Datenübertragbarkeit und Widerspruch. Schreib uns dazu an contact@interlev.com.
+            </p>
+          </div>
+        </section>
       </main>
 
       <Footer />

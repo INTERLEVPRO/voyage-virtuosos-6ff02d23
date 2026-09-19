@@ -11,6 +11,7 @@ import {
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { FloatingIcons } from "@/components/FloatingIcons";
+import { ConsentBanner } from "@/components/ConsentBanner";
 
 import appCss from "../styles.css?url";
 
@@ -173,16 +174,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         `,
       },
       {
-        src: "https://www.googletagmanager.com/gtag/js?id=G-BYSENCWW5P",
-        async: true,
-      },
-      {
+        // Consent Mode v2 — standardmäßig alles verweigert. Google Analytics wird
+        // erst nach ausdrücklicher Zustimmung nachgeladen (siehe src/lib/consent.ts).
         type: "text/javascript",
         children: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-BYSENCWW5P');
+          gtag('consent', 'default', {
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            analytics_storage: 'denied',
+            wait_for_update: 500
+          });
         `,
       },
     ],
@@ -213,6 +217,7 @@ function RootComponent() {
         </div>
         <ClientOnly fallback={null}>
           <Toaster position="top-center" richColors />
+          <ConsentBanner />
         </ClientOnly>
       </AuthProvider>
     </QueryClientProvider>

@@ -131,6 +131,27 @@ const DEST_IATA: Record<string, string> = {
   italy: "FLR",
   deutschland: "FRA",
   germany: "FRA",
+  goa: "GOI",
+  "nord goa": "GOI",
+  "süd goa": "GOI",
+  panaji: "GOI",
+  kochi: "COK",
+  cochin: "COK",
+  kerala: "COK",
+  delhi: "DEL",
+  "neu delhi": "DEL",
+  mumbai: "BOM",
+  bombay: "BOM",
+  chennai: "MAA",
+  bengaluru: "BLR",
+  bangalore: "BLR",
+  sansibar: "ZNZ",
+  zanzibar: "ZNZ",
+  hanoi: "HAN",
+  "ho chi minh": "SGN",
+  saigon: "SGN",
+  algarve: "FAO",
+  faro: "FAO",
 };
 
 const MONTHS: Record<string, number> = {
@@ -181,13 +202,22 @@ function normalizeLookupKey(input?: string): string {
     .trim();
 }
 
+/** Every IATA code we actually know. A bare 3-letter input is only accepted as
+ *  a code when it appears here — otherwise place names such as "Goa" would be
+ *  misread as an airport code (GOA = Genoa, Italy). */
+const KNOWN_IATA_CODES = new Set<string>([
+  ...Object.values(ORIGIN_IATA),
+  ...Object.values(DEST_IATA),
+]);
+
 function lookupIata(input: string | undefined, map: Record<string, string>): string | null {
   const key = normalizeLookupKey(input);
   if (!key) return null;
-  if (/^[a-z]{3}$/i.test(key)) return key.toUpperCase();
+
   const normalizedMap = Object.fromEntries(
     Object.entries(map).map(([alias, code]) => [normalizeLookupKey(alias), code]),
   );
+  // 1. Resolve place names first — a place name always wins over a code guess.
   if (normalizedMap[key]) return normalizedMap[key];
 
   const words = key.split(/\s+/).filter(Boolean);
@@ -196,6 +226,11 @@ function lookupIata(input: string | undefined, map: Record<string, string>): str
       const phrase = words.slice(start, start + size).join(" ");
       if (normalizedMap[phrase]) return normalizedMap[phrase];
     }
+  }
+
+  // 2. Only then accept an explicit, known IATA code.
+  if (/^[a-z]{3}$/i.test(key) && KNOWN_IATA_CODES.has(key.toUpperCase())) {
+    return key.toUpperCase();
   }
 
   return null;
@@ -293,31 +328,48 @@ function extractCityName(destination: string): string {
   return city || cleaned;
 }
 
+/**
+ * Build a Date only when year/month/day form a real calendar date.
+ * Rejects rollovers such as 31.02.2027 -> 03.03.2027 or month 13.
+ */
+function safeDate(year: number, month1: number, day: number): Date | null {
+  if (!Number.isInteger(year) || !Number.isInteger(month1) || !Number.isInteger(day)) return null;
+  if (year < 1900 || year > 2200) return null;
+  if (month1 < 1 || month1 > 12) return null;
+  if (day < 1 || day > 31) return null;
+  const d = new Date(year, month1 - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month1 - 1 || d.getDate() !== day) return null;
+  return d;
+}
+
+/** True when the string contains a calendar date that cannot exist. */
+export function isValidCalendarDate(year: number, month1: number, day: number): boolean {
+  return safeDate(year, month1, day) !== null;
+}
+
 /** Parse a user-provided start date ("10. Juni 2026", "10.06.2026", "2026-06-10") to a Date. */
 export function parseStartDate(input?: string): Date | null {
   if (!input) return null;
   const s = input.trim();
   // ISO YYYY-MM-DD
   let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (m) return safeDate(Number(m[1]), Number(m[2]), Number(m[3]));
   // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
   m = s.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
   if (m) {
     const yr = Number(m[3]);
-    return new Date(yr < 100 ? 2000 + yr : yr, Number(m[2]) - 1, Number(m[1]));
+    return safeDate(yr < 100 ? 2000 + yr : yr, Number(m[2]), Number(m[1]));
   }
   // DD.MM or DD/MM, including ranges like "15.06 - 22.06".
   m = s.match(/(\d{1,2})[./-](\d{1,2})(?![./-]\d)/);
   if (m) {
     const day = Number(m[1]);
     const monthIdx = Number(m[2]);
-    if (monthIdx >= 1 && monthIdx <= 12 && day >= 1 && day <= 31) {
-      const now = new Date();
-      let year = now.getFullYear();
-      const candidate = new Date(year, monthIdx - 1, day);
-      if (candidate < now) year += 1;
-      return new Date(year, monthIdx - 1, day);
-    }
+    const now = new Date();
+    const thisYear = safeDate(now.getFullYear(), monthIdx, day);
+    if (!thisYear) return null;
+    if (thisYear < now) return safeDate(now.getFullYear() + 1, monthIdx, day) ?? thisYear;
+    return thisYear;
   }
   // "10. Juni 2026" or "10. Juni"
   m = s.match(/(\d{1,2})\.\s*([a-zäöüß]+)(?:\s+(\d{4}))?/i);
@@ -326,12 +378,11 @@ export function parseStartDate(input?: string): Date | null {
     if (monthIdx) {
       const day = Number(m[1]);
       const now = new Date();
-      let year = m[3] ? Number(m[3]) : now.getFullYear();
-      if (!m[3]) {
-        const candidate = new Date(year, monthIdx - 1, day);
-        if (candidate < now) year += 1;
-      }
-      return new Date(year, monthIdx - 1, day);
+      if (m[3]) return safeDate(Number(m[3]), monthIdx, day);
+      const thisYear = safeDate(now.getFullYear(), monthIdx, day);
+      if (!thisYear) return null;
+      if (thisYear < now) return safeDate(now.getFullYear() + 1, monthIdx, day) ?? thisYear;
+      return thisYear;
     }
   }
   return null;
@@ -557,12 +608,13 @@ export function buildKlookHotelUrl(opts: {
 }
 
 /**
- * Klook hotel destination URL.
+ * Klook hotel URL.
  *
- * Known destinations open a stable Klook hotel-results page. Dates and guest
- * details are intentionally left for the traveller to fill on Klook because
- * destination pages do not support those values reliably without Klook's
- * internal location-selection state.
+ * Verified destination IDs open a stable Klook hotel-results page and carry the
+ * travel dates and guest count as far as Klook accepts them. Everything else
+ * opens a Klook *search* for the named hotel/city instead of the generic hotel
+ * homepage, so the destination the traveller saw is never silently dropped.
+ * We never invent Klook destination IDs.
  */
 export function buildKlookSearchUrl(opts: {
   destination: string;
@@ -576,10 +628,30 @@ export function buildKlookSearchUrl(opts: {
 }): string {
   const city = extractCityName(opts.destination);
   const destinationSlug = lookupKlookHotelDestination(city);
-  const aid = encodeURIComponent(opts.aid || AFFILIATE_MARKER);
-  const finalUrl = destinationSlug
-    ? `https://www.klook.com/destination/${destinationSlug}/3-hotel/?aid=${aid}`
-    : `https://www.klook.com/hotels/?aid=${aid}`;
+  const aid = opts.aid || AFFILIATE_MARKER;
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  const adults = Math.max(1, Math.round(opts.travelers ?? 2));
+  const rooms = Math.max(1, Math.round(opts.rooms ?? Math.ceil(adults / 2)));
+
+  const params = new URLSearchParams({ aid });
+  if (dates) {
+    params.set("start_time", dates[0]);
+    params.set("end_time", dates[1]);
+    params.set("checkin", dates[0]);
+    params.set("checkout", dates[1]);
+  }
+  params.set("adults", String(adults));
+  params.set("rooms", String(rooms));
+
+  let finalUrl: string;
+  if (destinationSlug) {
+    finalUrl = `https://www.klook.com/destination/${destinationSlug}/3-hotel/?${params.toString()}`;
+  } else {
+    const keyword = [opts.hotel, city].filter(Boolean).join(" ") || city;
+    if (!keyword) return `https://www.klook.com/hotels/?aid=${encodeURIComponent(aid)}`;
+    params.set("keyword", `${keyword} hotel`);
+    finalUrl = `https://www.klook.com/search/result/?${params.toString()}`;
+  }
 
   console.log("Klook hotel deeplink:", finalUrl);
   return finalUrl;
@@ -627,13 +699,31 @@ export const buildBookingUrl = buildKlookHotelUrl;
 
 // ─── Kiwitaxi (Transfer) ────────────────────────────────────────────────────
 
+/** Canonical public origin — used to turn internal routes into shareable links. */
+export const SITE_ORIGIN = "https://weltweiturlaub.de";
+
+/** Turn an app-internal path into an absolute URL (for e-mail, sharing, etc.). */
+export function absoluteUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const base =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : SITE_ORIGIN;
+  return `${base}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
+}
+
 /**
- * Transfer deeplink: Redirect to internal /transfer page with correct search context
- * so user sees the route & date prefilled in the white-label widget or fallback link.
+ * Transfer deeplink to the internal /transfer page.
+ *
+ * An airport transfer starts at the ARRIVAL airport of the destination, never
+ * at the departure city of the outbound flight. Pickup therefore defaults to
+ * the destination airport, drop-off to the hotel (when known) or the
+ * destination itself. No pickup time is invented — the traveller picks it.
  */
 export function buildTransferUrl(opts?: {
   destination?: string;
-  origin?: string;
+  /** Hotel / accommodation used as drop-off, when known. */
+  hotel?: string;
   travelers?: number;
   startDate?: string;
   month?: string;
@@ -641,12 +731,18 @@ export function buildTransferUrl(opts?: {
 }): string {
   if (!opts) return "/transfer";
   const params = new URLSearchParams();
-  const from = cleanDestination(opts.origin);
-  const to = cleanDestination(opts.destination);
-  const pickup = parseStartDate(opts.startDate);
+  const destination = cleanDestination(opts.destination);
+  const city = extractCityName(destination);
+  const destIata = lookupDestIata(destination);
+  const from = city ? `${city} Flughafen${destIata ? ` (${destIata})` : ""}` : "";
+  const to = cleanDestination(opts.hotel) || city;
+  const pickup = parseStartDate(opts.startDate) ?? dateFromMonthDescription(opts.month);
+
   if (from) params.set("from", from);
   if (to) params.set("to", to);
-  if (to.includes(",")) params.set("country", to.split(",").at(-1)?.trim() ?? "");
+  if (destination.includes(",")) {
+    params.set("country", destination.split(",").at(-1)?.trim() ?? "");
+  }
   if (opts.travelers) params.set("pax", String(Math.max(1, Math.round(opts.travelers))));
   if (pickup) params.set("date", isoDate(pickup));
   const query = params.toString();

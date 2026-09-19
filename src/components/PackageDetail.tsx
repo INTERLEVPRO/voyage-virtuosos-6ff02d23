@@ -45,19 +45,26 @@ import {
   buildKlookActivitiesUrl,
   lookupOriginIata,
   buildTransferUrl,
-  KIWI_TAXI_AFFILIATE_URL,
-
+  absoluteUrl,
 } from "@/lib/deeplinks";
 
+/** Report an outbound click. Failures are logged, never silently swallowed. */
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
-    await fetch("/api/track-click", {
+    const res = await fetch("/api/track-click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, provider, url }),
+      // Interne Pfade (z. B. /transfer?…) als vollständige URL melden.
+      body: JSON.stringify({ packageId, provider, url: absoluteUrl(url) }),
     });
-  } catch {
-    // non-fatal
+    if (!res.ok) {
+      console.error(`Klick-Tracking fehlgeschlagen [${res.status}]`, await res.text());
+      return;
+    }
+    const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!data?.ok) console.error("Klick-Tracking nicht gespeichert:", data?.error ?? "unbekannt");
+  } catch (err) {
+    console.error("Klick-Tracking nicht erreichbar:", err);
   }
 }
 
@@ -236,8 +243,23 @@ function openRouteInMaps(destination: string, place?: string) {
 function bookingHotelUrl(pkg: TravelPackage) {
   return buildKlookSearchUrl({
     destination: pkg.destination,
+    hotel: pkg.hotelName || undefined,
     travelers: pkg.travelers,
     rooms: Math.max(1, Math.ceil((pkg.travelers ?? 1) / 2)),
+    startDate: pkg.travelStartDate,
+    month: pkg.travelMonth,
+    durationDays: pkg.durationDays,
+  });
+}
+
+function flightBookingUrl(pkg: TravelPackage) {
+  return buildAviasalesSearchUrl({
+    destination: pkg.destination,
+    origin: pkg.origin,
+    travelers: pkg.travelers,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
   });
 }
 
@@ -284,9 +306,10 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
   lines.push("=== Buchungs-Links ===");
-  lines.push(`Hotel: ${bookingHotelUrl(pkg)}`);
-  lines.push(`Aktivitäten: ${klookActivityUrl(pkg)}`);
-  lines.push(`Transfer: ${transferUrl(pkg)}`);
+  lines.push(`Flug: ${absoluteUrl(flightBookingUrl(pkg))}`);
+  lines.push(`Hotel: ${absoluteUrl(bookingHotelUrl(pkg))}`);
+  lines.push(`Aktivitäten: ${absoluteUrl(klookActivityUrl(pkg))}`);
+  lines.push(`Transfer: ${absoluteUrl(transferUrl(pkg))}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
   const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
@@ -297,7 +320,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
 function transferUrl(pkg: TravelPackage) {
   return buildTransferUrl({
     destination: pkg.destination,
-    origin: pkg.origin,
+    hotel: pkg.hotelName || undefined,
     travelers: pkg.travelers,
     startDate: pkg.travelStartDate,
     month: pkg.travelMonth,
@@ -352,8 +375,23 @@ type Mode =
       lastChangeRequest: string;
     };
 
-export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () => void }) {
+export function PackageDetail({
+  pkg,
+  onBack,
+  onPackageUpdated,
+}: {
+  pkg: TravelPackage;
+  onBack: () => void;
+  /** Angepasstes Paket nach oben melden, damit die Änderung beim Zurückgehen erhalten bleibt. */
+  onPackageUpdated?: (updated: TravelPackage) => void;
+}) {
   const [currentPkg, setCurrentPkg] = useState<TravelPackage>(pkg);
+
+  /** Paket lokal setzen und gleichzeitig an die Ergebnisliste melden. */
+  function applyPackage(updated: TravelPackage) {
+    setCurrentPkg(updated);
+    onPackageUpdated?.(updated);
+  }
   const [mode, setMode] = useState<Mode>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -380,12 +418,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
   });
   const displayHotelName =
     currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
-  const hotelUrl = buildKlookSearchUrl({
-    destination: dest,
-    travelers: currentPkg.travelers,
-    rooms: Math.max(1, Math.ceil((currentPkg.travelers ?? 1) / 2)),
-  });
-  const taxiUrl = KIWI_TAXI_AFFILIATE_URL;
+  const hotelUrl = bookingHotelUrl(currentPkg);
+  // Haupt-Button und Tages-Buttons nutzen dieselbe Transferseite mit gleichem Kontext.
+  const taxiUrl = transferUrl(currentPkg);
 
   const activitiesUrl = buildKlookActivitiesUrl({
     destination: dest,
@@ -419,7 +454,7 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           lastChangeRequest: changeRequest,
         });
       } else if (data.status === "updated") {
-        setCurrentPkg(data.updatedPackage);
+        applyPackage(data.updatedPackage);
         setMode({ kind: "idle" });
         setNotice(`Alles klar, ich habe dein Paket angepasst. ${data.changeSummary}`);
       } else if (data.status === "rejected") {
@@ -440,9 +475,19 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
     callRefine(req, false);
   }
 
+  /**
+   * Bestätigt exakt das zuvor angezeigte Angebot. Es wird NICHT erneut bei der KI
+   * angefragt, damit der bestätigte Preis auch der übernommene Preis ist.
+   */
   function handleAcceptPrice() {
     if (mode.kind !== "confirming") return;
-    callRefine(mode.lastChangeRequest, true);
+    const confirmed = mode.proposal;
+    const summary = mode.changeSummary;
+    applyPackage(confirmed);
+    setMode({ kind: "idle" });
+    setNotice(
+      `Bestätigt — dein Paket kostet jetzt € ${confirmed.price.toLocaleString("de-DE")}. ${summary}`,
+    );
   }
 
   function handleCancelPrice() {
@@ -622,7 +667,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flüge"
           subtitle={currentPkg.flight}
           ratingLabel="Aviasales"
-          price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei Aviasales ansehen"
           provider="flight"
           url={flightUrl}
@@ -634,7 +678,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Flughafen-Transfer"
           subtitle="Privater Taxi-Transfer vom/zum Flughafen"
           ratingLabel="Kiwitaxi"
-          price={Math.round(currentPkg.price * 0.05)}
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
           url={taxiUrl}
@@ -647,7 +690,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           subtitle={displayHotelName}
           ratingLabel="Klook Hotels"
           extra={currentPkg.mealPlan}
-          price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei Klook Hotels ansehen"
           provider="hotel"
           url={hotelUrl}
@@ -660,7 +702,6 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
           ratingLabel="Klook"
-          price={Math.round(currentPkg.price * 0.13)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
           url={activitiesUrl}
@@ -807,6 +848,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                   href={bookingHotelUrl(currentPkg)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(currentPkg.id, "hotel_day", bookingHotelUrl(currentPkg));
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Hotel className="h-5 w-5" /> Hotel buchen
@@ -814,7 +858,14 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                 <a
                   href={klookActivityUrl(currentPkg, d.title)}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(
+                      currentPkg.id,
+                      "activities_day",
+                      klookActivityUrl(currentPkg, d.title),
+                    );
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Ticket className="h-3 w-3" /> Aktivität buchen
@@ -822,7 +873,10 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
                 <a
                   href={transferUrl(currentPkg)}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(currentPkg.id, "taxi_day", transferUrl(currentPkg));
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Car className="h-3 w-3" /> Transfer
@@ -989,7 +1043,7 @@ function ProviderRow({
   extra?: string;
   ratingLabel: string;
   rating?: string;
-  price: number;
+  price?: number;
   ctaLabel: string;
   provider: string;
   url?: string;
@@ -1025,8 +1079,12 @@ function ProviderRow({
           {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
         </div>
       </div>
-      <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-        <div className="text-lg font-bold text-foreground">€ {price.toLocaleString("de-DE")}</div>
+      <div className="flex items-center justify-end gap-4 sm:flex-col sm:items-end">
+        {typeof price === "number" && (
+          <div className="text-lg font-bold text-foreground">
+            € {price.toLocaleString("de-DE")}
+          </div>
+        )}
         {url && (
           <a
             href={url}

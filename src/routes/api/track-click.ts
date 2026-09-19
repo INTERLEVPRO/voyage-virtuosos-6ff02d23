@@ -24,11 +24,16 @@ export const Route = createFileRoute("/api/track-click")({
         // Only insert package_id if it looks like a uuid (DB-stored package).
         const isUuid = packageId && /^[0-9a-f-]{36}$/i.test(packageId);
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin.from("affiliate_clicks").insert({
+        const { error } = await supabaseAdmin.from("affiliate_clicks").insert({
           package_id: isUuid ? packageId : null,
           provider,
           url,
         });
+        if (error) {
+          // Never report success for a write that did not happen.
+          console.error("affiliate_clicks insert failed:", error.message, error.details);
+          return Response.json({ ok: false, error: error.message }, { status: 500 });
+        }
         return Response.json({ ok: true });
       },
     },
