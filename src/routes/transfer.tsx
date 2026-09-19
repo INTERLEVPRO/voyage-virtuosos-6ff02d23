@@ -18,7 +18,13 @@ export const Route = createFileRoute("/transfer")({
     from: typeof s.from === "string" ? s.from : undefined,
     to: typeof s.to === "string" ? s.to : undefined,
     country: typeof s.country === "string" ? s.country : undefined,
-    pax: typeof s.pax === "string" ? Number(s.pax) || undefined : undefined,
+    // Personenzahl akzeptiert Zahl und Text, damit sie nie verloren geht.
+    pax:
+      typeof s.pax === "number"
+        ? s.pax || undefined
+        : typeof s.pax === "string"
+          ? Number(s.pax) || undefined
+          : undefined,
     date: typeof s.date === "string" ? s.date : undefined,
   }),
   head: () => ({
