@@ -40,6 +40,7 @@ RULES:
 - Never put attractions in different cities into the same Vormittag/Nachmittag/Abend slot.
 - Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
 - Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
+- ÜBERNACHTUNGS-REALITÄT: Das Paket nennt EIN Hotel. Alle Tage müssen deshalb Tagesausflüge sein, die von diesem Hotel aus realistisch machbar sind (max. ~150 km / 3 h einfache Strecke, Rückkehr am selben Abend). Plane KEINE Orte ein, die eine Übernachtung an einem anderen Ort erfordern (z. B. nicht Negombo als einziges Hotel und dazu Ella, Yala und Galle). Wenn das Reiseziel eine Rundreise nahelegt, konzentriere dich stattdessen auf die Region rund um das Hotel.
 
 FORMAT (EXACTLY one line per day, nothing else):
 Tag N — <Thema mit echtem Ort>: Vormittag: <konkrete Orte/Aktivitäten> · Nachmittag: <konkrete Orte/Aktivitäten> · Abend: <konkrete Orte/Aktivitäten>
