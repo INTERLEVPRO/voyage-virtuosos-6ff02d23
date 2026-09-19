@@ -1029,7 +1029,7 @@ function ProviderRow({
   extra?: string;
   ratingLabel: string;
   rating?: string;
-  price: number;
+  price?: number;
   ctaLabel: string;
   provider: string;
   url?: string;
