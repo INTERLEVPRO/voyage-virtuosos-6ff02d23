@@ -847,6 +847,9 @@ export function PackageDetail({
                   href={bookingHotelUrl(currentPkg)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(currentPkg.id, "hotel_day", bookingHotelUrl(currentPkg));
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Hotel className="h-5 w-5" /> Hotel buchen
@@ -854,7 +857,14 @@ export function PackageDetail({
                 <a
                   href={klookActivityUrl(currentPkg, d.title)}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(
+                      currentPkg.id,
+                      "activities_day",
+                      klookActivityUrl(currentPkg, d.title),
+                    );
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Ticket className="h-3 w-3" /> Aktivität buchen
@@ -862,7 +872,10 @@ export function PackageDetail({
                 <a
                   href={transferUrl(currentPkg)}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackClick(currentPkg.id, "taxi_day", transferUrl(currentPkg));
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40"
                 >
                   <Car className="h-3 w-3" /> Transfer
