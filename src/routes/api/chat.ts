@@ -1834,7 +1834,8 @@ export type HotelDetails = {
   hotelName: string;
   cityOrArea: string;
   boardType: string;
-  rating: string;
+  /** Nur gesetzt, wenn die Quelle wirklich eine Bewertung nennt. Nie erfunden. */
+  rating?: string;
 };
 
 export function parseHotelDetails(
@@ -1876,7 +1877,8 @@ export function parseHotelDetails(
     hotelName.replace(new RegExp(`\\s+in\\s+${cleanDest}$`, "i"), "").trim() ||
     `Hotelvorschlag in ${cleanDest}`;
 
-  let rating = tier === "basic" ? "8.2/10" : tier === "medium" ? "8.7/10" : "9.3/10";
+  // Keine Vorgabe-Note: ohne Angabe in der Quelle bleibt die Bewertung leer.
+  let rating: string | undefined;
   for (const part of parts) {
     if (/\b\d+(\.\d+)?\s*\/\s*10\b/.test(part)) {
       rating = part;
