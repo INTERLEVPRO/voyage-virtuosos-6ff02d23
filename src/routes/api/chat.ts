@@ -2637,11 +2637,17 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         destination = dedupePlaceParts(destination);
+        if (destination) destination = stripCopula(destination);
         if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
 
         // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
         const validationMissing: MissingField[] = [];
-        if (!destination || /^deinem reiseziel$/i.test(destination) || isDateLike(destination))
+        if (
+          !destination ||
+          /^deinem reiseziel$/i.test(destination) ||
+          isDateLike(destination) ||
+          isStopDestination(destination)
+        )
           validationMissing.push("destination");
         if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
         if (!requestedDurationDays || requestedDurationDays <= 0)
