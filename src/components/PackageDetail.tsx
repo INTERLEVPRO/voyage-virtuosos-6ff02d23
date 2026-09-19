@@ -666,7 +666,6 @@ export function PackageDetail({
           title="Flüge"
           subtitle={currentPkg.flight}
           ratingLabel="Aviasales"
-          price={Math.round(currentPkg.price * 0.32)}
           ctaLabel="Bei Aviasales ansehen"
           provider="flight"
           url={flightUrl}
