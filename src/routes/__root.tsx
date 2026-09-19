@@ -216,6 +216,7 @@ function RootComponent() {
         </div>
         <ClientOnly fallback={null}>
           <Toaster position="top-center" richColors />
+          <ConsentBanner />
         </ClientOnly>
       </AuthProvider>
     </QueryClientProvider>
