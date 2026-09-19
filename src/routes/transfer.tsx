@@ -67,11 +67,14 @@ export const Route = createFileRoute("/transfer")({
 
 function TransferPage() {
   const search = Route.useSearch();
+  const [widgetFailed, setWidgetFailed] = useState(false);
   // Nur ein real existierendes Kalenderdatum wird angezeigt bzw. übergeben.
   const validDate = parseStartDate(search.date);
   const isoDateLabel = validDate
     ? validDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
+  const paxLabel =
+    search.pax && search.pax > 0 ? String(Math.min(8, Math.max(1, Math.round(search.pax)))) : null;
 
   useEffect(() => {
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
