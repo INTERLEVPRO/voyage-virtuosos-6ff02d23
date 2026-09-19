@@ -1003,7 +1003,7 @@ export function PackageDetail({
           body="Bewertungen direkt von den Anbietern"
         />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
-        <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
+        <TrustItem icon={Headphones} title="Support" body="Per E-Mail für dich da" />
       </div>
 
       <p
