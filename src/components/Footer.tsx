@@ -70,24 +70,8 @@ export function Footer() {
             </li>
           </ul>
 
-          <div className="flex gap-3 pt-2 sm:pt-4">
-            <a
-              href="https://www.facebook.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center bg-[#3b5998] hover:bg-[#2d4373] transition"
-            >
-              <Facebook className="h-5 w-5 sm:h-7 sm:w-7 text-white fill-current" />
-            </a>
-            <a
-              href="https://www.instagram.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-90 transition"
-            >
-              <Instagram className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-            </a>
-          </div>
+          {/* Social-Icons werden erst wieder angezeigt, wenn echte Profil-Links
+              vorliegen — Links auf Plattform-Startseiten wären irreführend. */}
         </div>
       </div>
     </footer>
