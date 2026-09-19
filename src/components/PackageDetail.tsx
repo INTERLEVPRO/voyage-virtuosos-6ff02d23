@@ -319,7 +319,7 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
 function transferUrl(pkg: TravelPackage) {
   return buildTransferUrl({
     destination: pkg.destination,
-    origin: pkg.origin,
+    hotel: pkg.hotelName || undefined,
     travelers: pkg.travelers,
     startDate: pkg.travelStartDate,
     month: pkg.travelMonth,
