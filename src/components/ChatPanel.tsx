@@ -227,11 +227,14 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
 
   }, [messages, status, onPackagesReady]);
 
+  // Neueste Nutzernachricht zuerst: ein später geändertes Reiseziel gewinnt
+  // gegenüber einem früher genannten Ziel.
   const generationContext = useMemo(() => {
     const userMessages = messages
       .filter((message) => message.role === "user")
       .map((message) => message.parts.map((part) => (part.type === "text" ? part.text : "")).join(""))
-      .filter(Boolean);
+      .filter(Boolean)
+      .reverse();
     return userMessages.length ? userMessages.join("\n") : input;
   }, [messages, input]);
 
