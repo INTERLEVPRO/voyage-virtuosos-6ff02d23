@@ -26,8 +26,9 @@ export const packageSchema = z.object({
   price: z.number(),
   requestedBudget: z.number().min(0).optional(),
   currency: z.string().optional(),
-  rating: z.number().min(0).max(5),
-  reviews: z.number().int().min(0),
+  // Nur echte, extern belegte Bewertungen (siehe `ratings`). Nie erfinden.
+  rating: z.number().min(0).max(5).optional(),
+  reviews: z.number().int().min(0).optional(),
   matchScore: z.number().min(0).max(100),
   duration: z.string(),
   durationDays: z.number().int().positive().optional(),

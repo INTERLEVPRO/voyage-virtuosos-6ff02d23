@@ -1834,7 +1834,8 @@ export type HotelDetails = {
   hotelName: string;
   cityOrArea: string;
   boardType: string;
-  rating: string;
+  /** Nur gesetzt, wenn die Quelle wirklich eine Bewertung nennt. Nie erfunden. */
+  rating?: string;
 };
 
 export function parseHotelDetails(
@@ -1876,7 +1877,8 @@ export function parseHotelDetails(
     hotelName.replace(new RegExp(`\\s+in\\s+${cleanDest}$`, "i"), "").trim() ||
     `Hotelvorschlag in ${cleanDest}`;
 
-  let rating = tier === "basic" ? "8.2/10" : tier === "medium" ? "8.7/10" : "9.3/10";
+  // Keine Vorgabe-Note: ohne Angabe in der Quelle bleibt die Bewertung leer.
+  let rating: string | undefined;
   for (const part of parts) {
     if (/\b\d+(\.\d+)?\s*\/\s*10\b/.test(part)) {
       rating = part;
@@ -2038,8 +2040,6 @@ function buildPackagesFromResearch(params: {
       price: Math.round(budget * multiplier),
       requestedBudget: budget,
       currency: "EUR",
-      rating: type === "basic" ? 4.2 : type === "medium" ? 4.5 : 4.8,
-      reviews: type === "basic" ? 320 : type === "medium" ? 980 : 1840,
       matchScore: type === "basic" ? 88 : type === "medium" ? 96 : 90,
       duration: `${durationDays} Tage`,
       hotel,
@@ -2778,7 +2778,7 @@ export const Route = createFileRoute("/api/chat")({
               package_type: p.type,
               title: p.title,
               price: Math.round(p.price),
-              rating: p.rating,
+              rating: p.rating ?? null,
               match_score: Math.round(p.matchScore),
               summary: p.summary,
               data: p,

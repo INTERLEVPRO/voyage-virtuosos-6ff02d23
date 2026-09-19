@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Mail } from "lucide-react";
+import { Mail, Phone, MessageCircle, Facebook, Instagram } from "lucide-react";
 import { ConsentSettingsButton } from "@/components/ConsentBanner";
 
 export function Footer() {
@@ -17,8 +17,9 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Nur Kontaktwege, die wirklich existieren. Telefon/WhatsApp werden
-              ergänzt, sobald echte Nummern vorliegen. */}
+          {/* E-Mail ist bestätigt und aktiv. Telefon, WhatsApp und die
+              Social-Profile bleiben sichtbar, aber bewusst ohne Ziel — es
+              werden keine Nummern oder Profile erfunden. */}
           <div className="flex items-center gap-3 pt-2 sm:pt-4">
             <a
               href="mailto:contact@interlev.com"
@@ -34,6 +35,29 @@ export function Footer() {
               contact@interlev.com
             </a>
           </div>
+
+          <div className="flex items-center gap-3">
+            {[
+              { Icon: Phone, bg: "bg-[#0d9e4f]", label: "Telefon folgt" },
+              { Icon: MessageCircle, bg: "bg-[#25D366]", label: "WhatsApp folgt" },
+              { Icon: Facebook, bg: "bg-[#1877F2]", label: "Facebook folgt" },
+              { Icon: Instagram, bg: "bg-[#C13584]", label: "Instagram folgt" },
+            ].map(({ Icon, bg, label }) => (
+              <span
+                key={label}
+                role="img"
+                aria-label={label}
+                title={label}
+                aria-disabled="true"
+                className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center opacity-50 cursor-default ${bg}`}
+              >
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              </span>
+            ))}
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Telefon, WhatsApp und Social-Media-Profile folgen in Kürze.
+          </p>
         </div>
 
         {/* Column 2 */}

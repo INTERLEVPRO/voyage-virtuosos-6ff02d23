@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -46,6 +47,15 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  // Nur app-interne Ziele zulassen (kein Open Redirect).
+  const safeRedirect =
+    search.redirect && /^\/(?!\/)/.test(search.redirect) ? search.redirect : "/";
+
+  // Nach der Rückkehr von Google steht die Sitzung — dann ans gemerkte Ziel.
+  const { user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user) navigate({ to: safeRedirect });
+  }, [authLoading, user, safeRedirect, navigate]);
 
   const handleEmailLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -57,19 +67,24 @@ function LoginPage() {
       return;
     }
     toast.success("Willkommen zurück!");
-    navigate({ to: search.redirect || "/" });
+    navigate({ to: safeRedirect });
   };
 
   const handleGoogle = async () => {
+    const target = new URL(window.location.origin);
+    if (safeRedirect !== "/") {
+      target.pathname = "/login";
+      target.searchParams.set("redirect", safeRedirect);
+    }
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: target.toString(),
     });
     if (result.error) {
       toast.error("Google-Anmeldung fehlgeschlagen");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: search.redirect || "/" });
+    navigate({ to: safeRedirect });
   };
 
   return (

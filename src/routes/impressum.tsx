@@ -146,7 +146,7 @@ function Impressum() {
           <div>
             <p className="font-semibold text-foreground">Partner-Links</p>
             <p>
-              Buchungen erfolgen bei Partneranbietern (u. a. Kiwi.com, KiwiTaxi, Klook). Beim Klick
+              Buchungen erfolgen bei Partneranbietern: Aviasales (Flüge), Klook (Hotels und Aktivitäten) und Kiwitaxi (Flughafentransfers). Beim Klick
               auf einen Buchungs-Button speichern wir anonym, welches Angebot geöffnet wurde, und du
               wirst zum jeweiligen Anbieter weitergeleitet. Dort gelten dessen Datenschutzhinweise.
             </p>

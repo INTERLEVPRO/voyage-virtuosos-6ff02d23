@@ -179,7 +179,7 @@ export const Route = createFileRoute("/api/refine-package")({
               .update({
                 title: proposedFull.title,
                 price: newPrice,
-                rating: proposedFull.rating,
+                rating: proposedFull.rating ?? null,
                 match_score: Math.round(proposedFull.matchScore),
                 summary: proposedFull.summary,
                 data: { ...proposedFull, id: selectedPackage.id },
