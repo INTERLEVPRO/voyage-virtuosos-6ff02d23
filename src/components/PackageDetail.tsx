@@ -701,7 +701,6 @@ export function PackageDetail({
           title="Aktivitäten"
           subtitle={`${currentPkg.activities.length} Aktivitäten inklusive`}
           ratingLabel="Klook"
-          price={Math.round(currentPkg.price * 0.13)}
           ctaLabel="Bei Klook ansehen"
           provider="activities"
           url={activitiesUrl}
