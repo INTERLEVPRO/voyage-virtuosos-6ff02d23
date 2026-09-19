@@ -57,19 +57,28 @@ function LoginPage() {
       return;
     }
     toast.success("Willkommen zurück!");
-    navigate({ to: search.redirect || "/" });
+    navigate({ to: safeRedirect });
   };
 
+  // Nur app-interne Ziele zulassen (kein Open Redirect).
+  const safeRedirect =
+    search.redirect && /^\/(?!\/)/.test(search.redirect) ? search.redirect : "/";
+
   const handleGoogle = async () => {
+    const target = new URL(window.location.origin);
+    if (safeRedirect !== "/") {
+      target.pathname = "/login";
+      target.searchParams.set("redirect", safeRedirect);
+    }
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: target.toString(),
     });
     if (result.error) {
       toast.error("Google-Anmeldung fehlgeschlagen");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: search.redirect || "/" });
+    navigate({ to: safeRedirect });
   };
 
   return (

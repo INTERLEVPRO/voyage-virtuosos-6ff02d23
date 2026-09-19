@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { KIWI_TAXI_AFFILIATE_URL } from "@/lib/deeplinks";
+import { KIWI_TAXI_AFFILIATE_URL, parseStartDate } from "@/lib/deeplinks";
 
 const KIWITAXI_PAP_MARKER = "728432";
 const WIDGET_SCRIPT_SRC = "https://widget-white-label.kiwitaxi.com/js/index.js";
@@ -74,20 +74,12 @@ function TransferPage() {
     // Normalize the date to ISO (YYYY-MM-DD). The pickup TIME is deliberately
     // left empty: it depends on the traveller's actual flight arrival and must
     // never be silently assumed.
+    // Strenge Kalenderprüfung (gemeinsam mit dem Rest der Seite). Unmögliche
+    // Angaben wie 31.02.2027 werden verworfen statt still verschoben.
     const isoDate = (() => {
-      const raw = search.date?.trim();
-      if (!raw) return undefined;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-      const m = raw.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/);
-      if (m) {
-        const yr = Number(m[3]);
-        const year = yr < 100 ? 2000 + yr : yr;
-        return `${year}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-      }
-      const d = new Date(raw);
-      return Number.isNaN(d.getTime())
-        ? undefined
-        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const d = parseStartDate(search.date);
+      if (!d) return undefined;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     })();
     const pax = search.pax && search.pax > 0 ? Math.min(8, Math.max(1, Math.round(search.pax))) : undefined;
 
@@ -151,7 +143,7 @@ function TransferPage() {
           Festpreis · deutschsprachiger Support · Bezahlung direkt bei Kiwitaxi
           {search.from ? ` · Abholung: ${search.from}` : ""}
           {search.to ? ` · Ziel: ${search.to}` : ""}
-          {search.date ? ` · Reisedatum: ${search.date}` : ""}
+          {isoDateLabel ? ` · Reisedatum: ${isoDateLabel}` : ""}
           {search.pax ? ` · Personen: ${search.pax}` : ""}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
