@@ -1065,8 +1065,12 @@ function ProviderRow({
           {extra && <p className="mt-1 text-xs text-muted-foreground">{extra}</p>}
         </div>
       </div>
-      <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-        <div className="text-lg font-bold text-foreground">€ {price.toLocaleString("de-DE")}</div>
+      <div className="flex items-center justify-end gap-4 sm:flex-col sm:items-end">
+        {typeof price === "number" && (
+          <div className="text-lg font-bold text-foreground">
+            € {price.toLocaleString("de-DE")}
+          </div>
+        )}
         {url && (
           <a
             href={url}
