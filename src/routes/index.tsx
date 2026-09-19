@@ -221,9 +221,9 @@ function Index() {
 
             {/* ── Animated stats bar ── */}
             <div className="fade-up fade-up-delay-4 mt-8 flex justify-center gap-6 sm:gap-10">
-              <StatPill icon={Globe} value="120+" label="Reiseziele" />
-              <StatPill icon={Plane} value="50K+" label="Pakete erstellt" />
-              <StatPill icon={MapPin} value="4.9★" label="Bewertung" />
+              <StatPill icon={Globe} value="Weltweit" label="Reiseziele" />
+              <StatPill icon={Plane} value="Flug + Hotel" label="inkl. Aktivitäten" />
+              <StatPill icon={MapPin} value="Kostenlos" label="& unverbindlich" />
             </div>
           </div>
 
