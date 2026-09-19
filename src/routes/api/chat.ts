@@ -59,14 +59,30 @@ type ResearchData = {
   hotels: string[];
 };
 
+// Entfernt Datumsangaben, bevor Beträge gesucht werden. Ohne das wird aus
+// "15.06.2027" fälschlich der Betrag 6.202 €.
+function stripDateTokens(text: string): string {
+  return text
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ")
+    .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\s*[./-]\s*\d{2,4}\b/g, " ")
+    .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\.?(?!\d)/g, " ")
+    .replace(
+      /\b\d{1,2}\.?\s*(januar|februar|m[äa]rz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)\b\s*(\d{4})?/gi,
+      " ",
+    );
+}
+
 // Parse the largest realistic budget amount from free text. Returns null when
 // no value at or above MIN_BUDGET_EUR can be found.
-// IMPORTANT: bare numbers (no currency, no thousands separator) that look like
-// a year (1900–2099) are ignored — they're almost certainly travel dates.
+// Eine Zahl zählt nur als Budget, wenn eine Währung oder ein Budget-Wort in der
+// Nähe steht. Datumsangaben werden vorher entfernt.
 function parseBudgetValue(text: string): number | null {
+  const cleaned = stripDateTokens(text);
   const candidates: number[] = [];
-  for (const m of text.matchAll(
-    /(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euro?|euros?)?/gi,
+  const budgetKeyword =
+    /(budget|kostet|kosten|preis|ausgeben|gesamt|insgesamt|pro\s+person|p\.\s?p\.|spend|total)\s*[:=]?\s*(von|ca\.?|circa|etwa|ungefähr|ungefaehr|rund|max\.?|maximal|bis\s+zu)?\s*$/i;
+  for (const m of cleaned.matchAll(
+    /(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euros?|k)?/gi,
   )) {
     const raw = m[1];
     const currency = m[2];
@@ -74,6 +90,8 @@ function parseBudgetValue(text: string): number | null {
     if (!Number.isFinite(n)) continue;
     if (n < MIN_BUDGET_EUR || n > 200000) continue;
     if (!currency && !/[.,]/.test(raw) && n >= 1900 && n <= 2099) continue;
+    const before = cleaned.slice(Math.max(0, (m.index ?? 0) - 40), m.index ?? 0);
+    if (!currency && !budgetKeyword.test(before)) continue;
     candidates.push(n);
   }
   if (candidates.length === 0) return null;
@@ -82,7 +100,8 @@ function parseBudgetValue(text: string): number | null {
 
 // Did the user mention a budget at all (even an unrealistically low one)?
 function mentionedBudget(text: string): boolean {
-  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
+  const cleaned = stripDateTokens(text);
+  return /\bbudget\b/i.test(cleaned) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(cleaned);
 }
 
 // "pro Person" / "p.P." / "per person" / "je Person" / "pro Kopf" => per-person.
