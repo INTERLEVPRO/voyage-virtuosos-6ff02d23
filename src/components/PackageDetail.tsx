@@ -45,19 +45,25 @@ import {
   buildKlookActivitiesUrl,
   lookupOriginIata,
   buildTransferUrl,
-  KIWI_TAXI_AFFILIATE_URL,
-
+  absoluteUrl,
 } from "@/lib/deeplinks";
 
+/** Report an outbound click. Failures are logged, never silently swallowed. */
 async function trackClick(packageId: string, provider: string, url: string) {
   try {
-    await fetch("/api/track-click", {
+    const res = await fetch("/api/track-click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ packageId, provider, url }),
     });
-  } catch {
-    // non-fatal
+    if (!res.ok) {
+      console.error(`Klick-Tracking fehlgeschlagen [${res.status}]`, await res.text());
+      return;
+    }
+    const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!data?.ok) console.error("Klick-Tracking nicht gespeichert:", data?.error ?? "unbekannt");
+  } catch (err) {
+    console.error("Klick-Tracking nicht erreichbar:", err);
   }
 }
 
