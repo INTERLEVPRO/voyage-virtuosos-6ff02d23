@@ -1987,7 +1987,7 @@ export function parseHotelDetails(
 function buildFallbackResearchData(destination: string): ResearchData {
   return {
     flights: [
-      `Direktflug nach ${destination} · Economy Smart · ca. 11h`,
+      `Linienflug nach ${destination} · Economy Smart · ca. 11h`,
       `Linienflug nach ${destination} · Komfort Tarif · ca. 11h`,
       `Premium Linienflug nach ${destination} · flexible Zeiten · ca. 11h`,
     ],
