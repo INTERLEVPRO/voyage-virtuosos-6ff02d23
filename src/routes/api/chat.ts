@@ -1314,8 +1314,11 @@ function extractDestination(history: string): string {
     const explicit = line.match(
       /(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i,
     );
-    if (explicit?.[1] && !isDateLike(explicit[1]))
-      return normalizePlaceName(cleanDestination(explicit[1]));
+    if (explicit?.[1] && !isDateLike(explicit[1])) {
+      const cand = cleanDestination(stripCopula(explicit[1]));
+      if (cand && !isDateLike(cand) && !isStopDestination(cand))
+        return normalizePlaceName(cand);
+    }
 
     // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
     const afterDuration = line.match(
@@ -1323,7 +1326,7 @@ function extractDestination(history: string): string {
     );
     if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
       const cand = cleanDestination(afterDuration[1]);
-      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
+      if (cand && !isDateLike(cand) && !isStopDestination(cand)) return normalizePlaceName(cand);
     }
 
     const byPrep = line.match(
@@ -1331,7 +1334,7 @@ function extractDestination(history: string): string {
     );
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
-      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
+      if (cand && !isDateLike(cand) && !isStopDestination(cand)) return normalizePlaceName(cand);
     }
 
     // Fallback: check all comma/semicolon-separated chunks in this line
