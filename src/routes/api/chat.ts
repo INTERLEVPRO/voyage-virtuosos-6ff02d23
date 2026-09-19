@@ -1409,7 +1409,8 @@ function extractDestination(history: string): string {
         )
         .trim();
       if (stripped && !isDateLike(stripped) && stripped.length >= 2) {
-        return normalizePlaceName(cleanDestination(stripped));
+        const cand = cleanDestination(stripped);
+        if (cand && !isStopDestination(cand)) return normalizePlaceName(cand);
       }
     }
   }
