@@ -608,12 +608,13 @@ export function buildKlookHotelUrl(opts: {
 }
 
 /**
- * Klook hotel destination URL.
+ * Klook hotel URL.
  *
- * Known destinations open a stable Klook hotel-results page. Dates and guest
- * details are intentionally left for the traveller to fill on Klook because
- * destination pages do not support those values reliably without Klook's
- * internal location-selection state.
+ * Verified destination IDs open a stable Klook hotel-results page and carry the
+ * travel dates and guest count as far as Klook accepts them. Everything else
+ * opens a Klook *search* for the named hotel/city instead of the generic hotel
+ * homepage, so the destination the traveller saw is never silently dropped.
+ * We never invent Klook destination IDs.
  */
 export function buildKlookSearchUrl(opts: {
   destination: string;
@@ -627,10 +628,30 @@ export function buildKlookSearchUrl(opts: {
 }): string {
   const city = extractCityName(opts.destination);
   const destinationSlug = lookupKlookHotelDestination(city);
-  const aid = encodeURIComponent(opts.aid || AFFILIATE_MARKER);
-  const finalUrl = destinationSlug
-    ? `https://www.klook.com/destination/${destinationSlug}/3-hotel/?aid=${aid}`
-    : `https://www.klook.com/hotels/?aid=${aid}`;
+  const aid = opts.aid || AFFILIATE_MARKER;
+  const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
+  const adults = Math.max(1, Math.round(opts.travelers ?? 2));
+  const rooms = Math.max(1, Math.round(opts.rooms ?? Math.ceil(adults / 2)));
+
+  const params = new URLSearchParams({ aid });
+  if (dates) {
+    params.set("start_time", dates[0]);
+    params.set("end_time", dates[1]);
+    params.set("checkin", dates[0]);
+    params.set("checkout", dates[1]);
+  }
+  params.set("adults", String(adults));
+  params.set("rooms", String(rooms));
+
+  let finalUrl: string;
+  if (destinationSlug) {
+    finalUrl = `https://www.klook.com/destination/${destinationSlug}/3-hotel/?${params.toString()}`;
+  } else {
+    const keyword = [opts.hotel, city].filter(Boolean).join(" ") || city;
+    if (!keyword) return `https://www.klook.com/hotels/?aid=${encodeURIComponent(aid)}`;
+    params.set("keyword", `${keyword} hotel`);
+    finalUrl = `https://www.klook.com/search/result/?${params.toString()}`;
+  }
 
   console.log("Klook hotel deeplink:", finalUrl);
   return finalUrl;
