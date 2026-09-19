@@ -305,9 +305,10 @@ function buildMailto(pkg: import("@/types/travel").TravelPackage, weather?: Weat
   pkg.activities.forEach((a) => lines.push(`• ${a}`));
   lines.push("");
   lines.push("=== Buchungs-Links ===");
-  lines.push(`Hotel: ${bookingHotelUrl(pkg)}`);
-  lines.push(`Aktivitäten: ${klookActivityUrl(pkg)}`);
-  lines.push(`Transfer: ${transferUrl(pkg)}`);
+  lines.push(`Flug: ${absoluteUrl(flightBookingUrl(pkg))}`);
+  lines.push(`Hotel: ${absoluteUrl(bookingHotelUrl(pkg))}`);
+  lines.push(`Aktivitäten: ${absoluteUrl(klookActivityUrl(pkg))}`);
+  lines.push(`Transfer: ${absoluteUrl(transferUrl(pkg))}`);
   lines.push("");
   lines.push("— Weltweiturlaub.de");
   const subject = encodeURIComponent(`Mein Reiseplan: ${pkg.title}`);
