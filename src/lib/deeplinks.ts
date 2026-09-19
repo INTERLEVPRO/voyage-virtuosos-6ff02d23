@@ -699,13 +699,31 @@ export const buildBookingUrl = buildKlookHotelUrl;
 
 // ─── Kiwitaxi (Transfer) ────────────────────────────────────────────────────
 
+/** Canonical public origin — used to turn internal routes into shareable links. */
+export const SITE_ORIGIN = "https://weltweiturlaub.de";
+
+/** Turn an app-internal path into an absolute URL (for e-mail, sharing, etc.). */
+export function absoluteUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const base =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : SITE_ORIGIN;
+  return `${base}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
+}
+
 /**
- * Transfer deeplink: Redirect to internal /transfer page with correct search context
- * so user sees the route & date prefilled in the white-label widget or fallback link.
+ * Transfer deeplink to the internal /transfer page.
+ *
+ * An airport transfer starts at the ARRIVAL airport of the destination, never
+ * at the departure city of the outbound flight. Pickup therefore defaults to
+ * the destination airport, drop-off to the hotel (when known) or the
+ * destination itself. No pickup time is invented — the traveller picks it.
  */
 export function buildTransferUrl(opts?: {
   destination?: string;
-  origin?: string;
+  /** Hotel / accommodation used as drop-off, when known. */
+  hotel?: string;
   travelers?: number;
   startDate?: string;
   month?: string;
@@ -713,12 +731,18 @@ export function buildTransferUrl(opts?: {
 }): string {
   if (!opts) return "/transfer";
   const params = new URLSearchParams();
-  const from = cleanDestination(opts.origin);
-  const to = cleanDestination(opts.destination);
-  const pickup = parseStartDate(opts.startDate);
+  const destination = cleanDestination(opts.destination);
+  const city = extractCityName(destination);
+  const destIata = lookupDestIata(destination);
+  const from = city ? `${city} Flughafen${destIata ? ` (${destIata})` : ""}` : "";
+  const to = cleanDestination(opts.hotel) || city;
+  const pickup = parseStartDate(opts.startDate) ?? dateFromMonthDescription(opts.month);
+
   if (from) params.set("from", from);
   if (to) params.set("to", to);
-  if (to.includes(",")) params.set("country", to.split(",").at(-1)?.trim() ?? "");
+  if (destination.includes(",")) {
+    params.set("country", destination.split(",").at(-1)?.trim() ?? "");
+  }
   if (opts.travelers) params.set("pax", String(Math.max(1, Math.round(opts.travelers))));
   if (pickup) params.set("date", isoDate(pickup));
   const query = params.toString();
