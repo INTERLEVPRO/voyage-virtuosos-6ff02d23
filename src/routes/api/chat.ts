@@ -40,6 +40,7 @@ RULES:
 - Never put attractions in different cities into the same Vormittag/Nachmittag/Abend slot.
 - Consider the travel month: prefer attractions that are typically open/zugänglich in that season (e.g. Monsun in Indien Juli/August → mehr Indoor & überdachte Orte; Hauptsaison im Sommer → früh morgens für überlaufene Spots). Wenn etwas saisonal geschlossen / nicht empfehlenswert ist, weiche auf eine echte Alternative aus.
 - Tag 1 = Ankunft + leichte Orientierung in der Nähe des Hotels. Letzter Tag = entspannter Abschluss + Rückreise.
+- ÜBERNACHTUNGS-REALITÄT: Das Paket nennt EIN Hotel. Alle Tage müssen deshalb Tagesausflüge sein, die von diesem Hotel aus realistisch machbar sind (max. ~150 km / 3 h einfache Strecke, Rückkehr am selben Abend). Plane KEINE Orte ein, die eine Übernachtung an einem anderen Ort erfordern (z. B. nicht Negombo als einziges Hotel und dazu Ella, Yala und Galle). Wenn das Reiseziel eine Rundreise nahelegt, konzentriere dich stattdessen auf die Region rund um das Hotel.
 
 FORMAT (EXACTLY one line per day, nothing else):
 Tag N — <Thema mit echtem Ort>: Vormittag: <konkrete Orte/Aktivitäten> · Nachmittag: <konkrete Orte/Aktivitäten> · Abend: <konkrete Orte/Aktivitäten>
@@ -59,14 +60,30 @@ type ResearchData = {
   hotels: string[];
 };
 
+// Entfernt Datumsangaben, bevor Beträge gesucht werden. Ohne das wird aus
+// "15.06.2027" fälschlich der Betrag 6.202 €.
+function stripDateTokens(text: string): string {
+  return text
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ")
+    .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\s*[./-]\s*\d{2,4}\b/g, " ")
+    .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\.?(?!\d)/g, " ")
+    .replace(
+      /\b\d{1,2}\.?\s*(januar|februar|m[äa]rz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|okt|nov|dec|dez|january|february|march|june|july|october|december)\b\s*(\d{4})?/gi,
+      " ",
+    );
+}
+
 // Parse the largest realistic budget amount from free text. Returns null when
 // no value at or above MIN_BUDGET_EUR can be found.
-// IMPORTANT: bare numbers (no currency, no thousands separator) that look like
-// a year (1900–2099) are ignored — they're almost certainly travel dates.
+// Eine Zahl zählt nur als Budget, wenn eine Währung oder ein Budget-Wort in der
+// Nähe steht. Datumsangaben werden vorher entfernt.
 function parseBudgetValue(text: string): number | null {
+  const cleaned = stripDateTokens(text);
   const candidates: number[] = [];
-  for (const m of text.matchAll(
-    /(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euro?|euros?)?/gi,
+  const budgetKeyword =
+    /(budget|kostet|kosten|preis|ausgeben|gesamt|insgesamt|pro\s+person|p\.\s?p\.|spend|total)\s*[:=]?\s*(von|ca\.?|circa|etwa|ungefähr|ungefaehr|rund|max\.?|maximal|bis\s+zu)?\s*$/i;
+  for (const m of cleaned.matchAll(
+    /(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euros?|k)?/gi,
   )) {
     const raw = m[1];
     const currency = m[2];
@@ -74,6 +91,8 @@ function parseBudgetValue(text: string): number | null {
     if (!Number.isFinite(n)) continue;
     if (n < MIN_BUDGET_EUR || n > 200000) continue;
     if (!currency && !/[.,]/.test(raw) && n >= 1900 && n <= 2099) continue;
+    const before = cleaned.slice(Math.max(0, (m.index ?? 0) - 40), m.index ?? 0);
+    if (!currency && !budgetKeyword.test(before)) continue;
     candidates.push(n);
   }
   if (candidates.length === 0) return null;
@@ -82,7 +101,8 @@ function parseBudgetValue(text: string): number | null {
 
 // Did the user mention a budget at all (even an unrealistically low one)?
 function mentionedBudget(text: string): boolean {
-  return /\bbudget\b/i.test(text) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(text);
+  const cleaned = stripDateTokens(text);
+  return /\bbudget\b/i.test(cleaned) || /\d{1,5}\s*(€|eur|euro?|euros?|usd|\$)/i.test(cleaned);
 }
 
 // "pro Person" / "p.P." / "per person" / "je Person" / "pro Kopf" => per-person.
@@ -1227,6 +1247,60 @@ function cleanDestination(raw: string): string {
   return (kept.join(" ") || stopped).trim();
 }
 
+// Antwort- und Füllwörter dürfen niemals zu einem Reiseziel werden
+// (z. B. die Antwort "insgesamt" auf die Budget-Rückfrage).
+const DESTINATION_STOP_WORDS = new Set([
+  "insgesamt",
+  "gesamt",
+  "gesamtbudget",
+  "total",
+  "pro person",
+  "pro kopf",
+  "je person",
+  "ist",
+  "sind",
+  "war",
+  "ja",
+  "nein",
+  "ok",
+  "okay",
+  "danke",
+  "bitte",
+  "richtig",
+  "stimmt",
+  "korrekt",
+  "passt",
+  "genau",
+  "alles",
+  "alle",
+  "alles richtig",
+  "alle anderen angaben stimmen",
+  "hi",
+  "hallo",
+  "hey",
+  "für alle",
+  "für uns",
+  "beide",
+  "zusammen",
+]);
+
+function isStopDestination(value: string): boolean {
+  const v = value.trim().toLowerCase().replace(/[.!?]+$/, "");
+  if (!v) return true;
+  if (DESTINATION_STOP_WORDS.has(v)) return true;
+  // Einzelne Füllwörter ohne weiteren Inhalt
+  const words = v.split(/\s+/);
+  if (words.every((w) => DESTINATION_STOP_WORDS.has(w))) return true;
+  return false;
+}
+
+// Entfernt Kopulae direkt hinter "Reiseziel"/"Ziel" ("Reiseziel ist Sri Lanka").
+function stripCopula(value: string): string {
+  return value
+    .replace(/^(?:ist|sind|war|wäre|waere|lautet|bleibt|heißt|heisst|soll\s+sein)\b\s*/i, "")
+    .trim();
+}
+
 function extractDestination(history: string): string {
   const lines = history
     .split(/\n+/)
@@ -1241,8 +1315,11 @@ function extractDestination(history: string): string {
     const explicit = line.match(
       /(?:reiseziel|ziel)\s*:?\s*([A-Za-zäöüÄÖÜß][A-Za-zäöüÄÖÜß.'’\- ]{2,})/i,
     );
-    if (explicit?.[1] && !isDateLike(explicit[1]))
-      return normalizePlaceName(cleanDestination(explicit[1]));
+    if (explicit?.[1] && !isDateLike(explicit[1])) {
+      const cand = cleanDestination(stripCopula(explicit[1]));
+      if (cand && !isDateLike(cand) && !isStopDestination(cand))
+        return normalizePlaceName(cand);
+    }
 
     // "7 Tage Mallorca", "2 Nächte Lissabon", "eine Woche Bali"
     const afterDuration = line.match(
@@ -1250,7 +1327,7 @@ function extractDestination(history: string): string {
     );
     if (afterDuration?.[1] && !isDateLike(afterDuration[1])) {
       const cand = cleanDestination(afterDuration[1]);
-      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
+      if (cand && !isDateLike(cand) && !isStopDestination(cand)) return normalizePlaceName(cand);
     }
 
     const byPrep = line.match(
@@ -1258,7 +1335,7 @@ function extractDestination(history: string): string {
     );
     if (byPrep?.[1] && !isDateLike(byPrep[1])) {
       const cand = cleanDestination(byPrep[1]);
-      if (cand && !isDateLike(cand)) return normalizePlaceName(cand);
+      if (cand && !isDateLike(cand) && !isStopDestination(cand)) return normalizePlaceName(cand);
     }
 
     // Fallback: check all comma/semicolon-separated chunks in this line
@@ -1280,9 +1357,12 @@ function extractDestination(history: string): string {
       }
 
       // Strip leading prepositions (e.g., "to", "nach")
-      const cleanedPrep = trimmed.replace(/^(nach|to|in|ab|von|from)\b\s*/i, "").trim();
+      const cleanedPrep = stripCopula(
+        trimmed.replace(/^(nach|to|in|ab|von|from)\b\s*/i, "").trim(),
+      );
       if (!cleanedPrep) continue;
       if (isDateLike(cleanedPrep)) continue;
+      if (isStopDestination(cleanedPrep)) continue;
       if (isFieldLabelChunk(cleanedPrep)) continue;
       if (isLikelyFieldOnlyMessage(cleanedPrep)) continue;
       if (/^\d+$/.test(cleanedPrep)) continue;
@@ -1330,7 +1410,8 @@ function extractDestination(history: string): string {
         )
         .trim();
       if (stripped && !isDateLike(stripped) && stripped.length >= 2) {
-        return normalizePlaceName(cleanDestination(stripped));
+        const cand = cleanDestination(stripped);
+        if (cand && !isStopDestination(cand)) return normalizePlaceName(cand);
       }
     }
   }
@@ -1907,7 +1988,7 @@ export function parseHotelDetails(
 function buildFallbackResearchData(destination: string): ResearchData {
   return {
     flights: [
-      `Direktflug nach ${destination} · Economy Smart · ca. 11h`,
+      `Linienflug nach ${destination} · Economy Smart · ca. 11h`,
       `Linienflug nach ${destination} · Komfort Tarif · ca. 11h`,
       `Premium Linienflug nach ${destination} · flexible Zeiten · ca. 11h`,
     ],
@@ -2493,7 +2574,12 @@ export const Route = createFileRoute("/api/chat")({
           if (!confirmedFinalTripState) {
             // 1. Destination correction
             const newDest = extractDestination(lastUserText);
-            if (newDest && newDest !== "deinem Reiseziel" && !isDateLike(newDest)) {
+            if (
+              newDest &&
+              newDest !== "deinem Reiseziel" &&
+              !isDateLike(newDest) &&
+              !isStopDestination(newDest)
+            ) {
               destination = cleanPlace(newDest);
             } else {
               const compound = parseCountryCity(lastUserText);
@@ -2552,11 +2638,17 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         destination = dedupePlaceParts(destination);
+        if (destination) destination = stripCopula(destination);
         if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
 
         // FINAL VALIDATION GATE — verify resolved trip state before generating packages.
         const validationMissing: MissingField[] = [];
-        if (!destination || /^deinem reiseziel$/i.test(destination) || isDateLike(destination))
+        if (
+          !destination ||
+          /^deinem reiseziel$/i.test(destination) ||
+          isDateLike(destination) ||
+          isStopDestination(destination)
+        )
           validationMissing.push("destination");
         if (!budget || budget < MIN_BUDGET_EUR) validationMissing.push("budget");
         if (!requestedDurationDays || requestedDurationDays <= 0)

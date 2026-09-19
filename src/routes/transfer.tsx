@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { KIWI_TAXI_AFFILIATE_URL, parseStartDate } from "@/lib/deeplinks";
 
 const KIWITAXI_PAP_MARKER = "728432";
@@ -18,7 +18,13 @@ export const Route = createFileRoute("/transfer")({
     from: typeof s.from === "string" ? s.from : undefined,
     to: typeof s.to === "string" ? s.to : undefined,
     country: typeof s.country === "string" ? s.country : undefined,
-    pax: typeof s.pax === "string" ? Number(s.pax) || undefined : undefined,
+    // Personenzahl akzeptiert Zahl und Text, damit sie nie verloren geht.
+    pax:
+      typeof s.pax === "number"
+        ? s.pax || undefined
+        : typeof s.pax === "string"
+          ? Number(s.pax) || undefined
+          : undefined,
     date: typeof s.date === "string" ? s.date : undefined,
   }),
   head: () => ({
@@ -67,13 +73,17 @@ export const Route = createFileRoute("/transfer")({
 
 function TransferPage() {
   const search = Route.useSearch();
+  const [widgetFailed, setWidgetFailed] = useState(false);
   // Nur ein real existierendes Kalenderdatum wird angezeigt bzw. übergeben.
   const validDate = parseStartDate(search.date);
   const isoDateLabel = validDate
     ? validDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
+  const paxLabel =
+    search.pax && search.pax > 0 ? String(Math.min(8, Math.max(1, Math.round(search.pax)))) : null;
 
   useEffect(() => {
+    setWidgetFailed(false);
     // Configure the Kiwitaxi White Label widget BEFORE loading its bundle.
     // The bundle reads window.kiwitaxiWLConfig at boot.
     // Normalize the date to ISO (YYYY-MM-DD). The pickup TIME is deliberately
@@ -131,9 +141,19 @@ function TransferPage() {
     const s = document.createElement("script");
     s.src = `${WIDGET_SCRIPT_SRC}?t=${Date.now()}`;
     s.async = true;
+    s.onerror = () => setWidgetFailed(true);
     document.body.appendChild(s);
 
+    // Nach einigen Sekunden prüfen, ob das Fenster wirklich aufgebaut wurde.
+    // Bleibt die Fläche leer, zeigen wir einen klaren Hinweis statt nichts.
+    const timer = window.setTimeout(() => {
+      const el = document.querySelector("[data-kiwitaxi-white-label]");
+      const mounted = !!el && el.children.length > 0;
+      setWidgetFailed(!mounted);
+    }, 8000);
+
     return () => {
+      window.clearTimeout(timer);
       // Cleanup on unmount or dependency update
       const addedScripts = document.querySelectorAll(`script[src*="widget-white-label.kiwitaxi.com"]`);
       addedScripts.forEach((scr) => scr.remove());
@@ -149,7 +169,7 @@ function TransferPage() {
           {search.from ? ` · Abholung: ${search.from}` : ""}
           {search.to ? ` · Ziel: ${search.to}` : ""}
           {isoDateLabel ? ` · Reisedatum: ${isoDateLabel}` : ""}
-          {search.pax ? ` · Personen: ${search.pax}` : ""}
+          {paxLabel ? ` · Personen: ${paxLabel}` : ""}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Bitte trage die Abholzeit passend zu deiner tatsächlichen Flugankunft ein — wir geben
@@ -157,8 +177,31 @@ function TransferPage() {
         </p>
       </header>
 
+      {widgetFailed && (
+        <div className="mb-4 rounded-xl border border-border bg-muted/40 p-5">
+          <h2 className="text-base font-semibold">Das Buchungsfenster lädt gerade nicht</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Du kannst deinen Transfer direkt bei Kiwitaxi buchen — mit diesen Angaben:
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {search.from ? <li>Abholung: {search.from}</li> : null}
+            {search.to ? <li>Ziel: {search.to}</li> : null}
+            {isoDateLabel ? <li>Datum: {isoDateLabel}</li> : null}
+            {paxLabel ? <li>Personen: {paxLabel}</li> : null}
+          </ul>
+          <a
+            className="mt-3 inline-block rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+            href={KIWI_TAXI_AFFILIATE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Bei Kiwitaxi öffnen
+          </a>
+        </div>
+      )}
+
       {/* Kiwitaxi White Label container — the script mounts the iframe into this div. */}
-      <div data-kiwitaxi-white-label style={{ width: "100%", minHeight: 720 }} />
+      <div data-kiwitaxi-white-label style={{ width: "100%", minHeight: widgetFailed ? 0 : 720 }} />
 
       <p className="mt-4 text-xs text-muted-foreground">
         Probleme beim Laden?{" "}

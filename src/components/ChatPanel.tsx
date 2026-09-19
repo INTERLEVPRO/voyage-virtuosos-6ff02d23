@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DateRange } from "react-day-picker";
+import { de } from "date-fns/locale";
 import {
   Send,
   Loader2,
@@ -453,6 +454,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
                 <Calendar
                   mode="range"
+                  locale={de}
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={1}

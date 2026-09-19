@@ -321,7 +321,8 @@ function transferUrl(pkg: TravelPackage) {
   return buildTransferUrl({
     destination: pkg.destination,
     hotel: pkg.hotelName || undefined,
-    travelers: pkg.travelers,
+    // Personenzahl geht immer mit zur Transferseite (Standard wie im Rest der Seite).
+    travelers: pkg.travelers && pkg.travelers > 0 ? pkg.travelers : 2,
     startDate: pkg.travelStartDate,
     month: pkg.travelMonth,
     durationDays: pkg.durationDays,
@@ -1002,7 +1003,7 @@ export function PackageDetail({
           body="Bewertungen direkt von den Anbietern"
         />
         <TrustItem icon={ShieldCheck} title="Sichere Buchung" body="Bei unseren Partnern" />
-        <TrustItem icon={Headphones} title="Support" body="24/7 für dich da" />
+        <TrustItem icon={Headphones} title="Support" body="Per E-Mail für dich da" />
       </div>
 
       <p
