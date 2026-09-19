@@ -50,9 +50,12 @@ export function Footer() {
           <h3 className="font-bold text-base sm:text-lg mb-2 sm:mb-4 uppercase">META-NAVIGATION</h3>
           <ul className="flex flex-wrap gap-x-4 gap-y-2 sm:block sm:space-y-4">
             <li>
-              <Link to="/" className="text-xs sm:text-sm font-semibold text-white hover:text-gray-300 transition">
+              <a
+                href="mailto:contact@interlev.com"
+                className="text-xs sm:text-sm font-semibold text-white hover:text-gray-300 transition"
+              >
                 Kontakt
-              </Link>
+              </a>
             </li>
             <li>
               <Link
@@ -63,9 +66,16 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link to="/" className="text-xs sm:text-sm font-semibold text-white hover:text-gray-300 transition">
+              <Link
+                to="/impressum"
+                hash="datenschutz"
+                className="text-xs sm:text-sm font-semibold text-white hover:text-gray-300 transition"
+              >
                 Datenschutz
               </Link>
+            </li>
+            <li>
+              <ConsentSettingsButton className="text-xs sm:text-sm font-semibold text-white hover:text-gray-300 transition" />
             </li>
           </ul>
 
