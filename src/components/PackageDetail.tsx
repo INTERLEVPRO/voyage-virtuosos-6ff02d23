@@ -677,7 +677,6 @@ export function PackageDetail({
           title="Flughafen-Transfer"
           subtitle="Privater Taxi-Transfer vom/zum Flughafen"
           ratingLabel="Kiwitaxi"
-          price={Math.round(currentPkg.price * 0.05)}
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
           url={taxiUrl}
