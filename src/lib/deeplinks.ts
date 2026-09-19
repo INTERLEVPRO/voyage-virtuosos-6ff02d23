@@ -378,12 +378,11 @@ export function parseStartDate(input?: string): Date | null {
     if (monthIdx) {
       const day = Number(m[1]);
       const now = new Date();
-      let year = m[3] ? Number(m[3]) : now.getFullYear();
-      if (!m[3]) {
-        const candidate = new Date(year, monthIdx - 1, day);
-        if (candidate < now) year += 1;
-      }
-      return new Date(year, monthIdx - 1, day);
+      if (m[3]) return safeDate(Number(m[3]), monthIdx, day);
+      const thisYear = safeDate(now.getFullYear(), monthIdx, day);
+      if (!thisYear) return null;
+      if (thisYear < now) return safeDate(now.getFullYear() + 1, monthIdx, day) ?? thisYear;
+      return thisYear;
     }
   }
   return null;
