@@ -150,12 +150,8 @@ const DEST_IATA: Record<string, string> = {
   hanoi: "HAN",
   "ho chi minh": "SGN",
   saigon: "SGN",
-  lissabon_algarve: "FAO",
   algarve: "FAO",
   faro: "FAO",
-  mexiko: "CUN",
-  bora: "BOB",
-  tokyo_narita: "NRT",
 };
 
 const MONTHS: Record<string, number> = {
