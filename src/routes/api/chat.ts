@@ -1246,6 +1246,60 @@ function cleanDestination(raw: string): string {
   return (kept.join(" ") || stopped).trim();
 }
 
+// Antwort- und Füllwörter dürfen niemals zu einem Reiseziel werden
+// (z. B. die Antwort "insgesamt" auf die Budget-Rückfrage).
+const DESTINATION_STOP_WORDS = new Set([
+  "insgesamt",
+  "gesamt",
+  "gesamtbudget",
+  "total",
+  "pro person",
+  "pro kopf",
+  "je person",
+  "ist",
+  "sind",
+  "war",
+  "ja",
+  "nein",
+  "ok",
+  "okay",
+  "danke",
+  "bitte",
+  "richtig",
+  "stimmt",
+  "korrekt",
+  "passt",
+  "genau",
+  "alles",
+  "alle",
+  "alles richtig",
+  "alle anderen angaben stimmen",
+  "hi",
+  "hallo",
+  "hey",
+  "für alle",
+  "für uns",
+  "beide",
+  "zusammen",
+]);
+
+function isStopDestination(value: string): boolean {
+  const v = value.trim().toLowerCase().replace(/[.!?]+$/, "");
+  if (!v) return true;
+  if (DESTINATION_STOP_WORDS.has(v)) return true;
+  // Einzelne Füllwörter ohne weiteren Inhalt
+  const words = v.split(/\s+/);
+  if (words.every((w) => DESTINATION_STOP_WORDS.has(w))) return true;
+  return false;
+}
+
+// Entfernt Kopulae direkt hinter "Reiseziel"/"Ziel" ("Reiseziel ist Sri Lanka").
+function stripCopula(value: string): string {
+  return value
+    .replace(/^(?:ist|sind|war|wäre|waere|lautet|bleibt|heißt|heisst|soll\s+sein)\b\s*/i, "")
+    .trim();
+}
+
 function extractDestination(history: string): string {
   const lines = history
     .split(/\n+/)
