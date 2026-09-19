@@ -181,13 +181,22 @@ function normalizeLookupKey(input?: string): string {
     .trim();
 }
 
+/** Every IATA code we actually know. A bare 3-letter input is only accepted as
+ *  a code when it appears here — otherwise place names such as "Goa" would be
+ *  misread as an airport code (GOA = Genoa, Italy). */
+const KNOWN_IATA_CODES = new Set<string>([
+  ...Object.values(ORIGIN_IATA),
+  ...Object.values(DEST_IATA),
+]);
+
 function lookupIata(input: string | undefined, map: Record<string, string>): string | null {
   const key = normalizeLookupKey(input);
   if (!key) return null;
-  if (/^[a-z]{3}$/i.test(key)) return key.toUpperCase();
+
   const normalizedMap = Object.fromEntries(
     Object.entries(map).map(([alias, code]) => [normalizeLookupKey(alias), code]),
   );
+  // 1. Resolve place names first — a place name always wins over a code guess.
   if (normalizedMap[key]) return normalizedMap[key];
 
   const words = key.split(/\s+/).filter(Boolean);
@@ -196,6 +205,11 @@ function lookupIata(input: string | undefined, map: Record<string, string>): str
       const phrase = words.slice(start, start + size).join(" ");
       if (normalizedMap[phrase]) return normalizedMap[phrase];
     }
+  }
+
+  // 2. Only then accept an explicit, known IATA code.
+  if (/^[a-z]{3}$/i.test(key) && KNOWN_IATA_CODES.has(key.toUpperCase())) {
+    return key.toUpperCase();
   }
 
   return null;
