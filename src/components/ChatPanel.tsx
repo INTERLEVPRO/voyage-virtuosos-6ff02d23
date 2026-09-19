@@ -693,13 +693,16 @@ function detectDestination(query: string): { emoji: string; title: string; secti
     palma: "mallorca", majorca: "mallorca",
   };
 
-  // Direct match
-  for (const key of Object.keys(DESTINATION_GUIDES)) {
-    if (q.includes(key)) return DESTINATION_GUIDES[key];
-  }
-  // Alias match
-  for (const [alias, canonical] of Object.entries(ALIASES)) {
-    if (q.includes(alias) && DESTINATION_GUIDES[canonical]) return DESTINATION_GUIDES[canonical];
+  // Zeile für Zeile prüfen — die Zeilen kommen in Reihenfolge "neueste zuerst",
+  // damit ein nachträglich geändertes Reiseziel gewinnt.
+  const lines = q.split("\n").filter((l) => l.trim());
+  for (const line of lines.length ? lines : [q]) {
+    for (const key of Object.keys(DESTINATION_GUIDES)) {
+      if (line.includes(key)) return DESTINATION_GUIDES[key];
+    }
+    for (const [alias, canonical] of Object.entries(ALIASES)) {
+      if (line.includes(alias) && DESTINATION_GUIDES[canonical]) return DESTINATION_GUIDES[canonical];
+    }
   }
   return null;
 }
