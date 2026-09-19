@@ -1356,9 +1356,12 @@ function extractDestination(history: string): string {
       }
 
       // Strip leading prepositions (e.g., "to", "nach")
-      const cleanedPrep = trimmed.replace(/^(nach|to|in|ab|von|from)\b\s*/i, "").trim();
+      const cleanedPrep = stripCopula(
+        trimmed.replace(/^(nach|to|in|ab|von|from)\b\s*/i, "").trim(),
+      );
       if (!cleanedPrep) continue;
       if (isDateLike(cleanedPrep)) continue;
+      if (isStopDestination(cleanedPrep)) continue;
       if (isFieldLabelChunk(cleanedPrep)) continue;
       if (isLikelyFieldOnlyMessage(cleanedPrep)) continue;
       if (/^\d+$/.test(cleanedPrep)) continue;
