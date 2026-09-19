@@ -689,7 +689,6 @@ export function PackageDetail({
           subtitle={displayHotelName}
           ratingLabel="Klook Hotels"
           extra={currentPkg.mealPlan}
-          price={Math.round(currentPkg.price * 0.5)}
           ctaLabel="Bei Klook Hotels ansehen"
           provider="hotel"
           url={hotelUrl}
