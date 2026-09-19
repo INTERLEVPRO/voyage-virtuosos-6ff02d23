@@ -453,6 +453,7 @@ export function ChatPanel({ onPackagesReady }: { onPackagesReady?: (pkgs: Travel
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
                 <Calendar
                   mode="range"
+                  locale={de}
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={1}
