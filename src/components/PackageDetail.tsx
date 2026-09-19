@@ -242,8 +242,23 @@ function openRouteInMaps(destination: string, place?: string) {
 function bookingHotelUrl(pkg: TravelPackage) {
   return buildKlookSearchUrl({
     destination: pkg.destination,
+    hotel: pkg.hotelName || undefined,
     travelers: pkg.travelers,
     rooms: Math.max(1, Math.ceil((pkg.travelers ?? 1) / 2)),
+    startDate: pkg.travelStartDate,
+    month: pkg.travelMonth,
+    durationDays: pkg.durationDays,
+  });
+}
+
+function flightBookingUrl(pkg: TravelPackage) {
+  return buildAviasalesSearchUrl({
+    destination: pkg.destination,
+    origin: pkg.origin,
+    travelers: pkg.travelers,
+    month: pkg.travelMonth,
+    startDate: pkg.travelStartDate,
+    durationDays: pkg.durationDays,
   });
 }
 
