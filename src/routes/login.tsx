@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -49,6 +50,12 @@ function LoginPage() {
   // Nur app-interne Ziele zulassen (kein Open Redirect).
   const safeRedirect =
     search.redirect && /^\/(?!\/)/.test(search.redirect) ? search.redirect : "/";
+
+  // Nach der Rückkehr von Google steht die Sitzung — dann ans gemerkte Ziel.
+  const { user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user) navigate({ to: safeRedirect });
+  }, [authLoading, user, safeRedirect, navigate]);
 
   const handleEmailLogin = async (e: FormEvent) => {
     e.preventDefault();

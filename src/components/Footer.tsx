@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Mail } from "lucide-react";
+import { Mail, Phone, MessageCircle, Facebook, Instagram } from "lucide-react";
 import { ConsentSettingsButton } from "@/components/ConsentBanner";
 
 export function Footer() {
