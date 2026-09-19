@@ -402,12 +402,9 @@ export function PackageDetail({ pkg, onBack }: { pkg: TravelPackage; onBack: () 
   });
   const displayHotelName =
     currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
-  const hotelUrl = buildKlookSearchUrl({
-    destination: dest,
-    travelers: currentPkg.travelers,
-    rooms: Math.max(1, Math.ceil((currentPkg.travelers ?? 1) / 2)),
-  });
-  const taxiUrl = KIWI_TAXI_AFFILIATE_URL;
+  const hotelUrl = bookingHotelUrl(currentPkg);
+  // Haupt-Button und Tages-Buttons nutzen dieselbe Transferseite mit gleichem Kontext.
+  const taxiUrl = transferUrl(currentPkg);
 
   const activitiesUrl = buildKlookActivitiesUrl({
     destination: dest,
