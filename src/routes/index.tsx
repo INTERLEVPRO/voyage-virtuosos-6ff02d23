@@ -122,7 +122,15 @@ function Index() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <PackageDetail pkg={selected} onBack={() => setSelected(null)} />
+        <PackageDetail
+          pkg={selected}
+          onBack={() => setSelected(null)}
+          onPackageUpdated={(updated) => {
+            // Anpassungen bleiben erhalten, auch wenn man zur Ergebnisliste zurückgeht.
+            setSelected(updated);
+            setPackages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+          }}
+        />
         <Footer />
       </div>
     );
