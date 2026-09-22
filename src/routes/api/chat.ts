@@ -82,6 +82,9 @@ function parseBudgetValue(text: string): number | null {
   const candidates: number[] = [];
   const budgetKeyword =
     /(budget|kostet|kosten|preis|ausgeben|gesamt|insgesamt|pro\s+person|p\.\s?p\.|spend|total)\s*[:=]?\s*(von|ca\.?|circa|etwa|ungefähr|ungefaehr|rund|max\.?|maximal|bis\s+zu)?\s*$/i;
+  // Schlüsselwort NACH der Zahl ("etwa 2500 ausgeben", "2500 Euro Budget")
+  const budgetKeywordAfter =
+    /^\s*(euro|eur|€|budget|ausgeben|gesamt|insgesamt|pro\s+person|p\.\s?p\.|für\s+alle|zusammen)\b/i;
   for (const m of cleaned.matchAll(
     /(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|usd|\$|euros?|k)?/gi,
   )) {
@@ -91,10 +94,20 @@ function parseBudgetValue(text: string): number | null {
     if (!Number.isFinite(n)) continue;
     if (n < MIN_BUDGET_EUR || n > 200000) continue;
     if (!currency && !/[.,]/.test(raw) && n >= 1900 && n <= 2099) continue;
-    const before = cleaned.slice(Math.max(0, (m.index ?? 0) - 40), m.index ?? 0);
-    if (!currency && !budgetKeyword.test(before)) continue;
+    const idx = m.index ?? 0;
+    const before = cleaned.slice(Math.max(0, idx - 40), idx);
+    const after = cleaned.slice(idx + m[0].length, idx + m[0].length + 40);
+    // Reine Zahl-Antwort ("2500", "etwa 2500", "ca. 2.500") auf die Budget-Frage
+    const line = (cleaned.slice(0, idx).split("\n").pop() ?? "") + m[0] + after.split("\n")[0];
+    const standalone =
+      /^\s*(ca\.?|circa|etwa|ungefähr|ungefaehr|rund|so|maximal|max\.?|bis\s+zu|vielleicht)?\s*\d{1,3}(?:[.,]\d{3})*\s*(€|eur|euro|k)?\s*[.!]?\s*$/i.test(
+        line,
+      );
+    if (!currency && !standalone && !budgetKeyword.test(before) && !budgetKeywordAfter.test(after))
+      continue;
     candidates.push(n);
   }
+
   if (candidates.length === 0) return null;
   return candidates[candidates.length - 1];
 }
