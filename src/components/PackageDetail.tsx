@@ -46,6 +46,7 @@ import {
   lookupOriginIata,
   buildTransferUrl,
   absoluteUrl,
+  KIWI_TAXI_AFFILIATE_URL,
 } from "@/lib/deeplinks";
 
 /** Report an outbound click. Failures are logged, never silently swallowed. */
@@ -421,7 +422,6 @@ export function PackageDetail({
     currentPkg.hotelName || currentPkg.hotel || `Hotelvorschlag in ${dest.split(",")[0].trim()}`;
   const hotelUrl = bookingHotelUrl(currentPkg);
   // Haupt-Button und Tages-Buttons nutzen dieselbe Transferseite mit gleichem Kontext.
-  const taxiUrl = transferUrl(currentPkg);
 
   const activitiesUrl = buildKlookActivitiesUrl({
     destination: dest,
@@ -681,7 +681,7 @@ export function PackageDetail({
           ratingLabel="Kiwitaxi"
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
-          url={taxiUrl}
+          url={KIWI_TAXI_AFFILIATE_URL}
           packageId={currentPkg.id}
           ctaCls="bg-secondary text-secondary-foreground hover:bg-secondary/90"
         />
