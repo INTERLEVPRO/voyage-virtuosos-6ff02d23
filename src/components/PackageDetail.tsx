@@ -1114,7 +1114,7 @@ function ProviderRow({
             onClick={() => {
               void trackClick(packageId, provider, url);
             }}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors ${ctaCls}`}
+            className={`inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-soft transition-colors sm:w-52 ${ctaCls}`}
           >
             {ctaLabel} <ExternalLink className="h-3.5 w-3.5" />
           </a>
