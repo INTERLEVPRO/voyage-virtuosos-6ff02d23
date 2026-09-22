@@ -100,9 +100,10 @@ function parseBudgetValue(text: string): number | null {
     // Reine Zahl-Antwort ("2500", "etwa 2500", "ca. 2.500") auf die Budget-Frage
     const line = (cleaned.slice(0, idx).split("\n").pop() ?? "") + m[0] + after.split("\n")[0];
     const standalone =
-      /^\s*(ca\.?|circa|etwa|ungefähr|ungefaehr|rund|so|maximal|max\.?|bis\s+zu|vielleicht)?\s*\d{1,3}(?:[.,]\d{3})*\s*(€|eur|euro|k)?\s*[.!]?\s*$/i.test(
+      /^\s*(ca\.?|circa|etwa|ungefähr|ungefaehr|rund|so|maximal|max\.?|bis\s+zu|vielleicht)?\s*(\d{1,3}(?:[.,]\d{3})+|\d{2,6})\s*(€|eur|euro|k)?\s*[.!]?\s*$/i.test(
         line,
       );
+
     if (!currency && !standalone && !budgetKeyword.test(before) && !budgetKeywordAfter.test(after))
       continue;
     candidates.push(n);
