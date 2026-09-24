@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { authErrorMessage, isUnconfirmedEmail } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -47,6 +48,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
   // Nur app-interne Ziele zulassen (kein Open Redirect).
   const safeRedirect =
     search.redirect && /^\/(?!\/)/.test(search.redirect) ? search.redirect : "/";
@@ -63,9 +66,11 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      setNeedsConfirm(isUnconfirmedEmail(error.message));
+      toast.error(authErrorMessage(error.message));
       return;
     }
+    setNeedsConfirm(false);
     toast.success("Willkommen zurück!");
     navigate({ to: safeRedirect });
   };
