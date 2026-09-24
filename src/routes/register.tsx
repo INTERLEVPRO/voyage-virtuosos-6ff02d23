@@ -131,7 +131,9 @@ function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <p className="mt-1 text-xs text-muted-foreground">Mindestens 8 Zeichen</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mindestens 8 Zeichen, am besten mit Zahlen und Sonderzeichen
+            </p>
           </div>
           <button
             type="submit"
@@ -141,6 +143,13 @@ function RegisterPage() {
             {loading ? "Konto wird erstellt…" : "Konto erstellen"}
           </button>
         </form>
+
+        {sent && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+            Wir haben dir eine Bestätigungs-E-Mail an <strong>{email}</strong> geschickt. Erst nach dem Klick
+            auf den Link kannst du dich anmelden — bitte auch im Spam-Ordner nachsehen.
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Bereits ein Konto?{" "}
