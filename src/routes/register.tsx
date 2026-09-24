@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { authErrorMessage } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -46,6 +47,7 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
@@ -60,13 +62,14 @@ function RegisterPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(authErrorMessage(error.message));
       return;
     }
     if (data.session) {
       toast.success("Konto erstellt!");
       navigate({ to: "/" });
     } else {
+      setSent(true);
       toast.success("Bitte bestätige deine E-Mail-Adresse.");
     }
   };

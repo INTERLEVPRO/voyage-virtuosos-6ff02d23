@@ -141,6 +141,33 @@ function LoginPage() {
           </button>
         </form>
 
+        {needsConfirm && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+            <p>
+              Dein Konto ist noch nicht bestätigt. Bitte öffne den Link in unserer E-Mail — schau auch im
+              Spam-Ordner nach.
+            </p>
+            <button
+              type="button"
+              disabled={resending}
+              onClick={async () => {
+                setResending(true);
+                const { error } = await supabase.auth.resend({
+                  type: "signup",
+                  email,
+                  options: { emailRedirectTo: window.location.origin },
+                });
+                setResending(false);
+                if (error) toast.error(authErrorMessage(error.message));
+                else toast.success("Bestätigungs-E-Mail wurde erneut gesendet.");
+              }}
+              className="mt-3 w-full rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+            >
+              {resending ? "Wird gesendet…" : "Bestätigungs-E-Mail erneut senden"}
+            </button>
+          </div>
+        )}
+
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Noch kein Konto?{" "}
           <Link to="/register" className="font-medium text-primary hover:underline">Registrieren</Link>
