@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { authErrorMessage } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -46,6 +47,7 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
@@ -60,13 +62,14 @@ function RegisterPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(authErrorMessage(error.message));
       return;
     }
     if (data.session) {
       toast.success("Konto erstellt!");
       navigate({ to: "/" });
     } else {
+      setSent(true);
       toast.success("Bitte bestätige deine E-Mail-Adresse.");
     }
   };
@@ -128,7 +131,9 @@ function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <p className="mt-1 text-xs text-muted-foreground">Mindestens 8 Zeichen</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mindestens 8 Zeichen, am besten mit Zahlen und Sonderzeichen
+            </p>
           </div>
           <button
             type="submit"
@@ -138,6 +143,13 @@ function RegisterPage() {
             {loading ? "Konto wird erstellt…" : "Konto erstellen"}
           </button>
         </form>
+
+        {sent && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+            Wir haben dir eine Bestätigungs-E-Mail an <strong>{email}</strong> geschickt. Erst nach dem Klick
+            auf den Link kannst du dich anmelden — bitte auch im Spam-Ordner nachsehen.
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Bereits ein Konto?{" "}

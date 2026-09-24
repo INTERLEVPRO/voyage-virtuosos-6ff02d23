@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { authErrorMessage, isUnconfirmedEmail } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -47,6 +48,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
   // Nur app-interne Ziele zulassen (kein Open Redirect).
   const safeRedirect =
     search.redirect && /^\/(?!\/)/.test(search.redirect) ? search.redirect : "/";
@@ -63,9 +66,11 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      setNeedsConfirm(isUnconfirmedEmail(error.message));
+      toast.error(authErrorMessage(error.message));
       return;
     }
+    setNeedsConfirm(false);
     toast.success("Willkommen zurück!");
     navigate({ to: safeRedirect });
   };
@@ -135,6 +140,33 @@ function LoginPage() {
             {loading ? "Anmelden…" : "Anmelden"}
           </button>
         </form>
+
+        {needsConfirm && (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+            <p>
+              Dein Konto ist noch nicht bestätigt. Bitte öffne den Link in unserer E-Mail — schau auch im
+              Spam-Ordner nach.
+            </p>
+            <button
+              type="button"
+              disabled={resending}
+              onClick={async () => {
+                setResending(true);
+                const { error } = await supabase.auth.resend({
+                  type: "signup",
+                  email,
+                  options: { emailRedirectTo: window.location.origin },
+                });
+                setResending(false);
+                if (error) toast.error(authErrorMessage(error.message));
+                else toast.success("Bestätigungs-E-Mail wurde erneut gesendet.");
+              }}
+              className="mt-3 w-full rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+            >
+              {resending ? "Wird gesendet…" : "Bestätigungs-E-Mail erneut senden"}
+            </button>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Noch kein Konto?{" "}
