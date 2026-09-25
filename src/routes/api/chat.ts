@@ -2352,11 +2352,37 @@ export const Route = createFileRoute("/api/chat")({
         const answeredInDialog = getAnsweredFieldsFromDialog(uiMessages);
         const answeredInUserMessages = getAnsweredFieldsFromUserMessages(uiMessages);
 
+        // Values the LLM extracted from the FULL conversation (latest value wins).
+        // These count as answered even for fields the assistant already asked,
+        // so a detail given in any message (or phrased freely) is never re-asked.
+        const llmHas: Record<MissingField, boolean> = {
+          destination: !!(
+            extracted.destination &&
+            extracted.destination !== "deinem Reiseziel" &&
+            !isStopDestination(stripCopula(extracted.destination)) &&
+            !isDateLike(extracted.destination)
+          ),
+          budget: !!(extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR),
+          duration: !!(extracted.durationDays && extracted.durationDays > 0),
+          travelers: !!(extracted.travelers && extracted.travelers > 0),
+          origin: !!(extracted.originCity && !isCountryOnly(extracted.originCity)),
+          timeframe: !!(extracted.timeframe && extracted.timeframe.trim().length > 1),
+          interests: !!(extracted.interests && extracted.interests.length > 0),
+        };
+        const strictRegexHas: Partial<Record<MissingField, boolean>> = {
+          budget: (parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR,
+          duration: regexSignals.hasDuration,
+          travelers: regexSignals.hasTravelers,
+          origin: regexSignals.hasOrigin,
+          timeframe: regexSignals.hasTimeframe,
+          interests: regexSignals.hasInterests,
+        };
+
         const fieldHas = (field: MissingField, looseSignal: boolean): boolean => {
-          // If the assistant explicitly asked about this field, the user MUST
-          // have replied with a valid answer — no loose/LLM inference allowed.
-          if (askedFields.has(field))
-            return answeredInDialog.has(field) || answeredInUserMessages.has(field);
+          if (answeredInDialog.has(field) || answeredInUserMessages.has(field)) return true;
+          if (llmHas[field]) return true;
+          // Already asked: accept only reliable signals (not the loose destination regex).
+          if (askedFields.has(field)) return !!strictRegexHas[field];
           return looseSignal;
         };
 
