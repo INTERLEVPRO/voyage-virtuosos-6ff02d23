@@ -2555,9 +2555,9 @@ export const Route = createFileRoute("/api/chat")({
             : extractOrigin(userHistory);
         if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
         let travelers =
-          extracted.travelers ??
           (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null) ??
-          extractTravelers(userHistory);
+          extractTravelers(userHistory) ??
+          extracted.travelers;
 
         // Guard: destination must differ from origin. If a later short user reply
         // (e.g. "Chennai" answering the origin question) leaked into destination
