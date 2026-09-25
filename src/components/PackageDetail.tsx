@@ -681,7 +681,7 @@ export function PackageDetail({
           ratingLabel="Kiwitaxi"
           ctaLabel="Bei Kiwitaxi ansehen"
           provider="taxi"
-          url={KIWI_TAXI_AFFILIATE_URL}
+          url={transferUrl(currentPkg)}
           packageId={currentPkg.id}
           ctaCls="bg-secondary text-secondary-foreground hover:bg-secondary/90"
         />
