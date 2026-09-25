@@ -714,15 +714,22 @@ function parseAnswerTravelers(value: string): number | null {
     const n = Number(numeric[1]);
     if (n > 0 && n < 30) return n;
   }
-  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
-    if (new RegExp(`\\b${word}\\b`).test(t)) return n;
-  }
-  if (/\b(allein|solo)\b/.test(t)) return 1;
-  if (/\b(paar|pärchen|paerchen|zu zweit)\b/.test(t)) return 2;
+  // Group phrases first, so "eine Woche zu zweit" is 2, not 1.
+  if (/\b(zu zweit|pärchen|paerchen|als paar|ein paar\b(?!\s+tage))/.test(t)) return 2;
   if (/\b(zu dritt)\b/.test(t)) return 3;
-  if (/\b(zu viert|familie)\b/.test(t)) return 4;
+  if (/\b(zu viert)\b/.test(t)) return 4;
   if (/\b(zu fünft|zu fuenft)\b/.test(t)) return 5;
   if (/\b(zu sechst)\b/.test(t)) return 6;
+  if (/\b(allein|solo)\b/.test(t)) return 1;
+  // Number words only when tied to a traveller word or as the whole answer.
+  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
+    if (
+      new RegExp(`\\b${word}\\s+(?:person(?:en)?|reisende|gäste|gaeste|leute|erwachsene|adults?)\\b`).test(t) ||
+      new RegExp(`^${word}$`).test(t)
+    )
+      return n;
+  }
+  if (/\bfamilie\b/.test(t)) return 4;
   return null;
 }
 
@@ -1490,6 +1497,11 @@ function extractOrigin(history: string): string | undefined {
           "",
         )
         .trim()
+        .replace(
+          /\s+(?:anfang|mitte|ende|im|am|in|um|und|mit|zu|januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|sommer|winter|herbst|frühling|fruehling|\d).*$/i,
+          "",
+        )
+        .trim()
         .split(/\s+/)
         .slice(0, 3)
         .join(" ");
@@ -1543,9 +1555,8 @@ function extractTravelers(history: string): number | undefined {
       const n = Number(num[1]);
       if (n > 0 && n < 30) return n;
     }
-    for (const [word, n] of Object.entries(WORD_NUMS)) {
-      if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
-    }
+    const n2 = parseAnswerTravelers(lower);
+    if (n2) return n2;
   }
   return undefined;
 }
