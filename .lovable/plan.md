@@ -1,29 +1,21 @@
-# Fix: Chat misreads short messages like "hi"
+# Fix hotel, activity and transfer booking links
 
-## The bug (from the screenshot)
-When someone types "hi", the assistant skips "Wohin soll es gehen?" and the welcome message. It jumps straight to the budget question. So the chat treats "hi" (or the AI's guess about it) as a destination and other details that were never given.
+Flight links (Aviasales) stay exactly as they are.
 
-## Cause (confirmed in the code, exact source still to pin down)
-- The check for "do we already know the destination?" accepts a destination from three sources: a loose text pattern, earlier dialog answers, and the AI's own guess. None of these sources are checked against the existing list of filler words ("hi", "hallo", "ok", "ja", ...).
-- Other details (duration, travelers, origin, month, interests) also accept the AI's guess without checking.
-- The friendly welcome only shows when 5 or more details are missing. Once wrong details count as known, the welcome is skipped too.
+## What the code does now
+- **Hotel (Klook):** only 6 cities (Dubai, Chennai, Kochi, Colombo, Mumbai) have a fixed Klook destination page. Every other destination falls back to a Klook keyword search (`/search/result/?keyword=...`). That search page ignores check-in/out and guest count, so dates and travellers are lost, and without a keyword it goes to the generic Klook hotels homepage.
+- **Activities (Klook):** also a keyword search. It sends the Travelpayouts API token as `aid` instead of the affiliate marker, and the dates are not applied by Klook.
+- **Transfer (Kiwitaxi):** the button opens the fixed short link `kiwitaxi.tpm.li/RgYDJiUT` (you asked for this earlier). That short link drops every parameter, so no route, date or passenger count arrives.
 
-## Fix
-1. **Greetings and filler get a proper reply.** If a message contains only a greeting or filler word, show the welcome text with the example and ask where the trip should go. No details are extracted from it.
-2. **Check every destination source against the filler list.** A destination such as "hi", "hallo" or "ok" never counts, no matter where it came from.
-3. **Only trust the AI's guess when the user actually wrote it.** A detail from the AI counts only when matching words appear in the user's own messages (for example a number for travelers or duration, or a place name for the destination). This stops invented details.
-4. **Keep last turn's fixes:** no repeated questions, all details read from one message, and the latest answer wins.
-
-## How it will be tested
-Tests go directly against the chat. Each case should get these replies:
-- "hi" gets the welcome and the destination question
-- "hallo" then "Mallorca" asks for the next missing detail, not the destination again
-- "hi, 7 Tage Mallorca zu zweit, 1500 €, ab Frankfurt im Juni, Strand" goes straight to the summary
-- The earlier Sri Lanka and "3000 insgesamt" flows still produce packages
+## Plan
+1. **Check what actually happens first.** Open each current link for 3 test trips (Dubai, Mallorca, Bali — 2 people, 7 days, fixed date) in a real browser and record where each one lands and which details show. Also check which URL formats Klook really accepts for dates and guests (destination page, hotel search, activity search).
+2. **Hotels:** switch to the Klook URL format that keeps dates, adults and rooms (confirmed in step 1). Use the hotel name + city when a hotel is known, the city otherwise. Extend the list of verified Klook destination pages only with pages confirmed to open (no guessed IDs). Never send people to the generic hotels homepage when a destination exists.
+3. **Activities:** use the correct affiliate marker (728432), the city, and dates in a format Klook accepts; open the city's activity page when confirmed, otherwise a city search.
+4. **Transfer:** keep your Kiwitaxi partner link, but open it with the trip details (arrival airport, hotel/city, date, passengers) through Kiwitaxi's own supported parameters with marker 728432. If Kiwitaxi only accepts the short link without details, fall back to our transfer page (which shows the Kiwitaxi booking window pre-filled) — I will tell you which one works.
+5. **Same links everywhere:** the package detail page, package cards and the `/buchen` page all use the same link builders, so they stay consistent. Click tracking stays unchanged.
+6. **Test:** for all 3 trips, open hotel, activities and transfer links in the browser and confirm the right destination/hotel, dates and traveller count appear. Confirm the flight link is byte-for-byte unchanged. Type check with no errors.
 
 ## Technical details
-- File: `src/routes/api/chat.ts`, in the `has` / `fieldHas` block (about lines 2380–2460) and `buildConciergeReply`.
-- Add `isGreetingOnly(lastUserText)` and return the welcome early.
-- Run `isStopDestination(stripCopula(...))` on `regexSignals`, `dialogPreview.destination` and `extracted.destination`.
-- Gate `llmHas[field]` behind a check that the value appears in `userHistory`.
-- Log the extracted values for "hi" first to confirm which source is at fault.
+- Files: `src/lib/deeplinks.ts` (`buildKlookSearchUrl`, `buildKlookActivitiesUrl`, `KLOOK_HOTEL_DESTINATIONS`, transfer link builder), `src/components/PackageDetail.tsx` (transfer button currently hardcodes `KIWI_TAXI_AFFILIATE_URL`), `src/routes/buchen.tsx`.
+- `buildAviasalesSearchUrl` and flight buttons are not touched.
+- No invented Klook IDs or data; only URL formats and pages confirmed by the browser test are used.
