@@ -714,15 +714,22 @@ function parseAnswerTravelers(value: string): number | null {
     const n = Number(numeric[1]);
     if (n > 0 && n < 30) return n;
   }
-  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
-    if (new RegExp(`\\b${word}\\b`).test(t)) return n;
-  }
-  if (/\b(allein|solo)\b/.test(t)) return 1;
-  if (/\b(paar|pärchen|paerchen|zu zweit)\b/.test(t)) return 2;
+  // Group phrases first, so "eine Woche zu zweit" is 2, not 1.
+  if (/\b(zu zweit|pärchen|paerchen|als paar|ein paar\b(?!\s+tage))/.test(t)) return 2;
   if (/\b(zu dritt)\b/.test(t)) return 3;
-  if (/\b(zu viert|familie)\b/.test(t)) return 4;
+  if (/\b(zu viert)\b/.test(t)) return 4;
   if (/\b(zu fünft|zu fuenft)\b/.test(t)) return 5;
   if (/\b(zu sechst)\b/.test(t)) return 6;
+  if (/\b(allein|solo)\b/.test(t)) return 1;
+  // Number words only when tied to a traveller word or as the whole answer.
+  for (const [word, n] of Object.entries(WORD_NUM_BASIC)) {
+    if (
+      new RegExp(`\\b${word}\\s+(?:person(?:en)?|reisende|gäste|gaeste|leute|erwachsene|adults?)\\b`).test(t) ||
+      new RegExp(`^${word}$`).test(t)
+    )
+      return n;
+  }
+  if (/\bfamilie\b/.test(t)) return 4;
   return null;
 }
 
@@ -1490,6 +1497,11 @@ function extractOrigin(history: string): string | undefined {
           "",
         )
         .trim()
+        .replace(
+          /\s+(?:anfang|mitte|ende|im|am|in|um|und|mit|zu|januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember|sommer|winter|herbst|frühling|fruehling|\d).*$/i,
+          "",
+        )
+        .trim()
         .split(/\s+/)
         .slice(0, 3)
         .join(" ");
@@ -1543,9 +1555,8 @@ function extractTravelers(history: string): number | undefined {
       const n = Number(num[1]);
       if (n > 0 && n < 30) return n;
     }
-    for (const [word, n] of Object.entries(WORD_NUMS)) {
-      if (new RegExp(`\\b${word}\\b`).test(lower)) return n;
-    }
+    const n2 = parseAnswerTravelers(lower);
+    if (n2) return n2;
   }
   return undefined;
 }
@@ -2352,11 +2363,37 @@ export const Route = createFileRoute("/api/chat")({
         const answeredInDialog = getAnsweredFieldsFromDialog(uiMessages);
         const answeredInUserMessages = getAnsweredFieldsFromUserMessages(uiMessages);
 
+        // Values the LLM extracted from the FULL conversation (latest value wins).
+        // These count as answered even for fields the assistant already asked,
+        // so a detail given in any message (or phrased freely) is never re-asked.
+        const llmHas: Record<MissingField, boolean> = {
+          destination: !!(
+            extracted.destination &&
+            extracted.destination !== "deinem Reiseziel" &&
+            !isStopDestination(stripCopula(extracted.destination)) &&
+            !isDateLike(extracted.destination)
+          ),
+          budget: !!(extracted.budgetEur && extracted.budgetEur >= MIN_BUDGET_EUR),
+          duration: !!(extracted.durationDays && extracted.durationDays > 0),
+          travelers: !!(extracted.travelers && extracted.travelers > 0),
+          origin: !!(extracted.originCity && !isCountryOnly(extracted.originCity)),
+          timeframe: !!(extracted.timeframe && extracted.timeframe.trim().length > 1),
+          interests: !!(extracted.interests && extracted.interests.length > 0),
+        };
+        const strictRegexHas: Partial<Record<MissingField, boolean>> = {
+          budget: (parseBudgetValue(userHistory) ?? 0) >= MIN_BUDGET_EUR,
+          duration: regexSignals.hasDuration,
+          travelers: regexSignals.hasTravelers,
+          origin: regexSignals.hasOrigin,
+          timeframe: regexSignals.hasTimeframe,
+          interests: regexSignals.hasInterests,
+        };
+
         const fieldHas = (field: MissingField, looseSignal: boolean): boolean => {
-          // If the assistant explicitly asked about this field, the user MUST
-          // have replied with a valid answer — no loose/LLM inference allowed.
-          if (askedFields.has(field))
-            return answeredInDialog.has(field) || answeredInUserMessages.has(field);
+          if (answeredInDialog.has(field) || answeredInUserMessages.has(field)) return true;
+          if (llmHas[field]) return true;
+          // Already asked: accept only reliable signals (not the loose destination regex).
+          if (askedFields.has(field)) return !!strictRegexHas[field];
           return looseSignal;
         };
 
@@ -2518,9 +2555,9 @@ export const Route = createFileRoute("/api/chat")({
             : extractOrigin(userHistory);
         if (origin) origin = cleanPlace(origin.replace(/^ist\s+/i, ""));
         let travelers =
-          extracted.travelers ??
           (dialog.travelers ? parseAnswerTravelers(dialog.travelers) : null) ??
-          extractTravelers(userHistory);
+          extractTravelers(userHistory) ??
+          extracted.travelers;
 
         // Guard: destination must differ from origin. If a later short user reply
         // (e.g. "Chennai" answering the origin question) leaked into destination
