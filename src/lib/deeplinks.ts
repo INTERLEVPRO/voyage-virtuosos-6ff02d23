@@ -647,19 +647,23 @@ export function buildKlookSearchUrl(opts: {
   if (destinationSlug) {
     finalUrl = `https://www.klook.com/destination/${destinationSlug}/3-hotel/?${params.toString()}`;
   } else {
-    const keyword = [opts.hotel, city].filter(Boolean).join(" ") || city;
-    if (!keyword) return `https://www.klook.com/hotels/?aid=${encodeURIComponent(aid)}`;
-    params.set("keyword", `${keyword} hotel`);
-    finalUrl = `https://www.klook.com/search/result/?${params.toString()}`;
+    if (!city) return `https://www.klook.com/hotels/?aid=${encodeURIComponent(aid)}`;
+    // Klook's search reads `query` (the old `keyword` param was ignored and
+    // showed generic results). Full hotel names break the search, so we search
+    // "<city> hotel" — verified in the browser for Bali and Palma de Mallorca.
+    const search = new URLSearchParams({ query: `${city} hotel`, aid });
+    if (dates) {
+      search.set("start_time", dates[0]);
+      search.set("end_time", dates[1]);
+    }
+    finalUrl = `https://www.klook.com/search/result/?${search.toString()}`;
   }
-
-  console.log("Klook hotel deeplink:", finalUrl);
   return finalUrl;
 }
 
 // ─── Klook (Activities) ──────────────────────────────────────────────────────
 
-/** Direct Klook activities search URL with pre-filled fields. */
+/** Klook activities search for the destination city. */
 export function buildKlookActivitiesUrl(opts: {
   destination: string;
   startDate?: string;
@@ -669,29 +673,14 @@ export function buildKlookActivitiesUrl(opts: {
   const city = extractCityName(opts.destination);
   if (!city) return KLOOK_ACTIVITIES_AFFILIATE_URL;
 
-  // Use city name with "things to do" for better search results
-  const queryKeyword = `${city} things to do`;
-
-  const params = new URLSearchParams({
-    aid: TRAVELPAYOUTS_TOKEN,
-    keyword: queryKeyword,
-  });
+  // `query` is the parameter Klook actually applies (verified); `keyword` was ignored.
+  const params = new URLSearchParams({ query: city, aid: AFFILIATE_MARKER });
   const dates = isoDatesFromStartOrMonth(opts.startDate, opts.month, opts.durationDays ?? 7);
   if (dates) {
     params.set("start_time", dates[0]);
     params.set("end_time", dates[1]);
   }
-  const finalUrl = `https://www.klook.com/search/result/?${params.toString()}`;
-
-  console.log("deeplink context", {
-    provider: "klook_activities",
-    destination: city,
-    keyword: queryKeyword,
-    dates,
-    url: finalUrl,
-  });
-
-  return finalUrl;
+  return `https://www.klook.com/search/result/?${params.toString()}`;
 }
 
 /** @deprecated kept for backwards compatibility — now routes through Klook. */
